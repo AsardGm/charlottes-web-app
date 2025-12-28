@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/theme.dart';
 import '../../providers/search_provider.dart';
+import '../../providers/chat_provider.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/post_card.dart';
 
@@ -235,8 +236,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
               color: AppColors.textMuted,
             ),
           ),
-          onTap: () {
-            // TODO: Navigate to user profile
+          onTap: () async {
+            // Otevři chat s uživatelem
+            try {
+              final chatService = ref.read(chatServiceProvider);
+              final conversationId = await chatService.getOrCreateDirectConversation(user.id);
+              if (context.mounted) {
+                context.go('/chat/$conversationId');
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Chyba: ${e.toString()}')),
+                );
+              }
+            }
           },
         );
       },

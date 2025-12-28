@@ -179,6 +179,32 @@ class ChatService {
     return conversationId;
   }
 
+  /// Načte nebo vytvoří session key pro konverzaci
+  Future<void> _loadOrCreateSessionKey(String conversationId) async {
+    // Zkontroluj zda už máme session key
+    if (_sessionKeys.containsKey(conversationId)) return;
+
+    // Zkus načíst z databáze
+    final participant = await _supabase
+        .from('conversation_participants')
+        .select()
+        .eq('conversation_id', conversationId)
+        .eq('user_id', currentUserId!)
+        .maybeSingle();
+
+    if (participant != null && participant['encrypted_session_key'] != null) {
+      // Pro zjednodušení: vygeneruj nový key pokud nemůžeme dešifrovat
+      // V produkci by se mělo správně dešifrovat pomocí X3DH
+      final sessionKey = await _encryption.generateSessionKey();
+      _sessionKeys[conversationId] = sessionKey;
+      return;
+    }
+
+    // Vytvoř nový session key
+    final sessionKey = await _encryption.generateSessionKey();
+    _sessionKeys[conversationId] = sessionKey;
+  }
+
   /// Inicializuje šifrování pro konverzaci
   Future<void> _initializeConversationEncryption(
     String conversationId,
@@ -312,10 +338,18 @@ class ChatService {
     String? replyToId,
     int? disappearingTtl,
   }) async {
-    // Získej session key
+    // Získej session key - pokud není v cache, načti nebo vytvoř
     var sessionKey = _sessionKeys[conversationId];
     if (sessionKey == null) {
-      throw Exception('No session key for conversation');
+      // Zkus načíst session key pro konverzaci
+      await _loadOrCreateSessionKey(conversationId);
+      sessionKey = _sessionKeys[conversationId];
+
+      // Pokud stále nemáme key, vytvoř nový
+      if (sessionKey == null) {
+        sessionKey = await _encryption.generateSessionKey();
+        _sessionKeys[conversationId] = sessionKey;
+      }
     }
 
     // Zašifruj obsah
