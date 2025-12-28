@@ -1,24 +1,38 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 
+/// Služba pro autentizaci uživatelů
+///
+/// Zajišťuje registraci, přihlášení, odhlášení a správu profilu.
+/// Používá Supabase Auth pro autentizaci.
 class AuthService {
+  /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  /// Aktuálně přihlášený uživatel (Supabase User)
   User? get currentUser => _supabase.auth.currentUser;
+
+  /// Je uživatel přihlášen?
   bool get isAuthenticated => currentUser != null;
 
+  /// Stream změn stavu autentizace
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 
+  /// Registrace nového uživatele
+  ///
+  /// Vytvoří účet a profil v databázi.
   Future<AuthResponse> signUp({
     required String email,
     required String password,
     required String username,
   }) async {
+    // Vytvoření účtu
     final response = await _supabase.auth.signUp(
       email: email,
       password: password,
     );
 
+    // Vytvoření profilu
     if (response.user != null) {
       await _supabase.from('profiles').insert({
         'id': response.user!.id,
@@ -33,6 +47,7 @@ class AuthService {
     return response;
   }
 
+  /// Přihlášení uživatele
   Future<AuthResponse> signIn({
     required String email,
     required String password,
@@ -43,10 +58,12 @@ class AuthService {
     );
   }
 
+  /// Odhlášení uživatele
   Future<void> signOut() async {
     await _supabase.auth.signOut();
   }
 
+  /// Získá profil aktuálního uživatele
   Future<UserModel?> getCurrentProfile() async {
     final user = currentUser;
     if (user == null) return null;
@@ -65,6 +82,7 @@ class AuthService {
     }
   }
 
+  /// Aktualizuje profil uživatele
   Future<void> updateProfile({
     String? username,
     String? avatarUrl,
@@ -81,6 +99,7 @@ class AuthService {
     }
   }
 
+  /// Odešle email pro reset hesla
   Future<void> resetPassword(String email) async {
     await _supabase.auth.resetPasswordForEmail(email);
   }

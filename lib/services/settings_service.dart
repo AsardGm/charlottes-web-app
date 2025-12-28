@@ -1,12 +1,20 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_settings_model.dart';
 
+/// Služba pro správu uživatelských nastavení
+///
+/// Umožňuje načítat a ukládat nastavení jako téma,
+/// notifikace, jazyk a další preference.
 class SettingsService {
+  /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  /// ID aktuálního uživatele
   String? get currentUserId => _supabase.auth.currentUser?.id;
 
   /// Získá nastavení uživatele
+  ///
+  /// Pokud nastavení neexistuje, vytvoří výchozí.
   Future<UserSettingsModel?> getSettings() async {
     if (currentUserId == null) return null;
 
@@ -24,7 +32,7 @@ class SettingsService {
     return UserSettingsModel.fromJson(response);
   }
 
-  /// Vytvoří výchozí nastavení
+  /// Vytvoří výchozí nastavení pro uživatele
   Future<UserSettingsModel> _createDefaultSettings() async {
     final defaultSettings = {
       'user_id': currentUserId,
@@ -48,7 +56,7 @@ class SettingsService {
   /// Aktualizuje nastavení
   Future<UserSettingsModel> updateSettings(Map<String, dynamic> updates) async {
     if (currentUserId == null) {
-      throw Exception('User not logged in');
+      throw Exception('Uživatel není přihlášen');
     }
 
     updates['updated_at'] = DateTime.now().toIso8601String();
@@ -63,7 +71,7 @@ class SettingsService {
     return UserSettingsModel.fromJson(response);
   }
 
-  /// Změní téma
+  /// Změní téma (light/dark)
   Future<UserSettingsModel> setTheme(String theme) async {
     return updateSettings({'theme': theme});
   }
@@ -73,7 +81,9 @@ class SettingsService {
     return updateSettings({'notifications_enabled': enabled});
   }
 
-  /// Nastaví kdo může psát zprávy
+  /// Nastaví kdo může posílat zprávy
+  ///
+  /// Hodnoty: 'everyone', 'followers', 'nobody'
   Future<UserSettingsModel> setAllowMessagesFrom(String value) async {
     return updateSettings({'allow_messages_from': value});
   }
@@ -83,7 +93,7 @@ class SettingsService {
     return updateSettings({'show_online_status': visible});
   }
 
-  /// Změní jazyk
+  /// Změní jazyk aplikace
   Future<UserSettingsModel> setLanguage(String language) async {
     return updateSettings({'language': language});
   }

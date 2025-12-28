@@ -1,12 +1,20 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 
+/// Služba pro správu sledování uživatelů
+///
+/// Umožňuje sledovat/přestat sledovat uživatele
+/// a získat seznamy sledujících/sledovaných.
 class FollowService {
+  /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  /// ID aktuálního uživatele
   String? get currentUserId => _supabase.auth.currentUser?.id;
 
   /// Získá seznam sledovaných uživatelů
+  ///
+  /// [userId] - ID uživatele (výchozí je aktuální uživatel)
   Future<List<UserModel>> getFollowing({
     String? userId,
     int limit = 50,
@@ -29,6 +37,8 @@ class FollowService {
   }
 
   /// Získá seznam sledujících (followers)
+  ///
+  /// [userId] - ID uživatele (výchozí je aktuální uživatel)
   Future<List<UserModel>> getFollowers({
     String? userId,
     int limit = 50,
@@ -86,7 +96,9 @@ class FollowService {
         .eq('following_id', userId);
   }
 
-  /// Toggle follow
+  /// Přepne stav sledování (sleduje/nesleduje)
+  ///
+  /// Vrací nový stav (true = sleduje, false = nesleduje).
   Future<bool> toggleFollow(String userId) async {
     final isCurrentlyFollowing = await isFollowing(userId);
 
@@ -99,7 +111,7 @@ class FollowService {
     }
   }
 
-  /// Počet sledovaných
+  /// Počet sledovaných uživatelů
   Future<int> getFollowingCount({String? userId}) async {
     final targetUserId = userId ?? currentUserId;
     if (targetUserId == null) return 0;
@@ -112,7 +124,7 @@ class FollowService {
     return (response as List).length;
   }
 
-  /// Počet sledujících
+  /// Počet sledujících (followers)
   Future<int> getFollowersCount({String? userId}) async {
     final targetUserId = userId ?? currentUserId;
     if (targetUserId == null) return 0;

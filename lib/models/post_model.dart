@@ -4,26 +4,71 @@ import 'reaction_model.dart';
 import 'category_model.dart';
 import 'thread_type_model.dart';
 
+/// Model příspěvku (vlákna)
+///
+/// Reprezentuje příspěvek na zdi včetně komentářů,
+/// reakcí a metadat vlákna.
 class PostModel {
+  /// Unikátní ID příspěvku
   final String id;
+
+  /// ID autora příspěvku
   final String authorId;
+
+  /// ID kategorie (volitelné)
   final String? categoryId;
+
+  /// ID typu vlákna (diskuze, otázka, oznámení)
   final String? threadTypeId;
+
+  /// Textový obsah příspěvku
   final String content;
+
+  /// URL přiloženého obrázku
   final String? imageUrl;
+
+  /// Stav vlákna: 'open', 'resolved', 'locked'
   final String status;
+
+  /// Deadline pro vyřešení (u otázek)
   final DateTime? deadline;
+
+  /// Datum vyřešení
   final DateTime? resolvedAt;
+
+  /// ID uživatele který vyřešil
   final String? resolvedBy;
+
+  /// Je příspěvek připnutý nahoře?
   final bool isPinned;
+
+  /// Počet zobrazení
   final int viewCount;
+
+  /// ID přijaté odpovědi (u otázek)
   final String? acceptedCommentId;
+
+  /// Datum vytvoření
   final DateTime createdAt;
+
+  /// Datum poslední úpravy
   final DateTime updatedAt;
+
+  // === Relační data ===
+
+  /// Autor příspěvku
   final UserModel? author;
+
+  /// Kategorie
   final CategoryModel? category;
+
+  /// Typ vlákna
   final ThreadTypeModel? threadType;
+
+  /// Seznam komentářů
   final List<CommentModel> comments;
+
+  /// Seznam reakcí
   final List<ReactionModel> reactions;
 
   PostModel({
@@ -49,8 +94,12 @@ class PostModel {
     this.reactions = const [],
   });
 
+  // === Počítané hodnoty ===
+
+  /// Počet komentářů
   int get commentCount => comments.length;
 
+  /// Počty reakcí podle typu
   Map<String, int> get reactionCounts {
     final counts = <String, int>{};
     for (final reaction in reactions) {
@@ -59,12 +108,15 @@ class PostModel {
     return counts;
   }
 
+  /// Celkový počet reakcí
   int get totalReactions => reactions.length;
 
+  /// Reagoval uživatel na příspěvek?
   bool hasUserReacted(String userId) {
     return reactions.any((r) => r.userId == userId);
   }
 
+  /// Získá typ reakce uživatele
   String? getUserReactionType(String userId) {
     try {
       return reactions.firstWhere((r) => r.userId == userId).type;
@@ -72,6 +124,8 @@ class PostModel {
       return null;
     }
   }
+
+  // === Stav vlákna ===
 
   /// Získá stav vlákna jako enum
   ThreadStatus get threadStatus => ThreadStatus.fromString(status);
@@ -84,6 +138,8 @@ class PostModel {
 
   /// Je vlákno zamčené?
   bool get isLocked => status == 'locked';
+
+  // === Deadline ===
 
   /// Má vlákno deadline?
   bool get hasDeadline => deadline != null;
@@ -100,14 +156,19 @@ class PostModel {
     return deadline!.difference(DateTime.now()).inDays;
   }
 
+  // === Přijatá odpověď ===
+
   /// Má přijatou odpověď?
   bool get hasAcceptedAnswer => acceptedCommentId != null;
 
-  /// Je komentář přijatá odpověď?
+  /// Je tento komentář přijatá odpověď?
   bool isAcceptedAnswer(String commentId) {
     return acceptedCommentId == commentId;
   }
 
+  // === Serializace ===
+
+  /// Vytvoří model z JSON dat (z Supabase)
   factory PostModel.fromJson(Map<String, dynamic> json) {
     return PostModel(
       id: json['id'] as String,
@@ -150,6 +211,7 @@ class PostModel {
     );
   }
 
+  /// Převede model na JSON pro uložení
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -170,6 +232,7 @@ class PostModel {
     };
   }
 
+  /// Vytvoří kopii s upravenými hodnotami
   PostModel copyWith({
     String? id,
     String? authorId,

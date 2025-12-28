@@ -1,9 +1,14 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/reaction_model.dart';
 
+/// Služba pro správu reakcí na příspěvky
+///
+/// Umožňuje přidávat, odebírat a přepínat reakce (like, love, atd.).
 class ReactionService {
+  /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  /// Získá všechny reakce na příspěvek
   Future<List<ReactionModel>> getReactions(String postId) async {
     final response = await _supabase
         .from('reactions')
@@ -15,6 +20,7 @@ class ReactionService {
         .toList();
   }
 
+  /// Získá reakci aktuálního uživatele na příspěvek
   Future<ReactionModel?> getUserReaction(String postId) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return null;
@@ -33,13 +39,16 @@ class ReactionService {
     }
   }
 
+  /// Přidá reakci na příspěvek
+  ///
+  /// Nejprve odstraní existující reakci (pokud existuje).
   Future<ReactionModel> addReaction({
     required String postId,
     required String type,
   }) async {
     final userId = _supabase.auth.currentUser!.id;
 
-    // Remove existing reaction first
+    // Nejprve odstraň existující reakci
     await removeReaction(postId);
 
     final response = await _supabase
@@ -56,6 +65,7 @@ class ReactionService {
     return ReactionModel.fromJson(response);
   }
 
+  /// Odstraní reakci z příspěvku
   Future<void> removeReaction(String postId) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -67,6 +77,10 @@ class ReactionService {
         .eq('user_id', userId);
   }
 
+  /// Přepne reakci na příspěvku
+  ///
+  /// Pokud stejná reakce existuje, odstraní ji.
+  /// Pokud ne, přidá novou.
   Future<void> toggleReaction({
     required String postId,
     required String type,

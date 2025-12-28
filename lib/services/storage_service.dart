@@ -2,11 +2,23 @@ import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
+/// Služba pro práci se soubory (obrázky)
+///
+/// Umožňuje vybírat obrázky z galerie/fotoaparátu
+/// a nahrávat je do Supabase Storage.
 class StorageService {
+  /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
+
+  /// Image picker pro výběr obrázků
   final ImagePicker _picker = ImagePicker();
+
+  /// Název bucketu v Supabase Storage
   static const String _bucketName = 'verejny';
 
+  /// Vybere obrázek z galerie nebo fotoaparátu
+  ///
+  /// Automaticky zmenší obrázek na max 1920px a komprimuje na 85%.
   Future<XFile?> pickImage({ImageSource source = ImageSource.gallery}) async {
     return await _picker.pickImage(
       source: source,
@@ -16,6 +28,9 @@ class StorageService {
     );
   }
 
+  /// Nahraje obrázek příspěvku
+  ///
+  /// Vrací veřejnou URL nahraného obrázku.
   Future<String?> uploadPostImage(XFile file) async {
     final userId = _supabase.auth.currentUser!.id;
     final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -31,6 +46,9 @@ class StorageService {
     return _supabase.storage.from(_bucketName).getPublicUrl(path);
   }
 
+  /// Nahraje avatar uživatele
+  ///
+  /// Vrací veřejnou URL nahraného avataru.
   Future<String?> uploadAvatar(XFile file) async {
     final userId = _supabase.auth.currentUser!.id;
     final extension = file.path.split('.').last;
@@ -45,6 +63,9 @@ class StorageService {
     return _supabase.storage.from(_bucketName).getPublicUrl(path);
   }
 
+  /// Smaže obrázek ze storage
+  ///
+  /// Přijímá veřejnou URL obrázku a extrahuje cestu pro smazání.
   Future<void> deleteImage(String url) async {
     try {
       final uri = Uri.parse(url);
@@ -55,7 +76,7 @@ class StorageService {
         await _supabase.storage.from(_bucketName).remove([path]);
       }
     } catch (_) {
-      // Ignore delete errors
+      // Ignoruj chyby při mazání
     }
   }
 }

@@ -1,12 +1,22 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/notification_model.dart';
 
+/// Služba pro správu notifikací
+///
+/// Zajišťuje načítání, označování jako přečtené a mazání notifikací.
+/// Podporuje real-time aktualizace.
 class NotificationService {
+  /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  /// ID aktuálního uživatele
   String? get currentUserId => _supabase.auth.currentUser?.id;
 
   /// Získá všechny notifikace uživatele
+  ///
+  /// [limit] - počet notifikací na stránku
+  /// [offset] - počet přeskočených (pro stránkování)
+  /// [unreadOnly] - pouze nepřečtené
   Future<List<NotificationModel>> getNotifications({
     int limit = 50,
     int offset = 0,
@@ -78,7 +88,7 @@ class NotificationService {
         .eq('is_read', true);
   }
 
-  /// Stream pro real-time notifikace
+  /// Real-time stream notifikací
   Stream<List<Map<String, dynamic>>> notificationsStream() {
     if (currentUserId == null) {
       return const Stream.empty();

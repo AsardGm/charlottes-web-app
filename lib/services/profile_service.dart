@@ -2,12 +2,17 @@ import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 
+/// Služba pro správu uživatelských profilů
+///
+/// Umožňuje zobrazení, editaci profilu a nahrávání avataru.
 class ProfileService {
+  /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  /// ID aktuálního uživatele
   String? get currentUserId => _supabase.auth.currentUser?.id;
 
-  /// Získá profil uživatele
+  /// Získá profil uživatele podle ID
   Future<UserModel?> getProfile(String userId) async {
     final response = await _supabase
         .from('profiles')
@@ -19,7 +24,7 @@ class ProfileService {
     return UserModel.fromJson(response);
   }
 
-  /// Aktualizuje profil
+  /// Aktualizuje profil aktuálního uživatele
   Future<UserModel> updateProfile({
     String? username,
     String? bio,
@@ -27,7 +32,7 @@ class ProfileService {
     String? location,
   }) async {
     if (currentUserId == null) {
-      throw Exception('User not logged in');
+      throw Exception('Uživatel není přihlášen');
     }
 
     final updates = <String, dynamic>{
@@ -49,15 +54,18 @@ class ProfileService {
     return UserModel.fromJson(response);
   }
 
-  /// Nahraje avatar
+  /// Nahraje avatar uživatele
+  ///
+  /// Vrací URL nahraného obrázku.
   Future<String> uploadAvatar(Uint8List bytes, String fileName) async {
     if (currentUserId == null) {
-      throw Exception('User not logged in');
+      throw Exception('Uživatel není přihlášen');
     }
 
     final extension = fileName.split('.').last.toLowerCase();
     final path = 'avatars/$currentUserId.$extension';
 
+    // Nahrání do storage
     await _supabase.storage.from('avatars').uploadBinary(
           path,
           bytes,
@@ -69,7 +77,7 @@ class ProfileService {
 
     final publicUrl = _supabase.storage.from('avatars').getPublicUrl(path);
 
-    // Aktualizuj profil s novou URL
+    // Aktualizace profilu s novou URL
     await _supabase
         .from('profiles')
         .update({'avatar_url': publicUrl})
@@ -78,7 +86,7 @@ class ProfileService {
     return publicUrl;
   }
 
-  /// Smaže avatar
+  /// Smaže avatar uživatele
   Future<void> deleteAvatar() async {
     if (currentUserId == null) return;
 
@@ -102,7 +110,9 @@ class ProfileService {
         .eq('id', currentUserId!);
   }
 
-  /// Zkontroluje dostupnost username
+  /// Zkontroluje dostupnost uživatelského jména
+  ///
+  /// Vrací true pokud je jméno volné.
   Future<bool> isUsernameAvailable(String username) async {
     final response = await _supabase
         .from('profiles')
@@ -132,9 +142,17 @@ class ProfileService {
   }
 }
 
+/// Statistiky profilu
+///
+/// Obsahuje počty sledujících, sledovaných a příspěvků.
 class ProfileStats {
+  /// Počet sledujících
   final int followerCount;
+
+  /// Počet sledovaných
   final int followingCount;
+
+  /// Počet příspěvků
   final int postCount;
 
   ProfileStats({

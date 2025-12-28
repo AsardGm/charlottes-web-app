@@ -2,10 +2,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/post_model.dart';
 import '../models/user_model.dart';
 
+/// Služba pro vyhledávání
+///
+/// Umožňuje vyhledávat příspěvky a uživatele v databázi.
 class SearchService {
+  /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  /// Vyhledá příspěvky
+  /// Vyhledá příspěvky podle obsahu
+  ///
+  /// Hledá v textu příspěvků pomocí ILIKE (case-insensitive).
   Future<List<PostModel>> searchPosts(
     String query, {
     int limit = 20,
@@ -31,7 +37,9 @@ class SearchService {
         .toList();
   }
 
-  /// Vyhledá uživatele
+  /// Vyhledá uživatele podle jména nebo bio
+  ///
+  /// Hledá v uživatelském jméně a popisu profilu.
   Future<List<UserModel>> searchUsers(
     String query, {
     int limit = 20,
@@ -51,12 +59,15 @@ class SearchService {
         .toList();
   }
 
-  /// Kombinované vyhledávání
+  /// Kombinované vyhledávání příspěvků i uživatelů
+  ///
+  /// Spustí obě vyhledávání paralelně pro lepší výkon.
   Future<SearchResults> search(String query, {int limit = 10}) async {
     if (query.isEmpty) {
       return SearchResults(posts: [], users: []);
     }
 
+    // Paralelní vyhledávání
     final results = await Future.wait([
       searchPosts(query, limit: limit),
       searchUsers(query, limit: limit),
@@ -69,8 +80,14 @@ class SearchService {
   }
 }
 
+/// Výsledky vyhledávání
+///
+/// Obsahuje nalezené příspěvky a uživatele.
 class SearchResults {
+  /// Nalezené příspěvky
   final List<PostModel> posts;
+
+  /// Nalezení uživatelé
   final List<UserModel> users;
 
   SearchResults({
@@ -78,6 +95,9 @@ class SearchResults {
     required this.users,
   });
 
+  /// Jsou výsledky prázdné?
   bool get isEmpty => posts.isEmpty && users.isEmpty;
+
+  /// Celkový počet výsledků
   int get totalCount => posts.length + users.length;
 }

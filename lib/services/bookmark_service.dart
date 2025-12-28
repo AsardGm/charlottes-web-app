@@ -1,12 +1,19 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/post_model.dart';
 
+/// Služba pro správu záložek (bookmarků)
+///
+/// Umožňuje ukládat a odebírat příspěvky ze záložek.
 class BookmarkService {
+  /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  /// ID aktuálního uživatele
   String? get currentUserId => _supabase.auth.currentUser?.id;
 
-  /// Získá všechny bookmarky uživatele
+  /// Získá všechny záložky uživatele
+  ///
+  /// Vrací seznam uložených příspěvků seřazený od nejnovějších.
   Future<List<PostModel>> getBookmarks({
     int limit = 50,
     int offset = 0,
@@ -34,7 +41,7 @@ class BookmarkService {
         .toList();
   }
 
-  /// Zkontroluje zda je příspěvek v bookmarkách
+  /// Zkontroluje zda je příspěvek v záložkách
   Future<bool> isBookmarked(String postId) async {
     if (currentUserId == null) return false;
 
@@ -48,7 +55,7 @@ class BookmarkService {
     return response != null;
   }
 
-  /// Přidá bookmark
+  /// Přidá příspěvek do záložek
   Future<void> addBookmark(String postId) async {
     if (currentUserId == null) return;
 
@@ -58,7 +65,7 @@ class BookmarkService {
     });
   }
 
-  /// Odebere bookmark
+  /// Odebere příspěvek ze záložek
   Future<void> removeBookmark(String postId) async {
     if (currentUserId == null) return;
 
@@ -69,7 +76,9 @@ class BookmarkService {
         .eq('post_id', postId);
   }
 
-  /// Toggle bookmark
+  /// Přepne stav záložky (přidá/odebere)
+  ///
+  /// Vrací nový stav (true = přidáno, false = odebráno).
   Future<bool> toggleBookmark(String postId) async {
     final isCurrentlyBookmarked = await isBookmarked(postId);
 
@@ -82,7 +91,7 @@ class BookmarkService {
     }
   }
 
-  /// Počet bookmarkovaných příspěvků
+  /// Počet záložek uživatele
   Future<int> getBookmarkCount() async {
     if (currentUserId == null) return 0;
 

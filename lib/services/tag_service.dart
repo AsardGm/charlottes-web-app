@@ -1,10 +1,17 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/tag_model.dart';
 
+/// Služba pro správu tagů (štítků)
+///
+/// Umožňuje práci s tagy - vyhledávání, přidávání k příspěvkům,
+/// získávání populárních tagů.
 class TagService {
+  /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
 
   /// Získá populární tagy
+  ///
+  /// Seřazeno podle počtu použití (post_count).
   Future<List<TagModel>> getPopularTags({int limit = 20}) async {
     final response = await _supabase
         .from('tags')
@@ -46,7 +53,9 @@ class TagService {
         .toList();
   }
 
-  /// Přidá tag k příspěvku (vytvoří tag pokud neexistuje)
+  /// Přidá tag k příspěvku
+  ///
+  /// Vytvoří tag pokud neexistuje (pomocí RPC funkce).
   Future<void> addTagToPost(String postId, String tagName) async {
     // Použij RPC funkci pro získání nebo vytvoření tagu
     final tagId = await _supabase.rpc(
@@ -70,7 +79,7 @@ class TagService {
         .eq('tag_id', tagId);
   }
 
-  /// Získá příspěvky s daným tagem
+  /// Získá ID příspěvků s daným tagem
   Future<List<String>> getPostIdsByTag(String tagId, {int limit = 50}) async {
     final response = await _supabase
         .from('post_tags')
@@ -83,7 +92,7 @@ class TagService {
         .toList();
   }
 
-  /// Získá tag podle slug
+  /// Získá tag podle slug (URL-friendly název)
   Future<TagModel?> getTagBySlug(String slug) async {
     final response = await _supabase
         .from('tags')

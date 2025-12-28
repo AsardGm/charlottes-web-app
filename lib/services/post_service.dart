@@ -1,9 +1,15 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/post_model.dart';
 
+/// Služba pro práci s příspěvky
+///
+/// Zajišťuje CRUD operace pro příspěvky včetně filtrování,
+/// řazení a správy stavu vláken.
 class PostService {
+  /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  /// SQL dotaz pro načtení příspěvku s relacemi
   static const String _selectQuery = '''
     *,
     profiles!posts_author_id_fkey(*),
@@ -13,11 +19,20 @@ class PostService {
     reactions(*)
   ''';
 
+  /// Načte seznam příspěvků s možností filtrování
+  ///
+  /// [limit] - počet příspěvků na stránku
+  /// [offset] - počet přeskočených příspěvků (pro stránkování)
+  /// [categoryId] - filtr podle kategorie
+  /// [threadTypeId] - filtr podle typu vlákna
+  /// [status] - filtr podle stavu (open, resolved, locked)
+  /// [hasDeadline] - pouze příspěvky s deadlinem
+  /// [isOverdue] - pouze příspěvky po deadlinu
+  /// [pinnedFirst] - připnuté příspěvky nahoře
   Future<List<PostModel>> getPosts({
     int limit = 20,
     int offset = 0,
     String? categoryId,
-    // Tyto parametry budou fungovat az po spusteni threads.sql:
     String? threadTypeId,
     String? status,
     bool? hasDeadline,
@@ -26,6 +41,7 @@ class PostService {
   }) async {
     var query = _supabase.from('posts').select(_selectQuery);
 
+    // Aplikace filtrů
     if (categoryId != null) {
       query = query.eq('category_id', categoryId);
     }
@@ -64,6 +80,9 @@ class PostService {
         .toList();
   }
 
+  /// Načte jeden příspěvek podle ID
+  ///
+  /// Automaticky inkrementuje počet zobrazení.
   Future<PostModel?> getPost(String id) async {
     final response = await _supabase
         .from('posts')
@@ -71,12 +90,13 @@ class PostService {
         .eq('id', id)
         .single();
 
-    // Inkrementovat view count
+    // Inkrementovat počet zobrazení
     await incrementViewCount(id);
 
     return PostModel.fromJson(response);
   }
 
+  /// Vytvoří nový příspěvek
   Future<PostModel> createPost({
     required String content,
     String? imageUrl,
@@ -105,6 +125,7 @@ class PostService {
     return PostModel.fromJson(response);
   }
 
+  /// Aktualizuje příspěvek
   Future<void> updatePost({
     required String id,
     required String content,
@@ -117,6 +138,7 @@ class PostService {
     }).eq('id', id);
   }
 
+  /// Smaže příspěvek
   Future<void> deletePost(String id) async {
     await _supabase.from('posts').delete().eq('id', id);
   }
@@ -140,7 +162,7 @@ class PostService {
     }).eq('id', postId);
   }
 
-  /// Zamkne příspěvek
+  /// Zamkne příspěvek (pouze admin)
   Future<void> lockPost(String postId) async {
     await _supabase.from('posts').update({
       'status': 'locked',
@@ -165,11 +187,12 @@ class PostService {
     }).eq('id', postId);
   }
 
-  /// Inkrementuje počet zobrazení
+  /// Inkrementuje počet zobrazení příspěvku
   Future<void> incrementViewCount(String postId) async {
     await _supabase.rpc('increment_view_count', params: {'post_id': postId});
   }
 
+  /// Real-time stream příspěvků
   Stream<List<Map<String, dynamic>>> postsStream() {
     return _supabase
         .from('posts')

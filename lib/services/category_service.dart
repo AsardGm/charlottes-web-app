@@ -1,9 +1,16 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/category_model.dart';
 
+/// Služba pro práci s kategoriemi
+///
+/// Zajišťuje načítání kategorií pro filtrování příspěvků.
 class CategoryService {
+  /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  /// Získá seznam aktivních kategorií
+  ///
+  /// Seřazeno podle sort_order.
   Future<List<CategoryModel>> getCategories() async {
     final response = await _supabase
         .from('categories')
@@ -16,6 +23,7 @@ class CategoryService {
         .toList();
   }
 
+  /// Získá kategorii podle slug
   Future<CategoryModel?> getCategoryBySlug(String slug) async {
     final response = await _supabase
         .from('categories')
@@ -27,6 +35,7 @@ class CategoryService {
     return CategoryModel.fromJson(response);
   }
 
+  /// Získá kategorii podle ID
   Future<CategoryModel?> getCategoryById(String id) async {
     final response = await _supabase
         .from('categories')

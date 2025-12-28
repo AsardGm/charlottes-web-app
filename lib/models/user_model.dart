@@ -1,17 +1,47 @@
+/// Model uživatele
+///
+/// Reprezentuje uživatele v aplikaci včetně profilových informací
+/// a statistik sledování.
 class UserModel {
+  /// Unikátní ID uživatele (UUID)
   final String id;
+
+  /// Uživatelské jméno
   final String username;
+
+  /// E-mailová adresa
   final String? email;
+
+  /// URL profilového obrázku
   final String? avatarUrl;
+
+  /// Role uživatele: 'admin' nebo 'member'
   final String role;
+
+  /// Je uživatel zablokován?
   final bool isBlocked;
+
+  /// Datum registrace
   final DateTime createdAt;
-  // Extended profile fields
+
+  // === Rozšířené profilové údaje ===
+
+  /// Krátký popis / bio
   final String? bio;
+
+  /// Webová stránka
   final String? website;
+
+  /// Lokalita / město
   final String? location;
+
+  /// Počet sledujících
   final int followerCount;
+
+  /// Počet sledovaných
   final int followingCount;
+
+  /// Počet příspěvků
   final int postCount;
 
   UserModel({
@@ -30,9 +60,13 @@ class UserModel {
     this.postCount = 0,
   });
 
+  /// Je uživatel admin?
   bool get isAdmin => role == 'admin';
+
+  /// Je uživatel běžný člen?
   bool get isMember => role == 'member';
 
+  /// Vytvoří model z JSON dat (z Supabase)
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id'] as String,
@@ -51,6 +85,7 @@ class UserModel {
     );
   }
 
+  /// Převede model na JSON pro uložení
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -69,6 +104,7 @@ class UserModel {
     };
   }
 
+  /// Vytvoří kopii s upravenými hodnotami
   UserModel copyWith({
     String? id,
     String? username,
