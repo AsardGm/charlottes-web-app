@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../app.dart';
+import '../../theme/theme.dart';
 import '../../providers/search_provider.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/post_card.dart';

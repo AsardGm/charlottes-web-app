@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import '../../app.dart';
+import '../../theme/theme.dart';
 import '../../models/conversation_model.dart';
 import '../../providers/chat_provider.dart';
 

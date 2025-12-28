@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../app.dart';
+import '../../theme/theme.dart';
 import '../../models/category_model.dart';
 import '../../models/thread_type_model.dart';
 import '../../providers/posts_provider.dart';

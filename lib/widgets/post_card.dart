@@ -5,7 +5,7 @@ import '../models/post_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/posts_provider.dart';
 import '../utils/helpers.dart';
-import '../app.dart';
+import '../theme/theme.dart';
 import 'user_avatar.dart';
 
 class PostCard extends ConsumerStatefulWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../app.dart';
+import '../../theme/theme.dart';
 import '../../providers/posts_provider.dart';
 import '../../providers/thread_type_provider.dart';
 import '../../models/thread_type_model.dart';
