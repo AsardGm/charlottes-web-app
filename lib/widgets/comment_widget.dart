@@ -1,0 +1,115 @@
+import 'package:flutter/material.dart';
+import '../models/comment_model.dart';
+import '../utils/helpers.dart';
+import 'user_avatar.dart';
+
+class CommentWidget extends StatelessWidget {
+  final CommentModel comment;
+  final bool canDelete;
+  final VoidCallback? onDelete;
+
+  const CommentWidget({
+    super.key,
+    required this.comment,
+    this.canDelete = false,
+    this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          UserAvatar(
+            imageUrl: comment.author?.avatarUrl,
+            name: comment.author?.username ?? 'Uzivatel',
+            size: 32,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withAlpha(25),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            comment.author?.username ?? 'Uzivatel',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          if (comment.author?.isAdmin ?? false) ...[
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.blue,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'Admin',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        comment.content,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      Helpers.formatTimeAgo(comment.createdAt),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    if (canDelete) ...[
+                      const SizedBox(width: 12),
+                      GestureDetector(
+                        onTap: onDelete,
+                        child: Text(
+                          'Smazat',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.red[400],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
