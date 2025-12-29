@@ -218,8 +218,8 @@ class MessageModel {
       editedAt: json['edited_at'] != null
           ? DateTime.parse(json['edited_at'] as String)
           : null,
-      sender: json['profiles'] != null
-          ? UserModel.fromJson(json['profiles'] as Map<String, dynamic>)
+      sender: (json['sender'] ?? json['profiles']) != null
+          ? UserModel.fromJson((json['sender'] ?? json['profiles']) as Map<String, dynamic>)
           : null,
       reactions: (json['message_reactions'] as List<dynamic>?)
               ?.map((r) => MessageReaction.fromJson(r as Map<String, dynamic>))

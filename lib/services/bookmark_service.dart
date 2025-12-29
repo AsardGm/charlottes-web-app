@@ -26,7 +26,7 @@ class BookmarkService {
           *,
           posts(
             *,
-            profiles(*),
+            profiles!posts_author_id_fkey(*),
             thread_types(*),
             categories(*)
           )

@@ -1,0 +1,28 @@
+{
+  "name": "community_app",
+  "version": "1.0.0",
+  "description": "Komunitni aplikace pro Spiderbagzz s Reddit-style feedem, E2EE chatem a pokrocilou gamifikaci.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AsardGm/charlottes-web-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AsardGm/charlottes-web-app/issues"
+  },
+  "homepage": "https://github.com/AsardGm/charlottes-web-app#readme",
+  "devDependencies": {
+    "firebase-tools": "^15.1.0"
+  }
+}

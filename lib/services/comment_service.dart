@@ -14,7 +14,7 @@ class CommentService {
   Future<List<CommentModel>> getComments(String postId) async {
     final response = await _supabase
         .from('comments')
-        .select('*, profiles(*)')
+        .select('*, profiles!comments_author_id_fkey(*)')
         .eq('post_id', postId)
         .order('created_at', ascending: true);
 
@@ -38,7 +38,7 @@ class CommentService {
           'content': content,
           'created_at': DateTime.now().toIso8601String(),
         })
-        .select('*, profiles(*)')
+        .select('*, profiles!comments_author_id_fkey(*)')
         .single();
 
     return CommentModel.fromJson(response);

@@ -15,7 +15,7 @@ class PostService {
     profiles!posts_author_id_fkey(*),
     categories(*),
     thread_types(*),
-    comments(*, profiles(*)),
+    comments(*, profiles!comments_author_id_fkey(*)),
     reactions(*)
   ''';
 
@@ -94,6 +94,20 @@ class PostService {
     await incrementViewCount(id);
 
     return PostModel.fromJson(response);
+  }
+
+  /// Načte příspěvky konkrétního uživatele
+  Future<List<PostModel>> getPostsByUser(String oderId, {int limit = 50}) async {
+    final response = await _supabase
+        .from('posts')
+        .select(_selectQuery)
+        .eq('author_id', oderId)
+        .order('created_at', ascending: false)
+        .limit(limit);
+
+    return (response as List)
+        .map((json) => PostModel.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 
   /// Vytvoří nový příspěvek

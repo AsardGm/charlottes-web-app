@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../feed/feed_screen.dart';
 import '../chat/conversations_screen.dart';
 import '../profile/profile_screen.dart';
+import '../../widgets/home/home_app_bar.dart';
+import '../../widgets/home/home_bottom_nav.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,62 +21,24 @@ class _HomeScreenState extends State<HomeScreen> {
     ProfileScreen(),
   ];
 
-  String _getTitle() {
-    switch (_currentIndex) {
-      case 0:
-        return 'Zed';
-      case 1:
-        return 'Zpravy';
-      case 2:
-        return 'Profil';
-      default:
-        return '';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Profil ma vlastni AppBar
+    final showAppBar = _currentIndex != 2;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_getTitle()),
-        centerTitle: true,
-      ),
+      appBar: showAppBar
+          ? HomeAppBar(currentIndex: _currentIndex)
+          : null,
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(
-              color: Colors.white.withAlpha(10),
-              width: 1,
-            ),
-          ),
-        ),
-        child: NavigationBar(
-          selectedIndex: _currentIndex,
-          onDestinationSelected: (index) {
-            setState(() => _currentIndex = index);
-          },
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Zed',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.chat_bubble_outline),
-              selectedIcon: Icon(Icons.chat_bubble),
-              label: 'Zpravy',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person),
-              label: 'Profil',
-            ),
-          ],
-        ),
+      bottomNavigationBar: HomeBottomNav(
+        currentIndex: _currentIndex,
+        onDestinationSelected: (index) {
+          setState(() => _currentIndex = index);
+        },
       ),
     );
   }

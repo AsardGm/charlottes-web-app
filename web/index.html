@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="cs">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,21 +18,201 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <!-- iOS meta tags & icons -->
+  <!-- SEO -->
+  <title>Charlotte's Web</title>
+  <meta name="description" content="Charlotte's Web - komunitni aplikace s feedem, chatem a gamifikaci">
+  <meta name="keywords" content="charlottes web, komunita, chat, feed, gamifikace">
+  <meta name="author" content="Charlotte's Web">
+
+  <!-- Theme colors -->
+  <meta name="theme-color" content="#C41E24">
+  <meta name="msapplication-navbutton-color" content="#C41E24">
+  <meta name="msapplication-TileColor" content="#0D1B2A">
+
+  <!-- iOS PWA meta tags -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="community_app">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Charlotte's Web">
+
+  <!-- iOS icons -->
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/Icon-192.png">
+
+  <!-- iOS splash screens -->
+  <link rel="apple-touch-startup-image" href="splash/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="splash/splash-1242x2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="splash/splash-828x1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
 
-  <title>community_app</title>
+  <!-- Manifest -->
   <link rel="manifest" href="manifest.json">
+
+  <!-- Preconnect to Supabase -->
+  <link rel="preconnect" href="https://supabase.co">
+  <link rel="dns-prefetch" href="https://supabase.co">
+
+  <!-- Firebase SDK pro push notifikace -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCp2it9pVTSSvUVqK9m70hxJ0Q_7qKz-8A",
+      authDomain: "spiderbagzz.firebaseapp.com",
+      projectId: "spiderbagzz",
+      storageBucket: "spiderbagzz.firebasestorage.app",
+      messagingSenderId: "700570202812",
+      appId: "1:700570202812:web:71e6b3df01815714f996b9"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const messaging = getMessaging(app);
+
+    // Register FCM service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then((registration) => {
+          console.log('[FCM] Service Worker registered:', registration.scope);
+        })
+        .catch((error) => {
+          console.error('[FCM] Service Worker registration failed:', error);
+        });
+    }
+
+    // Expose functions to Dart
+    window.requestNotificationPermission = async function() {
+      try {
+        const permission = await Notification.requestPermission();
+        return permission;
+      } catch (e) {
+        console.error('[FCM] Permission error:', e);
+        return 'denied';
+      }
+    };
+
+    window.getFCMToken = async function(vapidKey) {
+      try {
+        const token = await getToken(messaging, { vapidKey: vapidKey });
+        console.log('[FCM] Token:', token);
+        return token;
+      } catch (e) {
+        console.error('[FCM] Token error:', e);
+        return null;
+      }
+    };
+
+    window.getNotificationPermission = function() {
+      return Notification.permission;
+    };
+
+    // Handle foreground messages
+    onMessage(messaging, (payload) => {
+      console.log('[FCM] Foreground message:', payload);
+
+      // Show notification manually for foreground
+      if (Notification.permission === 'granted') {
+        new Notification(payload.notification?.title || 'SpiderBagzz', {
+          body: payload.notification?.body || '',
+          icon: '/icons/Icon-192.png',
+          badge: '/icons/Icon-192.png',
+          tag: payload.data?.tag || 'foreground',
+          data: payload.data
+        });
+      }
+
+      // Dispatch custom event for Flutter to catch
+      window.dispatchEvent(new CustomEvent('fcm-message', { detail: payload }));
+    });
+  </script>
+
+  <!-- Custom styles for loading -->
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #0D1B2A;
+      overflow: hidden;
+    }
+
+    /* Loading screen */
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(180deg, #0D1B2A 0%, #1C3148 50%, #0D1B2A 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    #loading img {
+      width: 150px;
+      height: 150px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    #loading .spinner {
+      margin-top: 30px;
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(196, 30, 36, 0.3);
+      border-top-color: #C41E24;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    #loading .text {
+      margin-top: 20px;
+      color: #F5F0E6;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 14px;
+      opacity: 0.7;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
+  <!-- Loading screen -->
+  <div id="loading">
+    <img src="icons/Icon-512.png" alt="SpiderBagzz">
+    <div class="spinner"></div>
+    <div class="text">Nacitam...</div>
+  </div>
+
+  <script>
+    // Remove loading screen when Flutter is ready
+    window.addEventListener('flutter-first-frame', function() {
+      const loader = document.getElementById('loading');
+      if (loader) {
+        loader.style.transition = 'opacity 0.3s';
+        loader.style.opacity = '0';
+        setTimeout(() => loader.remove(), 300);
+      }
+    });
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

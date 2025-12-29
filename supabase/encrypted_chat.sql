@@ -184,22 +184,26 @@ CREATE POLICY "Admins can update conversations" ON public.conversations
 -- Conversation participants
 ALTER TABLE public.conversation_participants ENABLE ROW LEVEL SECURITY;
 
+-- Helper funkce pro získání konverzací uživatele (obchází RLS rekurzi)
+CREATE OR REPLACE FUNCTION get_user_conversation_ids(uid UUID)
+RETURNS SETOF UUID AS $$
+    SELECT conversation_id FROM public.conversation_participants WHERE user_id = uid;
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
 DROP POLICY IF EXISTS "Participants can view conversation members" ON public.conversation_participants;
 CREATE POLICY "Participants can view conversation members" ON public.conversation_participants
     FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.conversation_participants cp
-            WHERE cp.conversation_id = conversation_id AND cp.user_id = auth.uid()
-        )
+        user_id = auth.uid() OR
+        conversation_id IN (SELECT get_user_conversation_ids(auth.uid()))
     );
 
 DROP POLICY IF EXISTS "Users can join conversations" ON public.conversation_participants;
 CREATE POLICY "Users can join conversations" ON public.conversation_participants
-    FOR INSERT WITH CHECK (user_id = auth.uid() OR
-        EXISTS (
-            SELECT 1 FROM public.conversation_participants
-            WHERE conversation_id = conversation_participants.conversation_id
-            AND user_id = auth.uid() AND role = 'admin'
+    FOR INSERT WITH CHECK (
+        user_id = auth.uid() OR
+        conversation_id IN (
+            SELECT cp.conversation_id FROM public.conversation_participants cp
+            WHERE cp.user_id = auth.uid() AND cp.role = 'admin'
         )
     );
 
@@ -323,11 +327,91 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- =====================================================
+-- TYPING INDICATORS
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.typing_indicators (
+    conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    is_typing BOOLEAN DEFAULT false,
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (conversation_id, user_id)
+);
+
+ALTER TABLE public.typing_indicators ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Participants can view typing" ON public.typing_indicators;
+CREATE POLICY "Participants can view typing" ON public.typing_indicators
+    FOR SELECT USING (
+        conversation_id IN (SELECT get_user_conversation_ids(auth.uid()))
+    );
+
+DROP POLICY IF EXISTS "Users can update own typing" ON public.typing_indicators;
+CREATE POLICY "Users can update own typing" ON public.typing_indicators
+    FOR ALL USING (user_id = auth.uid());
+
+-- Index pro rychlé dotazy
+CREATE INDEX IF NOT EXISTS idx_typing_indicators_conversation ON public.typing_indicators(conversation_id);
+
 -- Realtime subscription pro zprávy
-ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.message_receipts;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.message_reactions;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.conversation_participants;
+-- Přidáme tabulky do realtime publikace pouze pokud tam ještě nejsou
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime' AND tablename = 'messages'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime' AND tablename = 'message_receipts'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.message_receipts;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime' AND tablename = 'message_reactions'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.message_reactions;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime' AND tablename = 'conversation_participants'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.conversation_participants;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime' AND tablename = 'typing_indicators'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.typing_indicators;
+    END IF;
+END $$;
+
+-- =====================================================
+-- STORAGE BUCKET PRO CHAT OBRAZKY
+-- =====================================================
+-- Tento SQL je pouze pro dokumentaci - bucket se musí vytvořit v Supabase Dashboard:
+-- 1. Jdi do Storage
+-- 2. Klikni "New bucket"
+-- 3. Název: chat-images
+-- 4. Public bucket: ANO (pro snadné zobrazení obrázků)
+-- 5. Přidej RLS politiky:
+
+-- Politika pro upload (jen přihlášení uživatelé):
+-- CREATE POLICY "Allow authenticated uploads"
+-- ON storage.objects FOR INSERT
+-- WITH CHECK (bucket_id = 'chat-images' AND auth.role() = 'authenticated');
+
+-- Politika pro čtení (veřejné):
+-- CREATE POLICY "Allow public reads"
+-- ON storage.objects FOR SELECT
+-- USING (bucket_id = 'chat-images');
 
 -- =====================================================
 -- VERIFICATION

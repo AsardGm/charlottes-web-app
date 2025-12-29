@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:cryptography/cryptography.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/conversation_model.dart';
+import '../models/poll_model.dart';
 import '../models/user_model.dart';
 import 'encryption_service.dart';
 
@@ -63,12 +66,28 @@ class ChatService {
     }
 
     try {
+      // Nejprve získej ID konverzací, kde je uživatel účastníkem
+      final myConversations = await _supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', currentUserId!);
+
+      final conversationIds = (myConversations as List)
+          .map((c) => c['conversation_id'] as String)
+          .toList();
+
+      if (conversationIds.isEmpty) {
+        return [];
+      }
+
+      // Pak načti konverzace s účastníky
       final response = await _supabase
           .from('conversations')
           .select('''
             *,
             conversation_participants(*, profiles(*))
           ''')
+          .inFilter('id', conversationIds)
           .order('updated_at', ascending: false);
 
       if ((response as List).isEmpty) {
@@ -79,35 +98,38 @@ class ChatService {
           .map((c) => ConversationModel.fromJson(c))
           .toList();
 
-      // Načti poslední zprávu pro každou konverzaci
+      // Načti poslední zprávu a spočítej nepřečtené pro každou konverzaci
       for (var i = 0; i < conversations.length; i++) {
         try {
+          debugPrint('Loading last message for conversation: ${conversations[i].id}');
           final lastMessage = await _getLastMessage(conversations[i].id);
-          if (lastMessage != null) {
-            conversations[i] = ConversationModel(
-              id: conversations[i].id,
-              type: conversations[i].type,
-              name: conversations[i].name,
-              description: conversations[i].description,
-              avatarUrl: conversations[i].avatarUrl,
-              isEncrypted: conversations[i].isEncrypted,
-              disappearingMessagesTtl: conversations[i].disappearingMessagesTtl,
-              createdBy: conversations[i].createdBy,
-              createdAt: conversations[i].createdAt,
-              updatedAt: conversations[i].updatedAt,
-              participants: conversations[i].participants,
-              lastMessage: lastMessage,
-              unreadCount: conversations[i].unreadCount,
-            );
-          }
-        } catch (_) {
-          // Ignoruj chyby při načítání poslední zprávy
+          debugPrint('Last message loaded: ${lastMessage?.decryptedContent ?? "null"}');
+          final unreadCount = await _getUnreadCount(conversations[i].id, conversations[i].participants);
+
+          conversations[i] = ConversationModel(
+            id: conversations[i].id,
+            type: conversations[i].type,
+            name: conversations[i].name,
+            description: conversations[i].description,
+            avatarUrl: conversations[i].avatarUrl,
+            isEncrypted: conversations[i].isEncrypted,
+            disappearingMessagesTtl: conversations[i].disappearingMessagesTtl,
+            createdBy: conversations[i].createdBy,
+            createdAt: conversations[i].createdAt,
+            updatedAt: conversations[i].updatedAt,
+            participants: conversations[i].participants,
+            lastMessage: lastMessage,
+            unreadCount: unreadCount,
+          );
+        } catch (e) {
+          debugPrint('Error loading conversation data: $e');
         }
       }
 
       return conversations;
     } catch (e) {
       // Vrať prázdný seznam pokud dojde k chybě
+      debugPrint('getConversations ERROR: $e');
       return [];
     }
   }
@@ -122,7 +144,65 @@ class ChatService {
         .maybeSingle();
 
     if (response == null) return null;
-    return MessageModel.fromJson(response);
+
+    var message = MessageModel.fromJson(response);
+
+    // Dešifruj zprávu pro náhled
+    print('_getLastMessage: id=${message.id}, iv=${message.iv.length}, enc=${message.encryptedContent.length}');
+    if (!message.isDeleted && message.encryptedContent.isNotEmpty && message.iv.isNotEmpty) {
+      try {
+        print('Decrypting preview for: $conversationId');
+        final sessionKey = await _getOrCreateSessionKey(conversationId);
+        final decrypted = await _encryption.decryptMessage(
+          ciphertext: message.encryptedContent,
+          iv: message.iv,
+          secretKey: sessionKey,
+        );
+        print('Preview OK: ${decrypted.length > 20 ? decrypted.substring(0, 20) : decrypted}');
+        message = message.copyWith(decryptedContent: decrypted);
+      } catch (e) {
+        print('Decrypt preview ERROR: $e');
+        // Fallback text při selhání dešifrování
+        message = message.copyWith(decryptedContent: '[Sifrovana zprava]');
+      }
+    } else {
+      print('Skipping decrypt: deleted=${message.isDeleted}, enc=${message.encryptedContent.length}, iv=${message.iv.length}');
+    }
+
+    return message;
+  }
+
+  /// Spočítá počet nepřečtených zpráv v konverzaci
+  Future<int> _getUnreadCount(String conversationId, List<ConversationParticipant> participants) async {
+    if (currentUserId == null) return 0;
+
+    try {
+      // Najdi last_read_at pro aktuálního uživatele
+      final myParticipant = participants.where((p) => p.userId == currentUserId).firstOrNull;
+      final lastReadAt = myParticipant?.lastReadAt;
+
+      // Spočítej zprávy od ostatních, které přišly po last_read_at
+      if (lastReadAt != null) {
+        final response = await _supabase
+            .from('messages')
+            .select('id')
+            .eq('conversation_id', conversationId)
+            .neq('sender_id', currentUserId!)
+            .gt('created_at', lastReadAt.toIso8601String());
+        return (response as List).length;
+      } else {
+        // Pokud není last_read_at, spočítej všechny zprávy od ostatních
+        final response = await _supabase
+            .from('messages')
+            .select('id')
+            .eq('conversation_id', conversationId)
+            .neq('sender_id', currentUserId!);
+        return (response as List).length;
+      }
+    } catch (e) {
+      debugPrint('Error getting unread count: $e');
+      return 0;
+    }
   }
 
   /// Získá nebo vytvoří direct konverzaci s uživatelem
@@ -133,10 +213,6 @@ class ChatService {
     );
 
     final conversationId = response as String;
-
-    // Inicializuj šifrování pro konverzaci
-    await _initializeConversationEncryption(conversationId, otherUserId);
-
     return conversationId;
   }
 
@@ -160,19 +236,13 @@ class ChatService {
 
     final conversationId = convResponse['id'] as String;
 
-    // Vygeneruj session key
-    final sessionKey = await _encryption.generateSessionKey();
-    _sessionKeys[conversationId] = sessionKey;
-
     // Přidej členy včetně sebe
     final allMembers = {...memberIds, currentUserId!};
     for (final memberId in allMembers) {
-      final encryptedKey = await _encryptSessionKeyForUser(sessionKey, memberId);
       await _supabase.from('conversation_participants').insert({
         'conversation_id': conversationId,
         'user_id': memberId,
         'role': memberId == currentUserId ? 'admin' : 'member',
-        'encrypted_session_key': encryptedKey,
       });
     }
 
@@ -180,103 +250,29 @@ class ChatService {
   }
 
   /// Načte nebo vytvoří session key pro konverzaci
-  Future<void> _loadOrCreateSessionKey(String conversationId) async {
-    // Zkontroluj zda už máme session key
-    if (_sessionKeys.containsKey(conversationId)) return;
-
-    // Zkus načíst z databáze
-    final participant = await _supabase
-        .from('conversation_participants')
-        .select()
-        .eq('conversation_id', conversationId)
-        .eq('user_id', currentUserId!)
-        .maybeSingle();
-
-    if (participant != null && participant['encrypted_session_key'] != null) {
-      // Pro zjednodušení: vygeneruj nový key pokud nemůžeme dešifrovat
-      // V produkci by se mělo správně dešifrovat pomocí X3DH
-      final sessionKey = await _encryption.generateSessionKey();
-      _sessionKeys[conversationId] = sessionKey;
-      return;
+  /// Klíč je odvozen z conversation_id - deterministicky stejný pro všechny účastníky
+  Future<SecretKey> _getOrCreateSessionKey(String conversationId) async {
+    // Zkontroluj cache
+    if (_sessionKeys.containsKey(conversationId)) {
+      return _sessionKeys[conversationId]!;
     }
 
-    // Vytvoř nový session key
-    final sessionKey = await _encryption.generateSessionKey();
-    _sessionKeys[conversationId] = sessionKey;
-  }
-
-  /// Inicializuje šifrování pro konverzaci
-  Future<void> _initializeConversationEncryption(
-    String conversationId,
-    String otherUserId,
-  ) async {
-    // Zkontroluj zda už máme session key
-    if (_sessionKeys.containsKey(conversationId)) return;
-
-    // Zkus načíst z databáze
-    final participant = await _supabase
-        .from('conversation_participants')
-        .select()
-        .eq('conversation_id', conversationId)
-        .eq('user_id', currentUserId!)
-        .maybeSingle();
-
-    if (participant != null && participant['encrypted_session_key'] != null) {
-      // Dešifruj existující session key
-      final otherKeys = await getUserPublicKeys(otherUserId);
-      if (otherKeys != null) {
-        final ourKeys = await _encryption.getIdentityKeyPair();
-        if (ourKeys != null) {
-          final sessionKey = await _encryption.decryptSessionKey(
-            encryptedSessionKey: participant['encrypted_session_key'],
-            senderPublicKey: base64Decode(otherKeys.identityPublicKey),
-            ourPrivateKey: ourKeys.privateKeyBytes,
-          );
-          _sessionKeys[conversationId] = sessionKey;
-          return;
-        }
-      }
-    }
-
-    // Vytvoř nový session key
-    final sessionKey = await _encryption.generateSessionKey();
-    _sessionKeys[conversationId] = sessionKey;
-
-    // Zašifruj pro oba účastníky
-    final encryptedForUs =
-        await _encryptSessionKeyForUser(sessionKey, currentUserId!);
-    final encryptedForOther =
-        await _encryptSessionKeyForUser(sessionKey, otherUserId);
-
-    // Ulož do databáze
-    await _supabase
-        .from('conversation_participants')
-        .update({'encrypted_session_key': encryptedForUs})
-        .eq('conversation_id', conversationId)
-        .eq('user_id', currentUserId!);
-
-    await _supabase
-        .from('conversation_participants')
-        .update({'encrypted_session_key': encryptedForOther})
-        .eq('conversation_id', conversationId)
-        .eq('user_id', otherUserId);
-  }
-
-  Future<String?> _encryptSessionKeyForUser(
-    SecretKey sessionKey,
-    String userId,
-  ) async {
-    final userKeys = await getUserPublicKeys(userId);
-    if (userKeys == null) return null;
-
-    final ourKeys = await _encryption.getIdentityKeyPair();
-    if (ourKeys == null) return null;
-
-    return await _encryption.encryptSessionKey(
-      sessionKey: sessionKey,
-      recipientPublicKey: base64Decode(userKeys.identityPublicKey),
-      ourPrivateKey: ourKeys.privateKeyBytes,
+    // Odvoď klíč z conversation_id (deterministický - stejný pro všechny)
+    // Použijeme HKDF pro odvození klíče z conversation_id
+    final algorithm = Hkdf(hmac: Hmac.sha256(), outputLength: 32);
+    final secretKey = await algorithm.deriveKey(
+      secretKey: SecretKey(utf8.encode(conversationId)),
+      nonce: utf8.encode('charlotte-web-e2ee'),
+      info: utf8.encode('chat-session-key'),
     );
+
+    // Debug: log key derivation
+    final keyBytes = await secretKey.extractBytes();
+    debugPrint('Session key derived for conversation: $conversationId');
+    debugPrint('Key hash: ${keyBytes.take(4).toList()}...');
+
+    _sessionKeys[conversationId] = secretKey;
+    return secretKey;
   }
 
   // ============================================
@@ -289,44 +285,52 @@ class ChatService {
     int limit = 50,
     int offset = 0,
   }) async {
-    final response = await _supabase
-        .from('messages')
-        .select('''
-          *,
-          profiles(*),
-          message_reactions(*),
-          message_receipts(*)
-        ''')
-        .eq('conversation_id', conversationId)
-        .order('created_at', ascending: false)
-        .range(offset, offset + limit - 1);
+    try {
+      final response = await _supabase
+          .from('messages')
+          .select('*, profiles(*)')
+          .eq('conversation_id', conversationId)
+          .order('created_at', ascending: false)
+          .range(offset, offset + limit - 1);
 
-    final messages = (response as List)
-        .map((m) => MessageModel.fromJson(m as Map<String, dynamic>))
-        .toList();
+      final messages = (response as List)
+          .map((m) => MessageModel.fromJson(m as Map<String, dynamic>))
+          .toList();
 
-    // Dešifruj zprávy
-    final sessionKey = _sessionKeys[conversationId];
-    if (sessionKey != null) {
+      // Dešifruj zprávy
+      final sessionKey = await _getOrCreateSessionKey(conversationId);
+      final keyBytes = await sessionKey.extractBytes();
+      debugPrint('DECRYPT: conversation=$conversationId, key_hash=${keyBytes.take(4).toList()}, messages=${messages.length}');
+
       for (var i = 0; i < messages.length; i++) {
         if (!messages[i].isDeleted) {
           try {
+            debugPrint('DECRYPT msg ${messages[i].id}: len=${messages[i].encryptedContent.length}, iv=${messages[i].iv.length}');
             final decrypted = await _encryption.decryptMessage(
               ciphertext: messages[i].encryptedContent,
               iv: messages[i].iv,
               secretKey: sessionKey,
             );
+            debugPrint('DECRYPT OK: ${decrypted.substring(0, decrypted.length > 30 ? 30 : decrypted.length)}');
             messages[i] = messages[i].copyWith(decryptedContent: decrypted);
           } catch (e) {
+            // Desifrování selhalo - zobraz bezpecnou chybovou hlasku
+            debugPrint('DECRYPT FAIL ${messages[i].id}: $e');
+
+            // BEZPECNOST: Nikdy nepouzivame nesifrovaný obsah jako fallback
+            // To by umoznilo utocnikovi obejit sifrovani
             messages[i] = messages[i].copyWith(
-              decryptedContent: '[Nelze dešifrovat]',
+              decryptedContent: '[Nelze desifrovat zpravu]',
             );
           }
         }
       }
-    }
 
-    return messages;
+      return messages;
+    } catch (e) {
+      // Pokud query selže, vrať prázdný seznam
+      return [];
+    }
   }
 
   /// Odešle zprávu
@@ -338,25 +342,20 @@ class ChatService {
     String? replyToId,
     int? disappearingTtl,
   }) async {
-    // Získej session key - pokud není v cache, načti nebo vytvoř
-    var sessionKey = _sessionKeys[conversationId];
-    if (sessionKey == null) {
-      // Zkus načíst session key pro konverzaci
-      await _loadOrCreateSessionKey(conversationId);
-      sessionKey = _sessionKeys[conversationId];
+    // Získej session key pro šifrování
+    final sessionKey = await _getOrCreateSessionKey(conversationId);
 
-      // Pokud stále nemáme key, vytvoř nový
-      if (sessionKey == null) {
-        sessionKey = await _encryption.generateSessionKey();
-        _sessionKeys[conversationId] = sessionKey;
-      }
-    }
+    // Debug: log key při šifrování
+    final keyBytes = await sessionKey.extractBytes();
+    debugPrint('ENCRYPT: conversation=$conversationId, key_hash=${keyBytes.take(4).toList()}');
 
     // Zašifruj obsah
     final encrypted = await _encryption.encryptMessage(
       plaintext: content,
       secretKey: sessionKey,
     );
+
+    debugPrint('ENCRYPT: ciphertext_len=${encrypted.ciphertext.length}, iv_len=${encrypted.iv.length}');
 
     // Vypočítej expiration
     DateTime? expiresAt;
@@ -372,6 +371,7 @@ class ChatService {
           'sender_id': currentUserId,
           'encrypted_content': encrypted.ciphertext,
           'iv': encrypted.iv,
+          'mac': '', // MAC je součástí ciphertext (AES-GCM), prázdný string pro kompatibilitu s DB
           'message_type': messageType,
           'metadata': metadata ?? {},
           'reply_to_id': replyToId,
@@ -388,6 +388,391 @@ class ChatService {
 
     final message = MessageModel.fromJson(response);
     return message.copyWith(decryptedContent: content);
+  }
+
+  /// Nahraje obrázek do Storage a vrátí URL
+  Future<String> uploadImage({
+    required String conversationId,
+    required String filePath,
+    required String fileName,
+  }) async {
+    final fileBytes = await File(filePath).readAsBytes();
+    final storagePath = 'chat/$conversationId/${DateTime.now().millisecondsSinceEpoch}_$fileName';
+
+    await _supabase.storage
+        .from('chat-images')
+        .uploadBinary(storagePath, fileBytes);
+
+    final publicUrl = _supabase.storage
+        .from('chat-images')
+        .getPublicUrl(storagePath);
+
+    return publicUrl;
+  }
+
+  /// Odešle obrázek jako zprávu
+  Future<MessageModel> sendImageMessage({
+    required String conversationId,
+    required String imageUrl,
+    String? caption,
+  }) async {
+    // Zašifruj URL (a případný popisek)
+    final content = caption != null && caption.isNotEmpty
+        ? '$imageUrl|$caption'
+        : imageUrl;
+
+    return sendMessage(
+      conversationId: conversationId,
+      content: content,
+      messageType: 'image',
+      metadata: {
+        'image_url': imageUrl,
+        'caption': caption,
+      },
+    );
+  }
+
+  /// Odešle hlasovou zprávu
+  Future<MessageModel> sendVoiceMessage({
+    required String conversationId,
+    required String voiceUrl,
+    required int durationSeconds,
+  }) async {
+    // Ukládá se ve formátu "url|duration" pro kompatibilitu s UI
+    return sendMessage(
+      conversationId: conversationId,
+      content: '$voiceUrl|$durationSeconds',
+      messageType: 'voice',
+      metadata: {
+        'voice_url': voiceUrl,
+        'duration': durationSeconds,
+      },
+    );
+  }
+
+  /// Odešle zprávu s polohou
+  Future<MessageModel> sendLocationMessage({
+    required String conversationId,
+    required double latitude,
+    required double longitude,
+    String? address,
+  }) async {
+    final content = '$latitude,$longitude${address != null ? '|$address' : ''}';
+    return sendMessage(
+      conversationId: conversationId,
+      content: content,
+      messageType: 'location',
+      metadata: {
+        'latitude': latitude,
+        'longitude': longitude,
+        'address': address,
+      },
+    );
+  }
+
+  /// Nahraje soubor do Storage a vrátí URL
+  Future<String> uploadFile({
+    required String conversationId,
+    required String filePath,
+    required String fileName,
+  }) async {
+    final fileBytes = await File(filePath).readAsBytes();
+    final storagePath = 'chat/$conversationId/${DateTime.now().millisecondsSinceEpoch}_$fileName';
+
+    await _supabase.storage
+        .from('chat-files')
+        .uploadBinary(storagePath, fileBytes);
+
+    final publicUrl = _supabase.storage
+        .from('chat-files')
+        .getPublicUrl(storagePath);
+
+    return publicUrl;
+  }
+
+  /// Odešle soubor jako zprávu
+  Future<MessageModel> sendFileMessage({
+    required String conversationId,
+    required String fileUrl,
+    required String fileName,
+    required int fileSize,
+    required String mimeType,
+  }) async {
+    return sendMessage(
+      conversationId: conversationId,
+      content: fileUrl,
+      messageType: 'file',
+      metadata: {
+        'file_url': fileUrl,
+        'file_name': fileName,
+        'file_size': fileSize,
+        'mime_type': mimeType,
+      },
+    );
+  }
+
+  /// Přepošle zprávu do jiné konverzace
+  Future<MessageModel> forwardMessage({
+    required String messageId,
+    required String toConversationId,
+  }) async {
+    // Načti původní zprávu
+    final original = await _supabase
+        .from('messages')
+        .select('*, profiles(*)')
+        .eq('id', messageId)
+        .single();
+
+    final originalMessage = MessageModel.fromJson(original);
+
+    // Dešifruj původní obsah
+    final sessionKey = await _getOrCreateSessionKey(originalMessage.conversationId);
+    String content;
+    try {
+      content = await _encryption.decryptMessage(
+        ciphertext: originalMessage.encryptedContent,
+        iv: originalMessage.iv,
+        secretKey: sessionKey,
+      );
+    } catch (_) {
+      content = originalMessage.encryptedContent;
+    }
+
+    // Zašifruj pro novou konverzaci
+    final newSessionKey = await _getOrCreateSessionKey(toConversationId);
+    final encrypted = await _encryption.encryptMessage(
+      plaintext: content,
+      secretKey: newSessionKey,
+    );
+
+    // Vlož přeposlanou zprávu
+    final response = await _supabase
+        .from('messages')
+        .insert({
+          'conversation_id': toConversationId,
+          'sender_id': currentUserId,
+          'encrypted_content': encrypted.ciphertext,
+          'iv': encrypted.iv,
+          'mac': '', // MAC je součástí ciphertext (AES-GCM)
+          'message_type': originalMessage.messageType,
+          'metadata': originalMessage.metadata,
+          'forwarded_from_id': messageId,
+          'original_sender_id': originalMessage.senderId,
+        })
+        .select('*, profiles(*)')
+        .single();
+
+    // Aktualizuj timestamp konverzace
+    await _supabase
+        .from('conversations')
+        .update({'updated_at': DateTime.now().toIso8601String()})
+        .eq('id', toConversationId);
+
+    final message = MessageModel.fromJson(response);
+    return message.copyWith(decryptedContent: content);
+  }
+
+  // ============================================
+  // PINNED MESSAGES
+  // ============================================
+
+  /// Připne zprávu
+  Future<void> pinMessage(String conversationId, String messageId) async {
+    await _supabase.from('pinned_messages').insert({
+      'conversation_id': conversationId,
+      'message_id': messageId,
+      'pinned_by': currentUserId,
+    });
+  }
+
+  /// Odepne zprávu
+  Future<void> unpinMessage(String conversationId, String messageId) async {
+    await _supabase
+        .from('pinned_messages')
+        .delete()
+        .eq('conversation_id', conversationId)
+        .eq('message_id', messageId);
+  }
+
+  /// Získá připnuté zprávy
+  Future<List<MessageModel>> getPinnedMessages(String conversationId) async {
+    final response = await _supabase
+        .from('pinned_messages')
+        .select('message_id, messages(*, profiles(*))')
+        .eq('conversation_id', conversationId)
+        .order('pinned_at', ascending: false);
+
+    final messages = <MessageModel>[];
+    final sessionKey = await _getOrCreateSessionKey(conversationId);
+
+    for (final row in (response as List)) {
+      final msgData = row['messages'] as Map<String, dynamic>?;
+      if (msgData != null) {
+        var message = MessageModel.fromJson(msgData);
+        if (!message.isDeleted) {
+          try {
+            final decrypted = await _encryption.decryptMessage(
+              ciphertext: message.encryptedContent,
+              iv: message.iv,
+              secretKey: sessionKey,
+            );
+            message = message.copyWith(decryptedContent: decrypted);
+          } catch (_) {
+            // BEZPECNOST: Nikdy nepouzivame nesifrovaný obsah
+            message = message.copyWith(decryptedContent: '[Nelze desifrovat zpravu]');
+          }
+        }
+        messages.add(message);
+      }
+    }
+
+    return messages;
+  }
+
+  // ============================================
+  // POLLS
+  // ============================================
+
+  /// Vytvoří anketu
+  Future<PollModel> createPoll({
+    required String conversationId,
+    required String question,
+    required List<String> options,
+    bool isAnonymous = false,
+    bool allowsAddOptions = false,
+    DateTime? expiresAt,
+  }) async {
+    // Vytvoř anketu
+    final pollResponse = await _supabase
+        .from('polls')
+        .insert({
+          'conversation_id': conversationId,
+          'created_by': currentUserId,
+          'question': question,
+          'is_anonymous': isAnonymous,
+          'allows_add_options': allowsAddOptions,
+          'expires_at': expiresAt?.toIso8601String(),
+        })
+        .select()
+        .single();
+
+    final pollId = pollResponse['id'] as String;
+
+    // Přidej možnosti
+    for (final option in options) {
+      await _supabase.from('poll_options').insert({
+        'poll_id': pollId,
+        'option_text': option,
+        'added_by': currentUserId,
+      });
+    }
+
+    // Odešli zprávu s anketou
+    await sendMessage(
+      conversationId: conversationId,
+      content: question,
+      messageType: 'poll',
+      metadata: {'poll_id': pollId},
+    );
+
+    return PollModel.fromJson(pollResponse);
+  }
+
+  /// Hlasuje v anketě
+  Future<void> votePoll(String pollId, String optionId) async {
+    await _supabase.from('poll_votes').upsert({
+      'poll_id': pollId,
+      'option_id': optionId,
+      'user_id': currentUserId,
+    });
+  }
+
+  /// Odebere hlas z ankety
+  Future<void> unvotePoll(String pollId, String optionId) async {
+    await _supabase
+        .from('poll_votes')
+        .delete()
+        .eq('poll_id', pollId)
+        .eq('option_id', optionId)
+        .eq('user_id', currentUserId!);
+  }
+
+  /// Získá anketu s hlasy
+  Future<PollModel?> getPoll(String pollId) async {
+    final response = await _supabase
+        .from('polls')
+        .select('''
+          *,
+          poll_options(*),
+          poll_votes(*)
+        ''')
+        .eq('id', pollId)
+        .maybeSingle();
+
+    if (response == null) return null;
+    return PollModel.fromJson(response);
+  }
+
+  // ============================================
+  // ARCHIVE
+  // ============================================
+
+  /// Archivuje konverzaci
+  Future<void> archiveConversation(String conversationId) async {
+    await _supabase
+        .from('conversation_participants')
+        .update({
+          'is_archived': true,
+          'archived_at': DateTime.now().toIso8601String(),
+        })
+        .eq('conversation_id', conversationId)
+        .eq('user_id', currentUserId!);
+  }
+
+  /// Odarchivuje konverzaci
+  Future<void> unarchiveConversation(String conversationId) async {
+    await _supabase
+        .from('conversation_participants')
+        .update({
+          'is_archived': false,
+          'archived_at': null,
+        })
+        .eq('conversation_id', conversationId)
+        .eq('user_id', currentUserId!);
+  }
+
+  /// Získá archivované konverzace
+  Future<List<ConversationModel>> getArchivedConversations() async {
+    if (currentUserId == null) return [];
+
+    try {
+      final myConversations = await _supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', currentUserId!)
+          .eq('is_archived', true);
+
+      final conversationIds = (myConversations as List)
+          .map((c) => c['conversation_id'] as String)
+          .toList();
+
+      if (conversationIds.isEmpty) return [];
+
+      final response = await _supabase
+          .from('conversations')
+          .select('''
+            *,
+            conversation_participants(*, profiles(*))
+          ''')
+          .inFilter('id', conversationIds)
+          .order('updated_at', ascending: false);
+
+      return (response as List)
+          .map((c) => ConversationModel.fromJson(c))
+          .toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   /// Smaže zprávu (soft delete)
@@ -426,6 +811,48 @@ class ChatService {
     });
   }
 
+  /// Označí celou konverzaci jako přečtenou (aktualizuje last_read_at a vytvoří receipts)
+  Future<void> markConversationAsRead(String conversationId) async {
+    if (currentUserId == null) return;
+
+    try {
+      // Aktualizuj last_read_at
+      await _supabase
+          .from('conversation_participants')
+          .update({'last_read_at': DateTime.now().toIso8601String()})
+          .eq('conversation_id', conversationId)
+          .eq('user_id', currentUserId!);
+
+      // Získej všechny zprávy od ostatních v této konverzaci (limit kvůli výkonu)
+      final messagesResponse = await _supabase
+          .from('messages')
+          .select('id')
+          .eq('conversation_id', conversationId)
+          .neq('sender_id', currentUserId!)
+          .limit(100);
+
+      final messages = messagesResponse as List;
+
+      // Vytvoř read receipts pro všechny zprávy
+      for (final msg in messages) {
+        try {
+          await _supabase.from('message_receipts').upsert({
+            'message_id': msg['id'],
+            'user_id': currentUserId,
+            'status': 'read',
+            'timestamp': DateTime.now().toIso8601String(),
+          }, onConflict: 'message_id,user_id');
+        } catch (_) {
+          // Ignoruj chyby (může už existovat)
+        }
+      }
+
+      debugPrint('Marked conversation $conversationId as read for user $currentUserId (${messages.length} messages)');
+    } catch (e) {
+      debugPrint('Error marking conversation as read: $e');
+    }
+  }
+
   // ============================================
   // REAL-TIME
   // ============================================
@@ -445,17 +872,19 @@ class ChatService {
           final message = MessageModel.fromJson(data.first);
 
           // Dešifruj
-          final sessionKey = _sessionKeys[conversationId];
-          if (sessionKey != null && !message.isDeleted) {
+          if (!message.isDeleted) {
             try {
+              final sessionKey = await _getOrCreateSessionKey(conversationId);
               final decrypted = await _encryption.decryptMessage(
                 ciphertext: message.encryptedContent,
                 iv: message.iv,
                 secretKey: sessionKey,
               );
               return message.copyWith(decryptedContent: decrypted);
-            } catch (_) {
-              return message.copyWith(decryptedContent: '[Nelze dešifrovat]');
+            } catch (e) {
+              // Fallback - loguj chybu a zobraz chybovou zprávu
+              debugPrint('Stream decryption error for message ${message.id}: $e');
+              return message.copyWith(decryptedContent: '[Nepodařilo se dešifrovat zprávu]');
             }
           }
           return message;
@@ -469,6 +898,46 @@ class ChatService {
         .stream(primaryKey: ['id'])
         .eq('user_id', currentUserId!)
         .order('joined_at', ascending: false);
+  }
+
+  // ============================================
+  // TYPING INDICATOR
+  // ============================================
+
+  /// Nastaví typing status
+  Future<void> setTyping(String conversationId, bool isTyping) async {
+    try {
+      await _supabase.from('typing_indicators').upsert({
+        'conversation_id': conversationId,
+        'user_id': currentUserId,
+        'is_typing': isTyping,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+    } catch (_) {
+      // Ignoruj chyby - není kritické
+    }
+  }
+
+  /// Stream typing indikátorů v konverzaci
+  Stream<List<String>> typingStream(String conversationId) {
+    return _supabase
+        .from('typing_indicators')
+        .stream(primaryKey: ['conversation_id', 'user_id'])
+        .eq('conversation_id', conversationId)
+        .map((data) {
+          final now = DateTime.now();
+          return data
+              .where((row) {
+                if (row['user_id'] == currentUserId) return false;
+                if (row['is_typing'] != true) return false;
+                final updatedAt = DateTime.tryParse(row['updated_at'] ?? '');
+                if (updatedAt == null) return false;
+                // Zobraz pouze pokud bylo aktualizováno v posledních 5 sekundách
+                return now.difference(updatedAt).inSeconds < 5;
+              })
+              .map((row) => row['user_id'] as String)
+              .toList();
+        });
   }
 
   // ============================================

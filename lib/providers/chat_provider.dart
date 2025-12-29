@@ -84,10 +84,21 @@ class ChatNotifier extends Notifier<AsyncValue<void>> {
     }
   }
 
-  /// Označí jako přečtené
+  /// Označí zprávu jako přečtenou
   Future<void> markAsRead(String messageId) async {
     try {
       await _chatService.markAsRead(messageId);
+    } catch (e) {
+      // Ignoruj chyby při označování
+    }
+  }
+
+  /// Označí celou konverzaci jako přečtenou
+  Future<void> markConversationAsRead(String conversationId) async {
+    try {
+      await _chatService.markConversationAsRead(conversationId);
+      // Refresh seznam konverzací pro aktualizaci badge
+      ref.invalidate(conversationsProvider);
     } catch (e) {
       // Ignoruj chyby při označování
     }
@@ -122,4 +133,18 @@ final messageStreamProvider =
     StreamProvider.family<MessageModel, String>((ref, conversationId) {
   final chatService = ref.read(chatServiceProvider);
   return chatService.messagesStream(conversationId);
+});
+
+/// Provider pro načtení jedné konverzace podle ID
+final conversationProvider =
+    FutureProvider.family<ConversationModel?, String>((ref, conversationId) async {
+  final conversations = await ref.watch(conversationsProvider.future);
+  return conversations.where((c) => c.id == conversationId).firstOrNull;
+});
+
+/// Provider pro typing indicator stream
+final typingStreamProvider =
+    StreamProvider.family<List<String>, String>((ref, conversationId) {
+  final chatService = ref.read(chatServiceProvider);
+  return chatService.typingStream(conversationId);
 });

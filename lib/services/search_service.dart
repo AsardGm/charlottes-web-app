@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/post_model.dart';
 import '../models/user_model.dart';
@@ -23,7 +24,7 @@ class SearchService {
         .from('posts')
         .select('''
           *,
-          profiles(*),
+          profiles!posts_author_id_fkey(*),
           thread_types(*),
           categories(*),
           reactions(*)
@@ -47,16 +48,47 @@ class SearchService {
   }) async {
     if (query.isEmpty) return [];
 
-    final response = await _supabase
-        .from('profiles')
-        .select()
-        .or('username.ilike.%$query%,bio.ilike.%$query%')
-        .order('username')
-        .range(offset, offset + limit - 1);
+    try {
+      debugPrint('Searching users for: $query');
 
-    return (response as List)
-        .map((u) => UserModel.fromJson(u as Map<String, dynamic>))
-        .toList();
+      // Hledani podle username
+      final response = await _supabase
+          .from('profiles')
+          .select()
+          .ilike('username', '%$query%')
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      debugPrint('Search response: $response');
+      debugPrint('Response type: ${response.runtimeType}');
+      debugPrint('Response length: ${(response as List).length}');
+
+      final users = response
+          .map((u) {
+            debugPrint('Parsing user: $u');
+            return UserModel.fromJson(u as Map<String, dynamic>);
+          })
+          .toList();
+
+      // Pokud nenajdeme podle username, zkus bio
+      if (users.isEmpty) {
+        final bioResponse = await _supabase
+            .from('profiles')
+            .select()
+            .ilike('bio', '%$query%')
+            .order('created_at', ascending: false)
+            .limit(limit);
+
+        return (bioResponse as List)
+            .map((u) => UserModel.fromJson(u as Map<String, dynamic>))
+            .toList();
+      }
+
+      return users;
+    } catch (e) {
+      debugPrint('Search users error: $e');
+      return [];
+    }
   }
 
   /// Kombinované vyhledávání příspěvků i uživatelů

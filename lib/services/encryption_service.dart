@@ -12,7 +12,9 @@ class EncryptionService {
 
   final _secureStorage = const FlutterSecureStorage();
   final _x25519 = X25519();
-  final _aesGcm = AesGcm.with256bits();
+
+  // Vytvoří novou instanci AES-GCM pro každou operaci
+  AesGcm get _aesGcm => AesGcm.with256bits();
 
   // Klíče pro secure storage
   static const _identityPrivateKeyKey = 'identity_private_key';
@@ -127,6 +129,7 @@ class EncryptionService {
   }
 
   /// Zašifruje zprávu pomocí AES-256-GCM
+  /// Ciphertext obsahuje i MAC (concatenated)
   Future<EncryptedMessage> encryptMessage({
     required String plaintext,
     required SecretKey secretKey,
@@ -140,23 +143,34 @@ class EncryptionService {
       nonce: nonce,
     );
 
+    // Spojíme ciphertext + mac do jednoho stringu
+    final combined = [...secretBox.cipherText, ...secretBox.mac.bytes];
+
     return EncryptedMessage(
-      ciphertext: base64Encode(secretBox.cipherText),
+      ciphertext: base64Encode(combined),
       iv: base64Encode(nonce),
-      mac: base64Encode(secretBox.mac.bytes),
     );
   }
 
   /// Dešifruje zprávu
+  /// Očekává ciphertext s MAC na konci
   Future<String> decryptMessage({
     required String ciphertext,
     required String iv,
     required SecretKey secretKey,
     String? mac,
   }) async {
-    final ciphertextBytes = base64Decode(ciphertext);
+    final combinedBytes = base64Decode(ciphertext);
     final nonceBytes = base64Decode(iv);
-    final macBytes = mac != null ? base64Decode(mac) : <int>[];
+
+    // MAC je posledních 16 bytů
+    final macLength = 16;
+    if (combinedBytes.length < macLength) {
+      throw Exception('Invalid ciphertext length');
+    }
+
+    final ciphertextBytes = combinedBytes.sublist(0, combinedBytes.length - macLength);
+    final macBytes = combinedBytes.sublist(combinedBytes.length - macLength);
 
     final secretBox = SecretBox(
       ciphertextBytes,

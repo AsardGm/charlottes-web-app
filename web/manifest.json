@@ -1,13 +1,17 @@
 {
-    "name": "community_app",
-    "short_name": "community_app",
+    "name": "Charlotte's Web",
+    "short_name": "Charlotte's Web",
+    "description": "Charlotte's Web - komunitni aplikace s feedem, chatem a gamifikaci",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0D1B2A",
+    "theme_color": "#C41E24",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
+    "categories": ["social", "lifestyle"],
+    "lang": "cs",
+    "dir": "ltr",
+    "scope": "/",
     "icons": [
         {
             "src": "icons/Icon-192.png",
@@ -31,5 +35,46 @@
             "type": "image/png",
             "purpose": "maskable"
         }
-    ]
+    ],
+    "screenshots": [
+        {
+            "src": "screenshots/feed.png",
+            "sizes": "1080x1920",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Feed obrazovka"
+        },
+        {
+            "src": "screenshots/profile.png",
+            "sizes": "1080x1920",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Profil obrazovka"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Novy prispevek",
+            "short_name": "Novy",
+            "description": "Vytvorit novy prispevek",
+            "url": "/create-post",
+            "icons": [{ "src": "icons/shortcut-post.png", "sizes": "96x96" }]
+        },
+        {
+            "name": "Chat",
+            "short_name": "Chat",
+            "description": "Otevrit chat",
+            "url": "/chat",
+            "icons": [{ "src": "icons/shortcut-chat.png", "sizes": "96x96" }]
+        },
+        {
+            "name": "Profil",
+            "short_name": "Profil",
+            "description": "Muj profil",
+            "url": "/profile",
+            "icons": [{ "src": "icons/shortcut-profile.png", "sizes": "96x96" }]
+        }
+    ],
+    "related_applications": [],
+    "handle_links": "preferred"
 }

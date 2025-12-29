@@ -4,6 +4,8 @@ import '../models/user_model.dart';
 import '../services/profile_service.dart';
 import 'auth_provider.dart';
 
+export '../services/profile_service.dart' show ProfileStats;
+
 final profileServiceProvider = Provider<ProfileService>((ref) {
   return ProfileService();
 });

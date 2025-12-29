@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/theme.dart';
 import '../../providers/search_provider.dart';
-import '../../providers/chat_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/post_card.dart';
+import '../../widgets/profile/follow_button.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -175,6 +176,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
   }
 
   Widget _buildUsersTab(SearchState searchState) {
+    final currentUser = ref.watch(currentUserProvider).value;
+
     if (searchState.users.isEmpty) {
       return Center(
         child: Text(
@@ -189,6 +192,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
       itemCount: searchState.users.length,
       itemBuilder: (context, index) {
         final user = searchState.users[index];
+        final isCurrentUser = currentUser?.id == user.id;
+
         return ListTile(
           leading: UserAvatar(
             imageUrl: user.avatarUrl,
@@ -197,9 +202,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
           ),
           title: Row(
             children: [
-              Text(
-                user.username,
-                style: const TextStyle(fontWeight: FontWeight.w600),
+              Flexible(
+                child: Text(
+                  user.username,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               if (user.isAdmin) ...[
                 const SizedBox(width: 8),
@@ -228,29 +236,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: AppColors.textMuted),
                 )
-              : null,
-          trailing: Text(
-            '${user.followerCount} sledujicich',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.textMuted,
-            ),
-          ),
-          onTap: () async {
-            // Otevři chat s uživatelem
-            try {
-              final chatService = ref.read(chatServiceProvider);
-              final conversationId = await chatService.getOrCreateDirectConversation(user.id);
-              if (context.mounted) {
-                context.go('/chat/$conversationId');
-              }
-            } catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Chyba: ${e.toString()}')),
-                );
-              }
-            }
+              : Text(
+                  '${user.followerCount} sledujicich',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+          trailing: isCurrentUser
+              ? null
+              : FollowButton(
+                  userId: user.id,
+                  compact: true,
+                ),
+          onTap: () {
+            // Otevri profil uzivatele
+            context.push('/profile/${user.id}');
           },
         );
       },

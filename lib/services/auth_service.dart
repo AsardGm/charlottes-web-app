@@ -32,16 +32,28 @@ class AuthService {
       password: password,
     );
 
-    // Vytvoření profilu
+    // Profil se vytvoří automaticky přes trigger v databázi
+    // Pokud trigger selže, vytvoříme ho ručně
     if (response.user != null) {
-      await _supabase.from('profiles').insert({
-        'id': response.user!.id,
-        'username': username,
-        'email': email,
-        'role': 'member',
-        'is_blocked': false,
-        'created_at': DateTime.now().toIso8601String(),
-      });
+      try {
+        // Zkontroluj jestli profil existuje
+        final existing = await _supabase
+            .from('profiles')
+            .select()
+            .eq('id', response.user!.id)
+            .maybeSingle();
+
+        if (existing == null) {
+          await _supabase.from('profiles').insert({
+            'id': response.user!.id,
+            'username': username,
+            'role': 'member',
+            'is_blocked': false,
+          });
+        }
+      } catch (_) {
+        // Trigger už profil vytvořil
+      }
     }
 
     return response;

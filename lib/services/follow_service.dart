@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 
@@ -64,14 +65,19 @@ class FollowService {
   Future<bool> isFollowing(String userId) async {
     if (currentUserId == null) return false;
 
-    final response = await _supabase
-        .from('follows')
-        .select('id')
-        .eq('follower_id', currentUserId!)
-        .eq('following_id', userId)
-        .maybeSingle();
+    try {
+      final response = await _supabase
+          .from('follows')
+          .select('id')
+          .eq('follower_id', currentUserId!)
+          .eq('following_id', userId)
+          .maybeSingle();
 
-    return response != null;
+      return response != null;
+    } catch (e) {
+      debugPrint('isFollowing error: $e');
+      return false;
+    }
   }
 
   /// Začne sledovat uživatele
@@ -79,10 +85,17 @@ class FollowService {
     if (currentUserId == null) return;
     if (currentUserId == userId) return; // Nemůžeme sledovat sami sebe
 
-    await _supabase.from('follows').insert({
-      'follower_id': currentUserId,
-      'following_id': userId,
-    });
+    try {
+      debugPrint('Following user: $userId');
+      await _supabase.from('follows').insert({
+        'follower_id': currentUserId,
+        'following_id': userId,
+      });
+      debugPrint('Follow successful');
+    } catch (e) {
+      debugPrint('Follow error: $e');
+      rethrow;
+    }
   }
 
   /// Přestane sledovat uživatele

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/post_model.dart';
 import '../models/user_model.dart';
@@ -43,12 +44,14 @@ class SearchNotifier extends Notifier<SearchState> {
 
     try {
       final results = await _service.search(query);
+      debugPrint('Search results - posts: ${results.posts.length}, users: ${results.users.length}');
       state = state.copyWith(
         isLoading: false,
         posts: results.posts,
         users: results.users,
       );
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('Search error: $e\n$st');
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),

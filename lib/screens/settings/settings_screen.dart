@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:app_settings/app_settings.dart';
 import '../../theme/theme.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/push_notification_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -43,9 +46,84 @@ class SettingsScreen extends ConsumerWidget {
               _SectionHeader(title: 'Notifikace'),
               _SettingsCard(
                 children: [
+                  // Push notifikace - Web nebo Mobile
+                  if (kIsWeb) ...[
+                    // Web Push notifikace
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final pushState = ref.watch(pushNotificationNotifierProvider);
+                        final permissionAsync = ref.watch(notificationPermissionProvider);
+
+                        return permissionAsync.when(
+                          data: (permission) {
+                            final isEnabled = pushState.value ?? false;
+                            final isLoading = pushState.isLoading;
+
+                            return SwitchListTile(
+                              title: const Text('Push notifikace'),
+                              subtitle: Text(
+                                permission == 'denied'
+                                    ? 'Notifikace jsou blokovány v prohlizeci'
+                                    : 'Dostávat upozornění i když je app zavřená',
+                              ),
+                              value: isEnabled,
+                              onChanged: permission == 'denied'
+                                  ? null
+                                  : (value) async {
+                                      if (value) {
+                                        await ref
+                                            .read(pushNotificationNotifierProvider.notifier)
+                                            .enableNotifications();
+                                      } else {
+                                        await ref
+                                            .read(pushNotificationNotifierProvider.notifier)
+                                            .disableNotifications();
+                                      }
+                                    },
+                              activeThumbColor: AppColors.primary,
+                              secondary: isLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : null,
+                            );
+                          },
+                          loading: () => const ListTile(
+                            title: Text('Push notifikace'),
+                            trailing: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                          error: (_, _) => SwitchListTile(
+                            title: const Text('Push notifikace'),
+                            subtitle: const Text('Nelze načíst stav'),
+                            value: false,
+                            onChanged: null,
+                            activeThumbColor: AppColors.primary,
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1),
+                  ] else ...[
+                    // Mobile - odkaz do systémových nastavení
+                    ListTile(
+                      title: const Text('Push notifikace'),
+                      subtitle: const Text('Spravovat v nastaveni systemu'),
+                      trailing: const Icon(Icons.open_in_new, size: 20),
+                      onTap: () {
+                        AppSettings.openAppSettings(type: AppSettingsType.notification);
+                      },
+                    ),
+                    const Divider(height: 1),
+                  ],
                   SwitchListTile(
-                    title: const Text('Push notifikace'),
-                    subtitle: const Text('Dostávat upozornění na novou aktivitu'),
+                    title: const Text('In-app notifikace'),
+                    subtitle: const Text('Zobrazovat upozornění v aplikaci'),
                     value: settings.notificationsEnabled,
                     onChanged: (value) {
                       ref.read(settingsNotifierProvider.notifier)

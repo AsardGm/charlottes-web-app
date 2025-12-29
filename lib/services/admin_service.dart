@@ -62,8 +62,8 @@ class AdminService {
         .from('posts')
         .select('''
           *,
-          profiles(*),
-          comments(*, profiles(*)),
+          profiles!posts_author_id_fkey(*),
+          comments(*, profiles!comments_author_id_fkey(*)),
           reactions(*)
         ''')
         .order('created_at', ascending: false)

@@ -2,13 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// Téma aplikace Charlotte's Web
+/// Tema aplikace SpiderBagzz
+/// Design podle loga - nocni atmosfera, cervena, cyan neon
 class AppTheme {
   AppTheme._();
 
-  /// Tmavé téma (výchozí)
+  /// Tmave tema (vychozi) - SpiderBagzz Night Theme
   static ThemeData get darkTheme {
-    final baseTextTheme = GoogleFonts.orbitronTextTheme(
+    // Bangers font pro titulky - komiksovy styl jako v logu
+    final headlineTextTheme = GoogleFonts.bangersTextTheme(
+      ThemeData.dark().textTheme,
+    );
+
+    // Rajdhani pro body text - moderni a citelny
+    final bodyTextTheme = GoogleFonts.rajdhaniTextTheme(
       ThemeData.dark().textTheme,
     );
 
@@ -17,28 +24,30 @@ class AppTheme {
       brightness: Brightness.dark,
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.background,
-      fontFamily: GoogleFonts.orbitron().fontFamily,
-      colorScheme: const ColorScheme.dark(
+      fontFamily: GoogleFonts.rajdhani().fontFamily,
+      colorScheme: ColorScheme.dark(
         primary: AppColors.primary,
-        onPrimary: Colors.white,
-        secondary: AppColors.primaryLight,
-        onSecondary: Colors.white,
+        onPrimary: AppColors.textPrimary,
+        secondary: AppColors.secondary,
+        onSecondary: AppColors.textPrimary,
+        tertiary: AppColors.accent,           // Neonove cyan
+        onTertiary: AppColors.background,
         surface: AppColors.surface,
         onSurface: AppColors.textPrimary,
         error: AppColors.error,
-        onError: Colors.white,
+        onError: AppColors.textPrimary,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.textPrimary,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.bangers(
           color: AppColors.textPrimary,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.5,
+          fontSize: 24,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 2,
         ),
       ),
       cardTheme: CardThemeData(
@@ -48,7 +57,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-            color: Colors.white.withAlpha(10),
+            color: AppColors.accent.withAlpha(20),  // Cyan border
             width: 1,
           ),
         ),
@@ -59,20 +68,21 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const TextStyle(
-              color: AppColors.primary,
+            return GoogleFonts.rajdhani(
+              color: AppColors.primary,  // Cervena kdyz vybrano
               fontSize: 12,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
             );
           }
-          return const TextStyle(
+          return GoogleFonts.rajdhani(
             color: AppColors.textMuted,
             fontSize: 12,
+            fontWeight: FontWeight.w500,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: AppColors.primary, size: 24);
+            return const IconThemeData(color: AppColors.primary, size: 26);
           }
           return const IconThemeData(color: AppColors.textMuted, size: 24);
         }),
@@ -80,8 +90,14 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceLight,
-        hintStyle: const TextStyle(color: AppColors.textMuted),
-        labelStyle: const TextStyle(color: AppColors.textSecondary),
+        hintStyle: GoogleFonts.rajdhani(
+          color: AppColors.textMuted,
+          fontWeight: FontWeight.w500,
+        ),
+        labelStyle: GoogleFonts.rajdhani(
+          color: AppColors.textSecondary,
+          fontWeight: FontWeight.w500,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -89,13 +105,13 @@ class AppTheme {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Colors.white.withAlpha(10),
+            color: AppColors.secondary.withAlpha(40),
             width: 1,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: const BorderSide(color: AppColors.accent, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -106,33 +122,50 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.textPrimary,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: const TextStyle(
+          textStyle: GoogleFonts.rajdhani(
             fontSize: 16,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.2,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.textPrimary,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: GoogleFonts.rajdhani(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          textStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
+          foregroundColor: AppColors.accent,  // Cyan
+          textStyle: GoogleFonts.rajdhani(
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.textPrimary,
-          side: BorderSide(color: Colors.white.withAlpha(20)),
+          side: BorderSide(color: AppColors.accent.withAlpha(60)),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: GoogleFonts.rajdhani(
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -141,21 +174,27 @@ class AppTheme {
           foregroundColor: AppColors.textSecondary,
         ),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shape: CircleBorder(),
+        foregroundColor: AppColors.textPrimary,
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
       dividerTheme: DividerThemeData(
-        color: Colors.white.withAlpha(10),
+        color: AppColors.accent.withAlpha(20),
         thickness: 1,
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.surfaceElevated,
-        contentTextStyle: const TextStyle(color: AppColors.textPrimary),
+        contentTextStyle: GoogleFonts.rajdhani(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w500,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: AppColors.accent.withAlpha(30)),
         ),
         behavior: SnackBarBehavior.floating,
       ),
@@ -164,18 +203,20 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: AppColors.accent.withAlpha(30)),
         ),
-        titleTextStyle: const TextStyle(
+        titleTextStyle: GoogleFonts.bangers(
           color: AppColors.textPrimary,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
+          fontSize: 24,
+          letterSpacing: 1.5,
         ),
       ),
-      bottomSheetTheme: const BottomSheetThemeData(
+      bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          side: BorderSide(color: AppColors.accent.withAlpha(20)),
         ),
       ),
       popupMenuTheme: PopupMenuThemeData(
@@ -183,42 +224,137 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: AppColors.accent.withAlpha(20)),
         ),
       ),
-      textTheme: baseTextTheme.copyWith(
-        headlineLarge: baseTextTheme.headlineLarge?.copyWith(
-          color: AppColors.textPrimary,
-          fontWeight: FontWeight.bold,
-          letterSpacing: -1,
-        ),
-        headlineMedium: baseTextTheme.headlineMedium?.copyWith(
-          color: AppColors.textPrimary,
-          fontWeight: FontWeight.bold,
-          letterSpacing: -0.5,
-        ),
-        titleLarge: baseTextTheme.titleLarge?.copyWith(
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.surfaceLight,
+        selectedColor: AppColors.primary.withAlpha(40),
+        labelStyle: GoogleFonts.rajdhani(
           color: AppColors.textPrimary,
           fontWeight: FontWeight.w600,
         ),
-        titleMedium: baseTextTheme.titleMedium?.copyWith(
+        side: BorderSide(color: AppColors.accent.withAlpha(30)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      tabBarTheme: TabBarThemeData(
+        labelColor: AppColors.accent,  // Cyan
+        unselectedLabelColor: AppColors.textMuted,
+        indicatorColor: AppColors.accent,
+        labelStyle: GoogleFonts.rajdhani(
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelStyle: GoogleFonts.rajdhani(
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.accent,
+        linearTrackColor: AppColors.surfaceLight,
+      ),
+      sliderTheme: SliderThemeData(
+        activeTrackColor: AppColors.accent,
+        inactiveTrackColor: AppColors.surfaceLight,
+        thumbColor: AppColors.accent,
+        overlayColor: AppColors.accent.withAlpha(30),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.accent;
+          }
+          return AppColors.textMuted;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.accent.withAlpha(60);
+          }
+          return AppColors.surfaceLight;
+        }),
+      ),
+      textTheme: TextTheme(
+        // Headlines - Bangers (komiksovy styl z loga)
+        displayLarge: headlineTextTheme.displayLarge?.copyWith(
+          color: AppColors.textPrimary,
+          letterSpacing: 3,
+        ),
+        displayMedium: headlineTextTheme.displayMedium?.copyWith(
+          color: AppColors.textPrimary,
+          letterSpacing: 2.5,
+        ),
+        displaySmall: headlineTextTheme.displaySmall?.copyWith(
+          color: AppColors.textPrimary,
+          letterSpacing: 2,
+        ),
+        headlineLarge: headlineTextTheme.headlineLarge?.copyWith(
+          color: AppColors.textPrimary,
+          letterSpacing: 2,
+        ),
+        headlineMedium: headlineTextTheme.headlineMedium?.copyWith(
+          color: AppColors.textPrimary,
+          letterSpacing: 1.5,
+        ),
+        headlineSmall: headlineTextTheme.headlineSmall?.copyWith(
+          color: AppColors.textPrimary,
+          letterSpacing: 1,
+        ),
+        // Titles - Rajdhani bold
+        titleLarge: bodyTextTheme.titleLarge?.copyWith(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w700,
+        ),
+        titleMedium: bodyTextTheme.titleMedium?.copyWith(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w600,
+        ),
+        titleSmall: bodyTextTheme.titleSmall?.copyWith(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w600,
+        ),
+        // Body - Rajdhani regular
+        bodyLarge: bodyTextTheme.bodyLarge?.copyWith(
           color: AppColors.textPrimary,
           fontWeight: FontWeight.w500,
         ),
-        bodyLarge: baseTextTheme.bodyLarge?.copyWith(
-          color: AppColors.textPrimary,
-        ),
-        bodyMedium: baseTextTheme.bodyMedium?.copyWith(
+        bodyMedium: bodyTextTheme.bodyMedium?.copyWith(
           color: AppColors.textSecondary,
+          fontWeight: FontWeight.w500,
         ),
-        bodySmall: baseTextTheme.bodySmall?.copyWith(
+        bodySmall: bodyTextTheme.bodySmall?.copyWith(
           color: AppColors.textMuted,
+          fontWeight: FontWeight.w500,
+        ),
+        // Labels
+        labelLarge: bodyTextTheme.labelLarge?.copyWith(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w600,
+        ),
+        labelMedium: bodyTextTheme.labelMedium?.copyWith(
+          color: AppColors.textSecondary,
+          fontWeight: FontWeight.w600,
+        ),
+        labelSmall: bodyTextTheme.labelSmall?.copyWith(
+          color: AppColors.textMuted,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
   }
 
-  /// Světlé téma
+  /// Svetle tema
   static ThemeData get lightTheme {
-    return darkTheme;
+    return darkTheme.copyWith(
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: const Color(0xFFF5F0E6),  // Kremova
+      colorScheme: ColorScheme.light(
+        primary: AppColors.primary,
+        secondary: AppColors.secondary,
+        tertiary: AppColors.accent,
+        surface: const Color(0xFFF5F0E6),
+        error: AppColors.error,
+      ),
+    );
   }
 }

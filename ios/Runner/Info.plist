@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Potrebujeme pristup k mikrofonu pro nahravani hlasovych zprav</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Potrebujeme pristup k poloze pro sdileni vasi lokace</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Potrebujeme pristup ke galerii pro vyber obrazku</string>
 </dict>
 </plist>
