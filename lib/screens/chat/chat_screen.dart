@@ -244,11 +244,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Future<void> _pickFile() async {
     setState(() => _showAttachmentMenu = false);
 
-    final result = await FilePicker.platform.pickFiles();
+    // Na webu použij withData pro získání bytes přímo
+    final result = await FilePicker.platform.pickFiles(withData: true);
     if (result == null || result.files.isEmpty || !mounted) return;
 
     final file = result.files.first;
-    if (file.path == null) return;
+    final fileBytes = file.bytes;
+    if (fileBytes == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nepodařilo se načíst soubor')),
+        );
+      }
+      return;
+    }
 
     setState(() => _isSending = true);
 
@@ -256,7 +265,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       final chatService = ref.read(chatServiceProvider);
       final fileUrl = await chatService.uploadFile(
         conversationId: widget.conversationId,
-        filePath: file.path!,
+        fileBytes: fileBytes,
         fileName: file.name,
       );
 
@@ -410,9 +419,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     try {
       final chatService = ref.read(chatServiceProvider);
 
+      // Načti bytes z XFile (funguje na iOS i webu)
+      final imageBytes = await image.readAsBytes();
+
       final imageUrl = await chatService.uploadImage(
         conversationId: widget.conversationId,
-        filePath: image.path,
+        fileBytes: imageBytes,
         fileName: image.name,
       );
 

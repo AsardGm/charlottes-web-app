@@ -1,11 +1,15 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:record/record.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// Podmíněný import pro file operations
+import 'voice_file_helper_stub.dart'
+    if (dart.library.io) 'voice_file_helper_io.dart';
+
 /// Service pro nahrávání a přehrávání hlasových zpráv
+/// Funguje na iOS i webu
 class VoiceService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final AudioRecorder _recorder = AudioRecorder();
@@ -70,18 +74,29 @@ class VoiceService {
       throw Exception('Nemáte oprávnění pro mikrofon');
     }
 
-    final directory = await getTemporaryDirectory();
-    _currentRecordingPath =
-        '${directory.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    if (kIsWeb) {
+      // Na webu nahrávání do paměti (blob)
+      await _recorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.opus,
+          bitRate: 128000,
+          sampleRate: 48000,
+        ),
+        path: '', // Na webu se ignoruje
+      );
+    } else {
+      // Na mobilech nahrávání do souboru
+      _currentRecordingPath = await VoiceFileHelper.getRecordingPath();
 
-    await _recorder.start(
-      const RecordConfig(
-        encoder: AudioEncoder.aacLc,
-        bitRate: 128000,
-        sampleRate: 44100,
-      ),
-      path: _currentRecordingPath!,
-    );
+      await _recorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.aacLc,
+          bitRate: 128000,
+          sampleRate: 44100,
+        ),
+        path: _currentRecordingPath!,
+      );
+    }
 
     _isRecording = true;
     _recordingStartTime = DateTime.now();
@@ -95,7 +110,7 @@ class VoiceService {
     });
   }
 
-  /// Zastaví nahrávání a vrátí cestu k souboru
+  /// Zastaví nahrávání a vrátí cestu k souboru nebo blob URL na webu
   Future<String?> stopRecording() async {
     if (!_isRecording) return null;
 
@@ -104,7 +119,6 @@ class VoiceService {
 
     final path = await _recorder.stop();
     _isRecording = false;
-    _recordingStartTime = null;
 
     return path;
   }
@@ -120,12 +134,9 @@ class VoiceService {
     _isRecording = false;
     _recordingStartTime = null;
 
-    // Smaž soubor
-    if (_currentRecordingPath != null) {
-      final file = File(_currentRecordingPath!);
-      if (await file.exists()) {
-        await file.delete();
-      }
+    // Smaž soubor na nativních platformách
+    if (_currentRecordingPath != null && !kIsWeb) {
+      await VoiceFileHelper.deleteFile(_currentRecordingPath!);
     }
     _currentRecordingPath = null;
   }
@@ -135,10 +146,23 @@ class VoiceService {
     required String conversationId,
     required String filePath,
   }) async {
-    final file = File(filePath);
-    final bytes = await file.readAsBytes();
-    final fileName =
-        'voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    final recordingDuration = _recordingStartTime != null
+        ? DateTime.now().difference(_recordingStartTime!).inSeconds
+        : 0;
+    _recordingStartTime = null;
+
+    Uint8List bytes;
+
+    if (kIsWeb) {
+      // Na webu je filePath blob URL - použijeme fetch API
+      bytes = await VoiceFileHelper.readBlobAsBytes(filePath);
+    } else {
+      // Na mobilech načteme soubor
+      bytes = await VoiceFileHelper.readFileAsBytes(filePath);
+    }
+
+    final extension = kIsWeb ? 'webm' : 'm4a';
+    final fileName = 'voice_${DateTime.now().millisecondsSinceEpoch}.$extension';
     final storagePath = 'chat/$conversationId/$fileName';
 
     await _supabase.storage
@@ -149,28 +173,15 @@ class VoiceService {
         .from('voice-messages')
         .getPublicUrl(storagePath);
 
-    // Získej délku nahrávky
-    final duration = await _getAudioDuration(filePath);
-
     // Smaž lokální soubor
-    await file.delete();
+    if (!kIsWeb) {
+      await VoiceFileHelper.deleteFile(filePath);
+    }
 
     return VoiceUploadResult(
       url: publicUrl,
-      durationSeconds: duration,
+      durationSeconds: recordingDuration,
     );
-  }
-
-  Future<int> _getAudioDuration(String path) async {
-    try {
-      final tempPlayer = AudioPlayer();
-      await tempPlayer.setSourceDeviceFile(path);
-      final duration = await tempPlayer.getDuration();
-      await tempPlayer.dispose();
-      return duration?.inSeconds ?? 0;
-    } catch (_) {
-      return 0;
-    }
   }
 
   /// Přehraje hlasovou zprávu

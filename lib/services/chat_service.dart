@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -387,10 +386,9 @@ class ChatService {
   /// Nahraje obrázek do Storage a vrátí URL
   Future<String> uploadImage({
     required String conversationId,
-    required String filePath,
+    required Uint8List fileBytes,
     required String fileName,
   }) async {
-    final fileBytes = await File(filePath).readAsBytes();
     final storagePath = 'chat/$conversationId/${DateTime.now().millisecondsSinceEpoch}_$fileName';
 
     await _supabase.storage
@@ -467,10 +465,9 @@ class ChatService {
   /// Nahraje soubor do Storage a vrátí URL
   Future<String> uploadFile({
     required String conversationId,
-    required String filePath,
+    required Uint8List fileBytes,
     required String fileName,
   }) async {
-    final fileBytes = await File(filePath).readAsBytes();
     final storagePath = 'chat/$conversationId/${DateTime.now().millisecondsSinceEpoch}_$fileName';
 
     await _supabase.storage

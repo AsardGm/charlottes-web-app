@@ -2,8 +2,10 @@
     "name": "Charlotte's Web",
     "short_name": "Charlotte's Web",
     "description": "Charlotte's Web - komunitni aplikace s feedem, chatem a gamifikaci",
-    "start_url": ".",
+    "start_url": "/",
+    "id": "/",
     "display": "standalone",
+    "display_override": ["standalone", "minimal-ui"],
     "background_color": "#0D1B2A",
     "theme_color": "#C41E24",
     "orientation": "portrait-primary",
@@ -12,6 +14,9 @@
     "lang": "cs",
     "dir": "ltr",
     "scope": "/",
+    "permissions_policy": {
+        "notifications": ["self"]
+    },
     "icons": [
         {
             "src": "icons/Icon-192.png",
