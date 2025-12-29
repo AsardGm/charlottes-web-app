@@ -15,7 +15,7 @@ final themeModeProvider = Provider<String>((ref) {
   return settings.when(
     data: (s) => s?.theme ?? 'dark',
     loading: () => 'dark',
-    error: (_, __) => 'dark',
+    error: (_, _) => 'dark',
   );
 });
 

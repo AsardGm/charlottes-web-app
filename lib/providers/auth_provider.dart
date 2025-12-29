@@ -19,7 +19,7 @@ final currentUserProvider = FutureProvider<UserModel?>((ref) async {
       return null;
     },
     loading: () => null,
-    error: (_, __) => null,
+    error: (_, _) => null,
   );
 });
 
@@ -28,7 +28,7 @@ final isAuthenticatedProvider = Provider<bool>((ref) {
   return authState.when(
     data: (state) => state.session != null,
     loading: () => false,
-    error: (_, __) => false,
+    error: (_, _) => false,
   );
 });
 
@@ -37,7 +37,7 @@ final isAdminProvider = Provider<bool>((ref) {
   return user.when(
     data: (u) => u?.isAdmin ?? false,
     loading: () => false,
-    error: (_, __) => false,
+    error: (_, _) => false,
   );
 });
 

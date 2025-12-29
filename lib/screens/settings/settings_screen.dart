@@ -51,7 +51,7 @@ class SettingsScreen extends ConsumerWidget {
                       ref.read(settingsNotifierProvider.notifier)
                           .setNotificationsEnabled(value);
                     },
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                   ),
                   const Divider(height: 1),
                   SwitchListTile(
@@ -62,7 +62,7 @@ class SettingsScreen extends ConsumerWidget {
                       ref.read(settingsNotifierProvider.notifier)
                           .updateSettings({'email_notifications': value});
                     },
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                   ),
                 ],
               ),
@@ -81,7 +81,7 @@ class SettingsScreen extends ConsumerWidget {
                       ref.read(settingsNotifierProvider.notifier)
                           .setShowOnlineStatus(value);
                     },
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                   ),
                   const Divider(height: 1),
                   ListTile(
@@ -158,43 +158,46 @@ class SettingsScreen extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Kdo mi může psát'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<String>(
-              title: const Text('Kdokoliv'),
-              value: 'everyone',
-              groupValue: current,
-              onChanged: (value) {
-                ref.read(settingsNotifierProvider.notifier)
-                    .setAllowMessagesFrom(value!);
-                Navigator.pop(context);
-              },
-              activeColor: AppColors.primary,
-            ),
-            RadioListTile<String>(
-              title: const Text('Pouze sledující'),
-              value: 'followers',
-              groupValue: current,
-              onChanged: (value) {
-                ref.read(settingsNotifierProvider.notifier)
-                    .setAllowMessagesFrom(value!);
-                Navigator.pop(context);
-              },
-              activeColor: AppColors.primary,
-            ),
-            RadioListTile<String>(
-              title: const Text('Nikdo'),
-              value: 'nobody',
-              groupValue: current,
-              onChanged: (value) {
-                ref.read(settingsNotifierProvider.notifier)
-                    .setAllowMessagesFrom(value!);
-                Navigator.pop(context);
-              },
-              activeColor: AppColors.primary,
-            ),
-          ],
+        content: RadioGroup<String>(
+          onChanged: (value) {
+            if (value != null) {
+              ref.read(settingsNotifierProvider.notifier)
+                  .setAllowMessagesFrom(value);
+              Navigator.pop(context);
+            }
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Kdokoliv'),
+                leading: Radio<String>(value: 'everyone'),
+                onTap: () {
+                  ref.read(settingsNotifierProvider.notifier)
+                      .setAllowMessagesFrom('everyone');
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('Pouze sledující'),
+                leading: Radio<String>(value: 'followers'),
+                onTap: () {
+                  ref.read(settingsNotifierProvider.notifier)
+                      .setAllowMessagesFrom('followers');
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('Nikdo'),
+                leading: Radio<String>(value: 'nobody'),
+                onTap: () {
+                  ref.read(settingsNotifierProvider.notifier)
+                      .setAllowMessagesFrom('nobody');
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

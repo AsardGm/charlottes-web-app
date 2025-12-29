@@ -197,7 +197,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 ],
               ),
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             ),
 
             // Category selector
@@ -285,7 +285,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 ],
               ),
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             ),
 
             // Deadline selector (pouze pro typy s deadline)

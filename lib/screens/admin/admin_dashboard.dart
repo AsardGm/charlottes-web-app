@@ -159,7 +159,7 @@ class AdminDashboard extends ConsumerWidget {
                   child: CircularProgressIndicator(color: AppColors.primary),
                 ),
               ),
-              error: (_, __) => Container(
+              error: (_, _) => Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: AppColors.error.withAlpha(20),
