@@ -7,13 +7,16 @@ const PROJECT_ID = SERVICE_ACCOUNT.project_id || "spiderbagzz";
 
 interface PushPayload {
   user_id: string;
-  type: 'like' | 'comment' | 'follow' | 'mention' | 'reply' | 'chat' | 'post' | 'system';
+  type?: 'like' | 'comment' | 'follow' | 'mention' | 'reply' | 'chat' | 'post' | 'system';
   actor_name?: string;
   actor_avatar?: string;
   post_title?: string;
   message_preview?: string;
   custom_title?: string;
   custom_body?: string;
+  // Zpetna kompatibilita se starym API
+  title?: string;
+  body?: string;
   data?: Record<string, string>;
 }
 
@@ -162,15 +165,32 @@ serve(async (req) => {
     const payload: PushPayload = await req.json();
     const { user_id, type, data } = payload;
 
-    if (!user_id || !type) {
+    if (!user_id) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: user_id, type" }),
+        JSON.stringify({ error: "Missing required field: user_id" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // Generuj hezke texty
-    const { title, body } = generateNotificationContent(payload);
+    // Zpetna kompatibilita - pokud neni type, pouzij title/body primo
+    let title: string;
+    let body: string;
+
+    if (type) {
+      // Nove API - generuj texty podle typu
+      const content = generateNotificationContent(payload);
+      title = content.title;
+      body = content.body;
+    } else if (payload.title && payload.body) {
+      // Stare API - pouzij primo title a body
+      title = payload.title;
+      body = payload.body;
+    } else {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields: type OR (title AND body)" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
     // Supabase client
     const supabase = createClient(
@@ -195,8 +215,8 @@ serve(async (req) => {
     const accessToken = await getAccessToken();
 
     // Notifikacni data
-    const notificationData = {
-      type,
+    const notificationData: Record<string, string> = {
+      type: type || data?.type || 'system',
       click_action: "FLUTTER_NOTIFICATION_CLICK",
       ...(data || {}),
     };
@@ -226,7 +246,7 @@ serve(async (req) => {
             notification: {
               icon: "/icons/Icon-192.png",
               badge: "/icons/Icon-192.png",
-              tag: type,
+              tag: type || data?.type || 'notification',
               renotify: true,
               requireInteraction: false,
             },
