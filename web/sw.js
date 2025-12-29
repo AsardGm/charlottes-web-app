@@ -1,5 +1,5 @@
 // SpiderBagzz Service Worker pro PWA a Push Notifications
-const CACHE_NAME = 'spiderbagzz-v1';
+const CACHE_NAME = 'spiderbagzz-v2';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache

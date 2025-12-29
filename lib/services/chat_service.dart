@@ -137,7 +137,7 @@ class ChatService {
   Future<MessageModel?> _getLastMessage(String conversationId) async {
     final response = await _supabase
         .from('messages')
-        .select('*, profiles(*)')
+        .select('*, profiles!messages_sender_id_fkey(*)')
         .eq('conversation_id', conversationId)
         .order('created_at', ascending: false)
         .limit(1)
@@ -282,7 +282,7 @@ class ChatService {
     try {
       final response = await _supabase
           .from('messages')
-          .select('*, profiles(*)')
+          .select('*, profiles!messages_sender_id_fkey(*)')
           .eq('conversation_id', conversationId)
           .order('created_at', ascending: false)
           .range(offset, offset + limit - 1);
@@ -371,7 +371,7 @@ class ChatService {
           'reply_to_id': replyToId,
           'expires_at': expiresAt?.toIso8601String(),
         })
-        .select('*, profiles(*)')
+        .select('*, profiles!messages_sender_id_fkey(*)')
         .single();
 
     // Aktualizuj timestamp konverzace
@@ -513,7 +513,7 @@ class ChatService {
     // Načti původní zprávu
     final original = await _supabase
         .from('messages')
-        .select('*, profiles(*)')
+        .select('*, profiles!messages_sender_id_fkey(*)')
         .eq('id', messageId)
         .single();
 
@@ -553,7 +553,7 @@ class ChatService {
           'forwarded_from_id': messageId,
           'original_sender_id': originalMessage.senderId,
         })
-        .select('*, profiles(*)')
+        .select('*, profiles!messages_sender_id_fkey(*)')
         .single();
 
     // Aktualizuj timestamp konverzace
@@ -592,7 +592,7 @@ class ChatService {
   Future<List<MessageModel>> getPinnedMessages(String conversationId) async {
     final response = await _supabase
         .from('pinned_messages')
-        .select('message_id, messages(*, profiles(*))')
+        .select('message_id, messages(*, profiles!messages_sender_id_fkey(*))')
         .eq('conversation_id', conversationId)
         .order('pinned_at', ascending: false);
 
