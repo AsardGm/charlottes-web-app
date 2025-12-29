@@ -64,10 +64,7 @@ class SearchService {
       debugPrint('Response length: ${(response as List).length}');
 
       final users = response
-          .map((u) {
-            debugPrint('Parsing user: $u');
-            return UserModel.fromJson(u as Map<String, dynamic>);
-          })
+          .map((u) => UserModel.fromJson(u))
           .toList();
 
       // Pokud nenajdeme podle username, zkus bio

@@ -159,9 +159,8 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                           await ref
                               .read(postsProvider.notifier)
                               .deletePost(post.id);
-                          if (mounted) {
-                            context.go('/');
-                          }
+                          if (!mounted) return;
+                          context.go('/');
                         },
                       ),
                       const Divider(),

@@ -154,8 +154,6 @@ class _ConversationTile extends ConsumerWidget {
     // Zobraz preview zprávy nebo placeholder
     String messagePreview = 'Zahajte konverzaci';
     if (lastMessage != null) {
-      // Debug
-      print('LastMessage: id=${lastMessage.id}, decrypted=${lastMessage.decryptedContent}, encrypted=${lastMessage.encryptedContent.length}');
       if (lastMessage.isDeleted) {
         messagePreview = 'Zprava byla smazana';
       } else if (lastMessage.decryptedContent != null &&

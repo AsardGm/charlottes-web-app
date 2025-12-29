@@ -359,11 +359,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             );
             ref.invalidate(messagesProvider(widget.conversationId));
           } catch (e) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Chyba: ${e.toString()}')),
-              );
-            }
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Chyba: ${e.toString()}')),
+            );
           }
         },
       ),

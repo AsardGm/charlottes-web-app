@@ -148,25 +148,19 @@ class ChatService {
     var message = MessageModel.fromJson(response);
 
     // Dešifruj zprávu pro náhled
-    print('_getLastMessage: id=${message.id}, iv=${message.iv.length}, enc=${message.encryptedContent.length}');
     if (!message.isDeleted && message.encryptedContent.isNotEmpty && message.iv.isNotEmpty) {
       try {
-        print('Decrypting preview for: $conversationId');
         final sessionKey = await _getOrCreateSessionKey(conversationId);
         final decrypted = await _encryption.decryptMessage(
           ciphertext: message.encryptedContent,
           iv: message.iv,
           secretKey: sessionKey,
         );
-        print('Preview OK: ${decrypted.length > 20 ? decrypted.substring(0, 20) : decrypted}');
         message = message.copyWith(decryptedContent: decrypted);
       } catch (e) {
-        print('Decrypt preview ERROR: $e');
         // Fallback text při selhání dešifrování
         message = message.copyWith(decryptedContent: '[Sifrovana zprava]');
       }
-    } else {
-      print('Skipping decrypt: deleted=${message.isDeleted}, enc=${message.encryptedContent.length}, iv=${message.iv.length}');
     }
 
     return message;
