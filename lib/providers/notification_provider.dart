@@ -108,6 +108,17 @@ class NotificationNotifier extends Notifier<AsyncValue<List<NotificationModel>>>
 
     ref.invalidate(unreadCountProvider);
   }
+
+  Future<void> deleteReadNotifications() async {
+    await _service.deleteReadNotifications();
+
+    state.whenData((notifications) {
+      final updated = notifications.where((n) => !n.isRead).toList();
+      state = AsyncValue.data(updated);
+    });
+
+    ref.invalidate(unreadCountProvider);
+  }
 }
 
 final notificationNotifierProvider =

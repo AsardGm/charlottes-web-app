@@ -15,15 +15,85 @@ class NotificationsScreen extends ConsumerWidget {
     final notificationsAsync = ref.watch(notificationNotifierProvider);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Notifikace'),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withAlpha(40),
+                    AppColors.primary.withAlpha(20),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.notifications_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Notifikace',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.done_all),
-            tooltip: 'Oznacit vse jako prectene',
-            onPressed: () {
-              ref.read(notificationNotifierProvider.notifier).markAllAsRead();
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, color: AppColors.textSecondary),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            color: AppColors.surface,
+            onSelected: (value) {
+              if (value == 'read_all') {
+                ref.read(notificationNotifierProvider.notifier).markAllAsRead();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Vse oznaceno jako prectene'),
+                    backgroundColor: AppColors.success,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                );
+              } else if (value == 'delete_read') {
+                ref.read(notificationNotifierProvider.notifier).deleteReadNotifications();
+              }
             },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'read_all',
+                child: Row(
+                  children: [
+                    Icon(Icons.done_all, color: AppColors.success, size: 20),
+                    const SizedBox(width: 12),
+                    const Text('Oznacit vse jako prectene'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'delete_read',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_sweep, color: AppColors.error, size: 20),
+                    const SizedBox(width: 12),
+                    const Text('Smazat prectene'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -32,40 +102,115 @@ class NotificationsScreen extends ConsumerWidget {
           if (notifications.isEmpty) {
             return _buildEmptyState();
           }
+
+          // Rozdeleni na dnes, vcera, starsi
+          final today = <NotificationModel>[];
+          final yesterday = <NotificationModel>[];
+          final older = <NotificationModel>[];
+          final now = DateTime.now();
+
+          for (final n in notifications) {
+            final diff = now.difference(n.createdAt).inDays;
+            if (diff == 0) {
+              today.add(n);
+            } else if (diff == 1) {
+              yesterday.add(n);
+            } else {
+              older.add(n);
+            }
+          }
+
           return RefreshIndicator(
+            color: AppColors.primary,
+            backgroundColor: AppColors.surface,
             onRefresh: () => ref.read(notificationNotifierProvider.notifier).refresh(),
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: notifications.length,
-              itemBuilder: (context, index) {
-                return _NotificationTile(
-                  notification: notifications[index],
-                  onTap: () => _handleNotificationTap(context, ref, notifications[index]),
-                  onDismiss: () {
-                    ref.read(notificationNotifierProvider.notifier)
-                        .deleteNotification(notifications[index].id);
-                  },
-                );
-              },
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              children: [
+                if (today.isNotEmpty) ...[
+                  _buildSectionHeader('Dnes', today.length),
+                  ...today.map((n) => _NotificationCard(
+                    notification: n,
+                    onTap: () => _handleNotificationTap(context, ref, n),
+                    onDismiss: () {
+                      ref.read(notificationNotifierProvider.notifier).deleteNotification(n.id);
+                    },
+                  )),
+                ],
+                if (yesterday.isNotEmpty) ...[
+                  _buildSectionHeader('Vcera', yesterday.length),
+                  ...yesterday.map((n) => _NotificationCard(
+                    notification: n,
+                    onTap: () => _handleNotificationTap(context, ref, n),
+                    onDismiss: () {
+                      ref.read(notificationNotifierProvider.notifier).deleteNotification(n.id);
+                    },
+                  )),
+                ],
+                if (older.isNotEmpty) ...[
+                  _buildSectionHeader('Starsi', older.length),
+                  ...older.map((n) => _NotificationCard(
+                    notification: n,
+                    onTap: () => _handleNotificationTap(context, ref, n),
+                    onDismiss: () {
+                      ref.read(notificationNotifierProvider.notifier).deleteNotification(n.id);
+                    },
+                  )),
+                ],
+                const SizedBox(height: 20),
+              ],
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
+        loading: () => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 48, color: AppColors.error),
+              CircularProgressIndicator(color: AppColors.primary),
               const SizedBox(height: 16),
-              Text('Chyba: ${error.toString()}'),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () => ref.read(notificationNotifierProvider.notifier).refresh(),
-                child: const Text('Zkusit znovu'),
+              Text(
+                'Nacitam notifikace...',
+                style: TextStyle(color: AppColors.textMuted),
               ),
             ],
           ),
         ),
+        error: (error, _) => _buildErrorState(ref, error.toString()),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, int count) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16, bottom: 8),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textMuted,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withAlpha(20),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              count.toString(),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -76,43 +221,37 @@ class NotificationsScreen extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 100,
-            height: 100,
+            width: 120,
+            height: 120,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
+              gradient: RadialGradient(
                 colors: [
-                  AppColors.primary.withAlpha(20),
+                  AppColors.primary.withAlpha(30),
                   AppColors.primary.withAlpha(5),
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
               ),
               shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.primary.withAlpha(30),
-                width: 2,
-              ),
             ),
             child: Icon(
-              Icons.notifications_none_rounded,
-              size: 48,
-              color: AppColors.primary.withAlpha(180),
+              Icons.notifications_off_rounded,
+              size: 56,
+              color: AppColors.primary.withAlpha(150),
             ),
           ),
           const SizedBox(height: 24),
           Text(
             'Zadne notifikace',
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Tady uvidis vsechny novinky',
+            'Az se neco stane, das se tady',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               color: AppColors.textMuted,
             ),
           ),
@@ -121,27 +260,84 @@ class NotificationsScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildErrorState(WidgetRef ref, String error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.error.withAlpha(20),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
+                size: 40,
+                color: AppColors.error,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Nepodarilo se nacist',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error,
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textMuted,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: () => ref.read(notificationNotifierProvider.notifier).refresh(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Zkusit znovu'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _handleNotificationTap(BuildContext context, WidgetRef ref, NotificationModel notification) {
-    // Oznac jako prectene
     if (!notification.isRead) {
       ref.read(notificationNotifierProvider.notifier).markAsRead(notification.id);
     }
 
-    // Naviguj podle typu
     if (notification.postId != null) {
       context.go('/post/${notification.postId}');
     } else if (notification.type == 'follow' && notification.actorId != null) {
-      // TODO: Navigate to user profile
+      context.go('/user/${notification.actorId}');
+    } else if (notification.type == 'chat' && notification.data['conversation_id'] != null) {
+      context.go('/chat/${notification.data['conversation_id']}');
     }
   }
 }
 
-class _NotificationTile extends StatelessWidget {
+class _NotificationCard extends StatelessWidget {
   final NotificationModel notification;
   final VoidCallback onTap;
   final VoidCallback onDismiss;
 
-  const _NotificationTile({
+  const _NotificationCard({
     required this.notification,
     required this.onTap,
     required this.onDismiss,
@@ -149,88 +345,175 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final typeInfo = _getTypeInfo();
+
     return Dismissible(
       key: Key(notification.id),
       direction: DismissDirection.endToStart,
       onDismissed: (_) => onDismiss(),
       background: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.error,
+          borderRadius: BorderRadius.circular(16),
+        ),
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        color: AppColors.error,
-        child: const Icon(Icons.delete, color: Colors.white),
-      ),
-      child: Material(
-        color: notification.isRead
-            ? Colors.transparent
-            : AppColors.primary.withAlpha(10),
-        child: InkWell(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.white.withAlpha(5),
-                  width: 1,
-                ),
+        padding: const EdgeInsets.only(right: 24),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.delete_rounded, color: Colors.white, size: 24),
+            SizedBox(height: 4),
+            Text(
+              'Smazat',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Icon nebo avatar
-                _buildLeading(),
-                const SizedBox(width: 12),
-                // Obsah
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        notification.title,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: notification.isRead
-                              ? FontWeight.w400
-                              : FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      if (notification.body != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          notification.body!,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textSecondary,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                      const SizedBox(height: 4),
-                      Text(
-                        Helpers.formatTimeAgo(notification.createdAt),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
+          ],
+        ),
+      ),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        decoration: BoxDecoration(
+          color: notification.isRead
+              ? AppColors.surface
+              : AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: notification.isRead
+                ? Colors.white.withAlpha(5)
+                : typeInfo.color.withAlpha(40),
+            width: notification.isRead ? 1 : 2,
+          ),
+          boxShadow: notification.isRead
+              ? null
+              : [
+                  BoxShadow(
+                    color: typeInfo.color.withAlpha(20),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-                // Unread indicator
-                if (!notification.isRead)
-                  Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.only(top: 6, left: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
+                ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Avatar nebo ikona
+                  _buildAvatar(typeInfo),
+                  const SizedBox(width: 14),
+                  // Obsah
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            // Typ badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: typeInfo.color.withAlpha(20),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    typeInfo.icon,
+                                    size: 12,
+                                    color: typeInfo.color,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    typeInfo.label,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: typeInfo.color,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Spacer(),
+                            // Cas
+                            Text(
+                              Helpers.formatTimeAgo(notification.createdAt),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // Title
+                        Text(
+                          notification.title,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: notification.isRead
+                                ? FontWeight.w500
+                                : FontWeight.w700,
+                            color: AppColors.textPrimary,
+                            height: 1.3,
+                          ),
+                        ),
+                        // Body
+                        if (notification.body != null &&
+                            notification.body!.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            notification.body!,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                              height: 1.4,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-              ],
+                  // Unread indicator
+                  if (!notification.isRead)
+                    Container(
+                      width: 10,
+                      height: 10,
+                      margin: const EdgeInsets.only(left: 8),
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          colors: [
+                            typeInfo.color,
+                            typeInfo.color.withAlpha(150),
+                          ],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: typeInfo.color.withAlpha(100),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -238,71 +521,124 @@ class _NotificationTile extends StatelessWidget {
     );
   }
 
-  Widget _buildLeading() {
+  Widget _buildAvatar(_NotificationTypeInfo typeInfo) {
     if (notification.actor != null) {
-      return UserAvatar(
-        imageUrl: notification.actor!.avatarUrl,
-        name: notification.actor!.username,
-        size: 44,
+      return Stack(
+        children: [
+          UserAvatar(
+            imageUrl: notification.actor!.avatarUrl,
+            name: notification.actor!.username,
+            size: 48,
+          ),
+          Positioned(
+            right: -2,
+            bottom: -2,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: typeInfo.color,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.surface,
+                  width: 2,
+                ),
+              ),
+              child: Icon(
+                typeInfo.icon,
+                size: 10,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
       );
     }
 
     return Container(
-      width: 44,
-      height: 44,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
-        color: _getTypeColor().withAlpha(20),
-        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [
+            typeInfo.color.withAlpha(40),
+            typeInfo.color.withAlpha(20),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Icon(
-        _getTypeIcon(),
-        color: _getTypeColor(),
-        size: 22,
+        typeInfo.icon,
+        color: typeInfo.color,
+        size: 24,
       ),
     );
   }
 
-  IconData _getTypeIcon() {
+  _NotificationTypeInfo _getTypeInfo() {
     switch (notification.type) {
       case 'like':
-        return Icons.thumb_up;
+        return _NotificationTypeInfo(
+          icon: Icons.favorite_rounded,
+          color: const Color(0xFFE91E63),
+          label: 'Like',
+        );
       case 'comment':
-        return Icons.chat_bubble;
+        return _NotificationTypeInfo(
+          icon: Icons.chat_bubble_rounded,
+          color: AppColors.info,
+          label: 'Komentar',
+        );
       case 'mention':
-        return Icons.alternate_email;
+        return _NotificationTypeInfo(
+          icon: Icons.alternate_email_rounded,
+          color: AppColors.warning,
+          label: 'Zmineni',
+        );
       case 'follow':
-        return Icons.person_add;
+        return _NotificationTypeInfo(
+          icon: Icons.person_add_rounded,
+          color: AppColors.success,
+          label: 'Sledovani',
+        );
       case 'reply':
-        return Icons.reply;
+        return _NotificationTypeInfo(
+          icon: Icons.reply_rounded,
+          color: AppColors.info,
+          label: 'Odpoved',
+        );
       case 'post':
-        return Icons.article;
+        return _NotificationTypeInfo(
+          icon: Icons.article_rounded,
+          color: AppColors.primary,
+          label: 'Prispevek',
+        );
       case 'chat':
-        return Icons.message;
+        return _NotificationTypeInfo(
+          icon: Icons.message_rounded,
+          color: const Color(0xFF00BCD4),
+          label: 'Zprava',
+        );
       case 'system':
       default:
-        return Icons.notifications;
+        return _NotificationTypeInfo(
+          icon: Icons.notifications_rounded,
+          color: AppColors.textMuted,
+          label: 'System',
+        );
     }
   }
+}
 
-  Color _getTypeColor() {
-    switch (notification.type) {
-      case 'like':
-        return AppColors.primary;
-      case 'comment':
-        return AppColors.info;
-      case 'mention':
-        return AppColors.warning;
-      case 'follow':
-        return AppColors.success;
-      case 'reply':
-        return AppColors.info;
-      case 'post':
-        return AppColors.primary;
-      case 'chat':
-        return AppColors.success;
-      case 'system':
-      default:
-        return AppColors.textMuted;
-    }
-  }
+class _NotificationTypeInfo {
+  final IconData icon;
+  final Color color;
+  final String label;
+
+  _NotificationTypeInfo({
+    required this.icon,
+    required this.color,
+    required this.label,
+  });
 }

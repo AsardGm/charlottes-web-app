@@ -7,9 +7,84 @@ const PROJECT_ID = SERVICE_ACCOUNT.project_id || "spiderbagzz";
 
 interface PushPayload {
   user_id: string;
-  title: string;
-  body: string;
+  type: 'like' | 'comment' | 'follow' | 'mention' | 'reply' | 'chat' | 'post' | 'system';
+  actor_name?: string;
+  actor_avatar?: string;
+  post_title?: string;
+  message_preview?: string;
+  custom_title?: string;
+  custom_body?: string;
   data?: Record<string, string>;
+}
+
+// Generovani hezkych textu notifikaci
+function generateNotificationContent(payload: PushPayload): { title: string; body: string } {
+  const { type, actor_name, post_title, message_preview, custom_title, custom_body } = payload;
+
+  // Custom texty maji prednost
+  if (custom_title && custom_body) {
+    return { title: custom_title, body: custom_body };
+  }
+
+  const name = actor_name || 'Nekdo';
+  const postPreview = post_title ? `"${post_title.substring(0, 50)}${post_title.length > 50 ? '...' : ''}"` : '';
+
+  switch (type) {
+    case 'like':
+      return {
+        title: `${name} ocenil tvuj prispevek ❤️`,
+        body: postPreview || 'Tvuj prispevek se libi!',
+      };
+
+    case 'comment':
+      return {
+        title: `${name} okomentoval tvuj prispevek 💬`,
+        body: message_preview
+          ? `"${message_preview.substring(0, 80)}${message_preview.length > 80 ? '...' : ''}"`
+          : postPreview || 'Podivej se na novy komentar',
+      };
+
+    case 'reply':
+      return {
+        title: `${name} ti odpoveděl 💬`,
+        body: message_preview
+          ? `"${message_preview.substring(0, 80)}${message_preview.length > 80 ? '...' : ''}"`
+          : 'Podivej se na odpoved',
+      };
+
+    case 'follow':
+      return {
+        title: `${name} te zacal sledovat 👋`,
+        body: 'Mas noveho sledujiciho! Podivej se na jeho profil.',
+      };
+
+    case 'mention':
+      return {
+        title: `${name} te zminil 📣`,
+        body: postPreview || 'Byl jsi zminen v prispevku',
+      };
+
+    case 'chat':
+      return {
+        title: `Nova zprava od ${name} 💬`,
+        body: message_preview
+          ? `${message_preview.substring(0, 100)}${message_preview.length > 100 ? '...' : ''}`
+          : 'Mas novou zpravu',
+      };
+
+    case 'post':
+      return {
+        title: `${name} pridal novy prispevek 📝`,
+        body: postPreview || 'Podivej se na novy obsah',
+      };
+
+    case 'system':
+    default:
+      return {
+        title: custom_title || "Charlotte's Web",
+        body: custom_body || 'Mas novou notifikaci',
+      };
+  }
 }
 
 // Funkce pro ziskani OAuth2 access tokenu
@@ -17,7 +92,6 @@ async function getAccessToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   const exp = now + 3600;
 
-  // JWT header a payload
   const header = { alg: "RS256", typ: "JWT" };
   const payload = {
     iss: SERVICE_ACCOUNT.client_email,
@@ -28,13 +102,11 @@ async function getAccessToken(): Promise<string> {
     scope: "https://www.googleapis.com/auth/firebase.messaging",
   };
 
-  // Encode header a payload
   const encoder = new TextEncoder();
   const headerB64 = btoa(JSON.stringify(header)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
   const payloadB64 = btoa(JSON.stringify(payload)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
   const unsignedToken = `${headerB64}.${payloadB64}`;
 
-  // Importuj private key a podepis JWT
   const privateKey = SERVICE_ACCOUNT.private_key;
   const keyData = privateKey
     .replace("-----BEGIN PRIVATE KEY-----", "")
@@ -64,7 +136,6 @@ async function getAccessToken(): Promise<string> {
 
   const jwt = `${unsignedToken}.${signatureB64}`;
 
-  // Vymen JWT za access token
   const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -89,14 +160,17 @@ serve(async (req) => {
 
   try {
     const payload: PushPayload = await req.json();
-    const { user_id, title, body, data } = payload;
+    const { user_id, type, data } = payload;
 
-    if (!user_id || !title || !body) {
+    if (!user_id || !type) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
+        JSON.stringify({ error: "Missing required fields: user_id, type" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
+
+    // Generuj hezke texty
+    const { title, body } = generateNotificationContent(payload);
 
     // Supabase client
     const supabase = createClient(
@@ -120,42 +194,76 @@ serve(async (req) => {
     // Ziskej access token
     const accessToken = await getAccessToken();
 
+    // Notifikacni data
+    const notificationData = {
+      type,
+      click_action: "FLUTTER_NOTIFICATION_CLICK",
+      ...(data || {}),
+    };
+
     // Posli notifikaci na kazdy token (FCM V1 API)
     const results = await Promise.all(
       tokens.map(async ({ token, platform }) => {
-        const fcmPayload = {
+        const isIOSPWA = platform === 'ios_pwa';
+        const isWeb = platform === 'web' || platform === 'ios_web' || isIOSPWA;
+        const isAndroid = platform === 'android';
+        const isIOS = platform === 'ios';
+
+        const fcmPayload: Record<string, unknown> = {
           message: {
             token: token,
             notification: {
               title,
               body,
             },
-            data: data || {},
-            webpush: platform === "web" ? {
-              notification: {
-                icon: "/icons/Icon-192.png",
-                badge: "/icons/Icon-192.png",
-              },
-              fcm_options: {
-                link: "https://spiderbagzz.web.app",
-              },
-            } : undefined,
-            android: platform === "android" ? {
-              notification: {
-                icon: "ic_notification",
-                color: "#C41E24",
-              },
-            } : undefined,
-            apns: platform === "ios" ? {
-              payload: {
-                aps: {
-                  badge: 1,
-                  sound: "default",
-                },
-              },
-            } : undefined,
+            data: notificationData,
           },
         };
+
+        // Web-specificke nastaveni
+        if (isWeb) {
+          (fcmPayload.message as Record<string, unknown>).webpush = {
+            notification: {
+              icon: "/icons/Icon-192.png",
+              badge: "/icons/Icon-192.png",
+              tag: type,
+              renotify: true,
+              requireInteraction: false,
+            },
+            fcm_options: {
+              link: data?.url || "https://spiderbagzz-app.web.app",
+            },
+          };
+        }
+
+        // Android-specificke nastaveni
+        if (isAndroid) {
+          (fcmPayload.message as Record<string, unknown>).android = {
+            notification: {
+              icon: "ic_notification",
+              color: "#C41E24",
+              channel_id: "default",
+              click_action: "FLUTTER_NOTIFICATION_CLICK",
+            },
+            priority: "high",
+          };
+        }
+
+        // iOS-specificke nastaveni
+        if (isIOS) {
+          (fcmPayload.message as Record<string, unknown>).apns = {
+            payload: {
+              aps: {
+                badge: 1,
+                sound: "default",
+                "mutable-content": 1,
+              },
+            },
+            fcm_options: {
+              image: payload.actor_avatar,
+            },
+          };
+        }
 
         const response = await fetch(
           `https://fcm.googleapis.com/v1/projects/${PROJECT_ID}/messages:send`,
@@ -179,8 +287,27 @@ serve(async (req) => {
       })
     );
 
+    // Odstran neplatne tokeny
+    const failedTokens = results
+      .filter(r => !r.success && (r.status === 404 || r.status === 410))
+      .map(r => tokens.find(t => t.platform === r.platform)?.token)
+      .filter(Boolean);
+
+    if (failedTokens.length > 0) {
+      await supabase
+        .from("push_tokens")
+        .delete()
+        .in("token", failedTokens);
+    }
+
     return new Response(
-      JSON.stringify({ success: true, results }),
+      JSON.stringify({
+        success: true,
+        title,
+        body,
+        results,
+        removed_invalid_tokens: failedTokens.length,
+      }),
       {
         status: 200,
         headers: {
