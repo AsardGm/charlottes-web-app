@@ -11,23 +11,15 @@ CREATE OR REPLACE FUNCTION send_push_notification(
 )
 RETURNS VOID AS $$
 DECLARE
-  supabase_url TEXT;
-  service_key TEXT;
+  supabase_url TEXT := 'https://lzzoquoucfaxsifhtifo.supabase.co';
+  service_key TEXT := 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6em9xdW91Y2ZheHNpZmh0aWZvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Njg0NzY4OSwiZXhwIjoyMDgyNDIzNjg5fQ.niNwt4wwnLG3T_644WBPuSCTtcHqRLKdLF7VPHf7krg';
 BEGIN
-  -- Získej URL a klíč z konfigurace
-  supabase_url := current_setting('app.settings.supabase_url', true);
-  service_key := current_setting('app.settings.service_role_key', true);
-
-  -- Pokud nejsou nastavené, použij hardcoded hodnoty
-  IF supabase_url IS NULL THEN
-    supabase_url := 'https://lzzoquoucfaxsifhtifo.supabase.co';
-  END IF;
-
-  -- Zavolej Edge Function
+  -- Zavolej Edge Function s Authorization headerem
   PERFORM net.http_post(
     url := supabase_url || '/functions/v1/send-push',
     headers := jsonb_build_object(
-      'Content-Type', 'application/json'
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || service_key
     ),
     body := jsonb_build_object(
       'user_id', p_user_id::TEXT,
