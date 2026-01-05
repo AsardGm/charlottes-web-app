@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/badge_provider.dart';
 import '../../providers/posts_provider.dart';
 import '../../services/profile_service.dart';
+import '../../services/chat_service.dart';
 import '../../models/user_model.dart';
 import '../../models/post_model.dart';
 import '../../models/badge_model.dart';
@@ -60,6 +61,27 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  /// Otevře nebo vytvoří chat s uživatelem
+  Future<void> _openChat(String userId) async {
+    try {
+      final chatService = ChatService();
+      final conversationId =
+          await chatService.getOrCreateDirectConversation(userId);
+      if (mounted) {
+        context.push('/chat/$conversationId');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Nepodařilo se otevřít chat: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -305,7 +327,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen>
                     const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => context.push('/chat/${user.id}'),
+                        onPressed: () => _openChat(user.id),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.textPrimary,
                           side: BorderSide(color: AppColors.textMuted.withAlpha(50)),

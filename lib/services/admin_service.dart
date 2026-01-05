@@ -22,6 +22,21 @@ class AdminService {
         .toList();
   }
 
+  /// Vyhledá uživatele podle username (pro @mentions)
+  Future<List<UserModel>> searchUsers(String query, {int limit = 10}) async {
+    final response = await _supabase
+        .from('profiles')
+        .select()
+        .ilike('username', '%$query%')
+        .eq('is_blocked', false)
+        .limit(limit)
+        .order('username');
+
+    return (response as List)
+        .map((json) => UserModel.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
   /// Zablokuje uživatele
   Future<void> blockUser(String userId) async {
     await _supabase

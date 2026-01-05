@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
+import '../screens/auth/forgot_password_screen.dart';
+import '../screens/onboarding/onboarding_screen.dart';
+import '../screens/splash/splash_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/feed/create_post_screen.dart';
 import '../screens/feed/post_detail_screen.dart';
@@ -13,6 +17,7 @@ import '../screens/admin/post_management_screen.dart';
 import '../screens/chat/chat_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/settings/settings_screen.dart';
+import '../screens/settings/privacy_security_screen.dart';
 import '../screens/search/search_screen.dart';
 import '../screens/profile/edit_profile_screen.dart';
 import '../screens/profile/user_profile_screen.dart';
@@ -32,22 +37,60 @@ class AuthChangeNotifier extends ChangeNotifier {
 
 final _authChangeNotifier = AuthChangeNotifier();
 
+/// Cache pro onboarding status (aby se nevolalo SharedPreferences při každém redirectu)
+bool? _onboardingCompleted;
+
+/// Načte onboarding status z SharedPreferences
+Future<bool> _checkOnboardingCompleted() async {
+  if (_onboardingCompleted != null) return _onboardingCompleted!;
+  final prefs = await SharedPreferences.getInstance();
+  _onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
+  return _onboardingCompleted!;
+}
+
+/// Resetuje cache (volat po změně onboarding statusu)
+void resetOnboardingCache() {
+  _onboardingCompleted = null;
+}
+
 /// Provider pro GoRouter
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/splash',
     refreshListenable: _authChangeNotifier,
-    redirect: (context, state) {
+    redirect: (context, state) async {
       final session = Supabase.instance.client.auth.currentSession;
       final isLoggedIn = session != null;
-      final isAuthRoute = state.matchedLocation == '/login' || state.matchedLocation == '/register';
+      final isSplash = state.matchedLocation == '/splash';
+      final isOnboarding = state.matchedLocation == '/onboarding';
+      final isAuthRoute = state.matchedLocation == '/login' ||
+                          state.matchedLocation == '/register' ||
+                          state.matchedLocation == '/forgot-password';
 
-      // Pokud není přihlášen a není na auth stránce, přesměruj na login
-      if (!isLoggedIn && !isAuthRoute) {
+      // Splash screen se nezpracovává - nechej ho běžet
+      if (isSplash) {
+        return null;
+      }
+
+      // Zkontroluj onboarding status
+      final onboardingCompleted = await _checkOnboardingCompleted();
+
+      // Pokud onboarding není dokončen a není na onboarding stránce
+      if (!onboardingCompleted && !isOnboarding) {
+        return '/onboarding';
+      }
+
+      // Pokud onboarding je dokončen a je na onboarding stránce
+      if (onboardingCompleted && isOnboarding) {
+        return isLoggedIn ? '/' : '/login';
+      }
+
+      // Pokud není přihlášen a není na auth/onboarding stránce
+      if (!isLoggedIn && !isAuthRoute && !isOnboarding) {
         return '/login';
       }
 
-      // Pokud je přihlášen a je na auth stránce, přesměruj na home
+      // Pokud je přihlášen a je na auth stránce
       if (isLoggedIn && isAuthRoute) {
         return '/';
       }
@@ -55,6 +98,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // Splash
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+
+      // Onboarding
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+
       // Auth
       GoRoute(
         path: '/login',
@@ -63,6 +118,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
 
       // Home
@@ -129,6 +188,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/privacy-security',
+        builder: (context, state) => const PrivacySecurityScreen(),
       ),
       GoRoute(
         path: '/search',

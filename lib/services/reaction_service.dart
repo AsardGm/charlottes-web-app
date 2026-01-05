@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/reaction_model.dart';
+import 'push_sender_service.dart';
 
 /// Služba pro správu reakcí na příspěvky
 ///
@@ -7,6 +8,9 @@ import '../models/reaction_model.dart';
 class ReactionService {
   /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
+
+  /// Push sender pro notifikace
+  final PushSenderService _pushSender = PushSenderService.instance;
 
   /// Získá všechny reakce na příspěvek
   Future<List<ReactionModel>> getReactions(String postId) async {
@@ -62,7 +66,35 @@ class ReactionService {
         .select()
         .single();
 
+    // Posli push notifikaci autorovi prispevku
+    _sendReactionNotification(postId);
+
     return ReactionModel.fromJson(response);
+  }
+
+  /// Odesle push notifikaci autorovi prispevku o nove reakci
+  Future<void> _sendReactionNotification(String postId) async {
+    try {
+      // Ziskej info o prispevku
+      final post = await _supabase
+          .from('posts')
+          .select('author_id, content')
+          .eq('id', postId)
+          .single();
+
+      final authorId = post['author_id'] as String?;
+      final content = post['content'] as String? ?? '';
+
+      if (authorId != null) {
+        await _pushSender.sendLikeNotification(
+          postAuthorId: authorId,
+          postId: postId,
+          postContent: content,
+        );
+      }
+    } catch (e) {
+      // Ignoruj chyby - push neni kriticky
+    }
   }
 
   /// Odstraní reakci z příspěvku

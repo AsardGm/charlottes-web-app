@@ -25,10 +25,19 @@ class AppColors {
   static const Color surfaceLight = Color(0xFF1C3148);   // Svetlejsi plocha
   static const Color surfaceElevated = Color(0xFF254158); // Elevated karty
 
+  // === FUNCTIONAL DARK THEME (pro feed) ===
+  static const Color functionalBg = Color(0xFF14181D);      // Tmave pozadi
+  static const Color functionalSurface = Color(0xFF2A323C); // Karty/povrchy
+  static const Color functionalBorder = Color(0xFF3A424C);  // Ramy/separatory
+  static const Color functionalMuted = Color(0xFF8A929C);   // Tlumeny text
+
   // === TEXT ===
   static const Color textPrimary = Color(0xFFF5F0E6);    // Kremova bila z loga
   static const Color textSecondary = Color(0xFFB8C4D0);  // Svetle seda s modrim
-  static const Color textMuted = Color(0xFF6B7B8A);      // Utlumena modro-seda
+  static const Color textMuted = Color(0xFF8A9AAA);      // Vylepseny kontrast (WCAG AA)
+
+  // === ACCESSIBILITY - High Contrast Variants ===
+  static const Color textMutedHigh = Color(0xFFA0B0C0);  // Vyssi kontrast pro a11y
 
   // === ACCENT - Zluta/Hneda (z krabic UPS/DHL) ===
   static const Color gold = Color(0xFFC4A35A);           // Zlata/hneda z krabic

@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:app_settings/app_settings.dart';
+import 'package:go_router/go_router.dart';
 import '../../theme/theme.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/push_notification_provider.dart';
+import '../../providers/theme_provider.dart' as theme;
+import '../../services/web_push_service.dart';
+import '../onboarding/onboarding_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -16,6 +19,16 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              context.go('/');
+            }
+          },
+        ),
         title: const Text('Nastaveni'),
       ),
       body: settingsAsync.when(
@@ -31,12 +44,7 @@ class SettingsScreen extends ConsumerWidget {
               _SectionHeader(title: 'Vzhled'),
               _SettingsCard(
                 children: [
-                  _ThemeTile(
-                    currentTheme: settings.theme,
-                    onChanged: (theme) {
-                      ref.read(settingsNotifierProvider.notifier).setTheme(theme);
-                    },
-                  ),
+                  _ThemeTileNew(ref: ref),
                 ],
               ),
 
@@ -46,71 +54,13 @@ class SettingsScreen extends ConsumerWidget {
               _SectionHeader(title: 'Notifikace'),
               _SettingsCard(
                 children: [
-                  // Push notifikace - Web nebo Mobile
+                  // Web/PWA - push notifikace
                   if (kIsWeb) ...[
-                    // Web Push notifikace
-                    Consumer(
-                      builder: (context, ref, _) {
-                        final pushState = ref.watch(pushNotificationNotifierProvider);
-                        final permissionAsync = ref.watch(notificationPermissionProvider);
-
-                        return permissionAsync.when(
-                          data: (permission) {
-                            final isEnabled = pushState.value ?? false;
-                            final isLoading = pushState.isLoading;
-
-                            return SwitchListTile(
-                              title: const Text('Push notifikace'),
-                              subtitle: Text(
-                                permission == 'denied'
-                                    ? 'Notifikace jsou blokovány v prohlizeci'
-                                    : 'Dostávat upozornění i když je app zavřená',
-                              ),
-                              value: isEnabled,
-                              onChanged: permission == 'denied'
-                                  ? null
-                                  : (value) async {
-                                      if (value) {
-                                        await ref
-                                            .read(pushNotificationNotifierProvider.notifier)
-                                            .enableNotifications();
-                                      } else {
-                                        await ref
-                                            .read(pushNotificationNotifierProvider.notifier)
-                                            .disableNotifications();
-                                      }
-                                    },
-                              activeThumbColor: AppColors.primary,
-                              secondary: isLoading
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    )
-                                  : null,
-                            );
-                          },
-                          loading: () => const ListTile(
-                            title: Text('Push notifikace'),
-                            trailing: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ),
-                          error: (_, _) => SwitchListTile(
-                            title: const Text('Push notifikace'),
-                            subtitle: const Text('Nelze načíst stav'),
-                            value: false,
-                            onChanged: null,
-                            activeThumbColor: AppColors.primary,
-                          ),
-                        );
-                      },
-                    ),
+                    const _WebPushTile(),
                     const Divider(height: 1),
-                  ] else ...[
-                    // Mobile - odkaz do systémových nastavení
+                  ],
+                  // Mobile - odkaz do systémových nastavení
+                  if (!kIsWeb) ...[
                     ListTile(
                       title: const Text('Push notifikace'),
                       subtitle: const Text('Spravovat v nastaveni systemu'),
@@ -151,6 +101,14 @@ class SettingsScreen extends ConsumerWidget {
               _SectionHeader(title: 'Soukromi'),
               _SettingsCard(
                 children: [
+                  ListTile(
+                    leading: Icon(Icons.security, color: AppColors.primary),
+                    title: const Text('Soukromi a bezpecnost'),
+                    subtitle: const Text('Soukromy ucet, heslo, prihlaseni'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/privacy-security'),
+                  ),
+                  const Divider(height: 1),
                   SwitchListTile(
                     title: const Text('Zobrazovat online status'),
                     subtitle: const Text('Ostatní uvidí, kdy jsi online'),
@@ -167,6 +125,27 @@ class SettingsScreen extends ConsumerWidget {
                     subtitle: Text(_getMessagesFromLabel(settings.allowMessagesFrom)),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => _showMessagesFromDialog(context, ref, settings.allowMessagesFrom),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Buddy - pruvodce
+              _SectionHeader(title: 'Pruvodce'),
+              _SettingsCard(
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.auto_awesome, color: AppColors.accent),
+                    title: const Text('Spustit pruvodce'),
+                    subtitle: const Text('Znovu zobrazit uvitani od Buddyho'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () async {
+                      await OnboardingHelper.reset();
+                      if (context.mounted) {
+                        context.go('/onboarding');
+                      }
+                    },
                   ),
                 ],
               ),
@@ -193,7 +172,7 @@ class SettingsScreen extends ConsumerWidget {
               // Verze
               Center(
                 child: Text(
-                  "Charlotte's Web v1.0.0",
+                  "Buds and Buddies v1.0.0",
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textMuted,
@@ -351,39 +330,38 @@ class _SettingsCard extends StatelessWidget {
   }
 }
 
-class _ThemeTile extends StatelessWidget {
-  final String currentTheme;
-  final ValueChanged<String> onChanged;
+/// Widget pro přepínání tématu - používá theme_provider
+class _ThemeTileNew extends StatelessWidget {
+  final WidgetRef ref;
 
-  const _ThemeTile({
-    required this.currentTheme,
-    required this.onChanged,
-  });
+  const _ThemeTileNew({required this.ref});
 
   @override
   Widget build(BuildContext context) {
+    final themeMode = ref.watch(theme.themeModeProvider);
+
     return ListTile(
       title: const Text('Tema'),
-      subtitle: Text(_getThemeLabel(currentTheme)),
+      subtitle: Text(_getThemeLabel(themeMode)),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => _showThemeDialog(context),
     );
   }
 
-  String _getThemeLabel(String theme) {
-    switch (theme) {
-      case 'dark':
+  String _getThemeLabel(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.dark:
         return 'Tmave';
-      case 'light':
+      case ThemeMode.light:
         return 'Svetle';
-      case 'system':
+      case ThemeMode.system:
         return 'Podle systemu';
-      default:
-        return theme;
     }
   }
 
   void _showThemeDialog(BuildContext context) {
+    final themeMode = ref.read(theme.themeModeProvider);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -395,9 +373,9 @@ class _ThemeTile extends StatelessWidget {
               icon: Icons.dark_mode,
               title: 'Tmave',
               value: 'dark',
-              isSelected: currentTheme == 'dark',
+              isSelected: themeMode == ThemeMode.dark,
               onTap: () {
-                onChanged('dark');
+                ref.read(theme.themeModeProvider.notifier).setDark();
                 Navigator.pop(context);
               },
             ),
@@ -405,9 +383,9 @@ class _ThemeTile extends StatelessWidget {
               icon: Icons.light_mode,
               title: 'Svetle',
               value: 'light',
-              isSelected: currentTheme == 'light',
+              isSelected: themeMode == ThemeMode.light,
               onTap: () {
-                onChanged('light');
+                ref.read(theme.themeModeProvider.notifier).setLight();
                 Navigator.pop(context);
               },
             ),
@@ -415,9 +393,9 @@ class _ThemeTile extends StatelessWidget {
               icon: Icons.settings_brightness,
               title: 'Podle systemu',
               value: 'system',
-              isSelected: currentTheme == 'system',
+              isSelected: themeMode == ThemeMode.system,
               onTap: () {
-                onChanged('system');
+                ref.read(theme.themeModeProvider.notifier).setSystem();
                 Navigator.pop(context);
               },
             ),
@@ -452,6 +430,187 @@ class _ThemeOption extends StatelessWidget {
           ? Icon(Icons.check, color: AppColors.primary)
           : null,
       onTap: onTap,
+    );
+  }
+}
+
+/// Widget pro nastavení web push notifikací
+class _WebPushTile extends StatefulWidget {
+  const _WebPushTile();
+
+  @override
+  State<_WebPushTile> createState() => _WebPushTileState();
+}
+
+class _WebPushTileState extends State<_WebPushTile> {
+  bool _isLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final pushService = WebPushService.instance;
+    final isEnabled = pushService.isEnabled;
+    final isPushSupported = pushService.isPushSupported;
+    final isStandalone = pushService.isStandalone;
+    final platform = pushService.platform;
+
+    // iOS Safari nepodporuje push
+    if (platform == 'ios_web') {
+      return ListTile(
+        title: const Text('Push notifikace'),
+        subtitle: const Text('Nainstaluj aplikaci pro push notifikace'),
+        trailing: Icon(
+          Icons.info_outline,
+          color: AppColors.textMuted,
+          size: 20,
+        ),
+        onTap: () => _showIOSInstallDialog(context),
+      );
+    }
+
+    // Platforma nepodporuje push
+    if (!isPushSupported) {
+      return ListTile(
+        title: const Text('Push notifikace'),
+        subtitle: const Text('Tvuj prohlizec nepodporuje push notifikace'),
+        trailing: Icon(
+          Icons.warning_amber,
+          color: AppColors.warning,
+          size: 20,
+        ),
+      );
+    }
+
+    return ListTile(
+      title: const Text('Push notifikace'),
+      subtitle: Text(
+        isEnabled
+            ? 'Povoleno${isStandalone ? ' (PWA)' : ''}'
+            : 'Klikni pro povoleni',
+      ),
+      trailing: _isLoading
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Icon(
+              isEnabled ? Icons.notifications_active : Icons.notifications_off,
+              color: isEnabled ? AppColors.success : AppColors.textMuted,
+            ),
+      onTap: isEnabled ? null : _requestPermission,
+    );
+  }
+
+  Future<void> _requestPermission() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await WebPushService.instance.requestPermission();
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+
+        if (result == 'granted') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Push notifikace povoleny!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else if (result == 'denied') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Push notifikace byly zamitnuty'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Chyba: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showIOSInstallDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Nainstaluj aplikaci'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Pro push notifikace na iOS je potreba nainstalovat aplikaci na plochu:',
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.ios_share, size: 24),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text('1. Klikni na tlacitko Sdilet'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.add_box_outlined, size: 24),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text('2. Vyber "Pridat na plochu"'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.check_circle_outline, size: 24),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text('3. Otevri aplikaci z plochy'),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Rozumim'),
+          ),
+        ],
+      ),
     );
   }
 }

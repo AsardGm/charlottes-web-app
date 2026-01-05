@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
+import 'push_sender_service.dart';
 
 /// Služba pro správu sledování uživatelů
 ///
@@ -9,6 +10,9 @@ import '../models/user_model.dart';
 class FollowService {
   /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
+
+  /// Push sender pro notifikace
+  final PushSenderService _pushSender = PushSenderService.instance;
 
   /// ID aktuálního uživatele
   String? get currentUserId => _supabase.auth.currentUser?.id;
@@ -92,6 +96,9 @@ class FollowService {
         'following_id': userId,
       });
       debugPrint('Follow successful');
+
+      // Posli push notifikaci sledovanemu uzivateli
+      _pushSender.sendFollowNotification(followedUserId: userId);
     } catch (e) {
       debugPrint('Follow error: $e');
       rethrow;

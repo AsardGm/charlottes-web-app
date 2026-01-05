@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/comment_model.dart';
+import 'push_sender_service.dart';
 
 /// Služba pro práci s komentáři
 ///
@@ -7,6 +8,9 @@ import '../models/comment_model.dart';
 class CommentService {
   /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
+
+  /// Push sender pro notifikace
+  final PushSenderService _pushSender = PushSenderService.instance;
 
   /// Načte komentáře k příspěvku
   ///
@@ -41,7 +45,42 @@ class CommentService {
         .select('*, profiles!comments_author_id_fkey(*)')
         .single();
 
-    return CommentModel.fromJson(response);
+    final comment = CommentModel.fromJson(response);
+
+    // Posli push notifikaci autorovi prispevku
+    _sendCommentNotification(postId, comment.id, content);
+
+    return comment;
+  }
+
+  /// Odesle push notifikaci autorovi prispevku o novem komentari
+  Future<void> _sendCommentNotification(
+    String postId,
+    String commentId,
+    String commentContent,
+  ) async {
+    try {
+      final post = await _supabase
+          .from('posts')
+          .select('author_id, content')
+          .eq('id', postId)
+          .single();
+
+      final authorId = post['author_id'] as String?;
+      final postContent = post['content'] as String? ?? '';
+
+      if (authorId != null) {
+        await _pushSender.sendCommentNotification(
+          postAuthorId: authorId,
+          postId: postId,
+          postContent: postContent,
+          commentContent: commentContent,
+          commentId: commentId,
+        );
+      }
+    } catch (e) {
+      // Ignoruj chyby - push neni kriticky
+    }
   }
 
   /// Smaže komentář

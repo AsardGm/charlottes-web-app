@@ -7,10 +7,12 @@ import '../models/conversation_model.dart';
 import '../models/poll_model.dart';
 import '../models/user_model.dart';
 import 'encryption_service.dart';
+import 'push_sender_service.dart';
 
 class ChatService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final EncryptionService _encryption = EncryptionService();
+  final PushSenderService _pushSender = PushSenderService.instance;
 
   // Cache pro session klíče konverzací
   final Map<String, SecretKey> _sessionKeys = {};
@@ -31,12 +33,21 @@ class ChatService {
     final signedPrekey = await _encryption.generateSignedPrekey();
     final oneTimePrekeys = await _encryption.generateOneTimePrekeys(10);
 
+    // Podepíši signed prekey pomocí identity klíče (Ed25519)
+    final signedPrekeySignature = await _encryption.signData(
+      Uint8List.fromList(signedPrekey.publicKey),
+    );
+
+    // Získej signing public key pro ověření
+    final signingPublicKey = await _encryption.getSigningPublicKey();
+
     // Ulož veřejné klíče do databáze
     await _supabase.from('user_keys').upsert({
       'user_id': currentUserId,
       'identity_public_key': identityKey.publicKeyBase64,
+      'signing_public_key': signingPublicKey,
       'signed_prekey_public': signedPrekey.publicKeyBase64,
-      'signed_prekey_signature': '', // TODO: Podepsat identity klíčem
+      'signed_prekey_signature': signedPrekeySignature,
       'one_time_prekeys':
           oneTimePrekeys.map((k) => base64Encode(k)).toList(),
     });
@@ -380,7 +391,40 @@ class ChatService {
         .eq('id', conversationId);
 
     final message = MessageModel.fromJson(response);
+
+    // Posli push notifikace prijemcum
+    _sendMessageNotifications(conversationId, content);
+
     return message.copyWith(decryptedContent: content);
+  }
+
+  /// Odesle push notifikace vsem prijemcum zpravy
+  Future<void> _sendMessageNotifications(
+    String conversationId,
+    String messageContent,
+  ) async {
+    try {
+      // Ziskej vsechny ucastniky konverzace krome sebe
+      final participants = await _supabase
+          .from('conversation_participants')
+          .select('user_id')
+          .eq('conversation_id', conversationId)
+          .neq('user_id', currentUserId!);
+
+      for (final p in participants as List) {
+        final recipientId = p['user_id'] as String?;
+        if (recipientId != null) {
+          await _pushSender.sendChatNotification(
+            recipientId: recipientId,
+            conversationId: conversationId,
+            messageContent: messageContent,
+          );
+        }
+      }
+    } catch (e) {
+      // Ignoruj chyby - push neni kriticky
+      debugPrint('Push notification error: $e');
+    }
   }
 
   /// Nahraje obrázek do Storage a vrátí URL
@@ -954,6 +998,7 @@ class ChatService {
 class UserPublicKeys {
   final String userId;
   final String identityPublicKey;
+  final String? signingPublicKey;
   final String signedPrekeyPublic;
   final String signedPrekeySignature;
   final List<String> oneTimePrekeys;
@@ -961,6 +1006,7 @@ class UserPublicKeys {
   UserPublicKeys({
     required this.userId,
     required this.identityPublicKey,
+    this.signingPublicKey,
     required this.signedPrekeyPublic,
     required this.signedPrekeySignature,
     required this.oneTimePrekeys,
@@ -970,12 +1016,27 @@ class UserPublicKeys {
     return UserPublicKeys(
       userId: json['user_id'] as String,
       identityPublicKey: json['identity_public_key'] as String,
+      signingPublicKey: json['signing_public_key'] as String?,
       signedPrekeyPublic: json['signed_prekey_public'] as String,
       signedPrekeySignature: json['signed_prekey_signature'] as String? ?? '',
       oneTimePrekeys: (json['one_time_prekeys'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
+    );
+  }
+
+  /// Ověří podpis signed prekey
+  Future<bool> verifySignedPrekey(EncryptionService encryption) async {
+    if (signingPublicKey == null || signedPrekeySignature.isEmpty) {
+      return false;
+    }
+
+    final prekeyBytes = base64Decode(signedPrekeyPublic);
+    return encryption.verifySignature(
+      data: Uint8List.fromList(prekeyBytes),
+      signatureBase64: signedPrekeySignature,
+      signingPublicKeyBase64: signingPublicKey!,
     );
   }
 }

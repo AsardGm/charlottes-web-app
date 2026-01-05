@@ -1,5 +1,5 @@
 class AppConstants {
-  static const String appName = "Charlotte's Web";
+  static const String appName = "Buds and Buddies";
 
   // User roles
   static const String roleMember = 'member';

@@ -44,6 +44,9 @@ class UserModel {
   /// Počet příspěvků
   final int postCount;
 
+  /// Je účet soukromý?
+  final bool isPrivate;
+
   UserModel({
     required this.id,
     required this.username,
@@ -58,6 +61,7 @@ class UserModel {
     this.followerCount = 0,
     this.followingCount = 0,
     this.postCount = 0,
+    this.isPrivate = false,
   });
 
   /// Je uživatel admin?
@@ -82,6 +86,7 @@ class UserModel {
       followerCount: json['follower_count'] as int? ?? 0,
       followingCount: json['following_count'] as int? ?? 0,
       postCount: json['post_count'] as int? ?? 0,
+      isPrivate: json['is_private'] as bool? ?? false,
     );
   }
 
@@ -101,6 +106,7 @@ class UserModel {
       'follower_count': followerCount,
       'following_count': followingCount,
       'post_count': postCount,
+      'is_private': isPrivate,
     };
   }
 
@@ -119,6 +125,7 @@ class UserModel {
     int? followerCount,
     int? followingCount,
     int? postCount,
+    bool? isPrivate,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -134,6 +141,7 @@ class UserModel {
       followerCount: followerCount ?? this.followerCount,
       followingCount: followingCount ?? this.followingCount,
       postCount: postCount ?? this.postCount,
+      isPrivate: isPrivate ?? this.isPrivate,
     );
   }
 }

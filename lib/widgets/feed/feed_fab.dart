@@ -33,19 +33,23 @@ class FeedFab extends StatelessWidget {
           FloatingActionButton.small(
             heroTag: 'filter',
             onPressed: onOpenFilters,
-            backgroundColor: AppColors.surfaceLight,
+            backgroundColor: AppColors.functionalSurface,
+            foregroundColor: AppColors.functionalMuted,
             child: Badge(
               isLabelVisible: hasActiveFilters,
+              backgroundColor: AppColors.accent,
               child: const Icon(Icons.filter_list),
             ),
           ),
           const SizedBox(height: 8),
         ],
 
-        // Tlačítko pro vytvoření příspěvku
+        // Tlačítko pro vytvoření příspěvku - Functional Dark cyan
         FloatingActionButton(
           heroTag: 'create',
           onPressed: () => context.go('/create-post'),
+          backgroundColor: AppColors.accent,
+          foregroundColor: Colors.black,
           child: const Icon(Icons.add),
         ),
       ],

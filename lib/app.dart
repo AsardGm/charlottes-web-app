@@ -3,30 +3,38 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'config/app_router.dart';
 import 'theme/theme.dart';
+import 'providers/theme_provider.dart';
 
-/// Hlavní widget aplikace Charlotte's Web
+/// Hlavní widget aplikace Buds and Buddies
 class CommunityApp extends ConsumerWidget {
   const CommunityApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
-    // Nastavení system UI pro dark theme
+    // Nastavení system UI podle aktuálního tématu
+    final isDark = themeMode == ThemeMode.dark ||
+        (themeMode == ThemeMode.system &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
+      SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppColors.background,
-        systemNavigationBarIconBrightness: Brightness.light,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        systemNavigationBarColor:
+            isDark ? AppColors.background : const Color(0xFFF8F9FA),
+        systemNavigationBarIconBrightness:
+            isDark ? Brightness.light : Brightness.dark,
       ),
     );
 
     return MaterialApp.router(
-      title: "Charlotte's Web",
+      title: "Buds and Buddies",
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.dark,
-      theme: AppTheme.darkTheme,
+      themeMode: themeMode,
+      theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       routerConfig: router,
     );

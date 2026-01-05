@@ -209,10 +209,70 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _removeAvatar() async {
-    // TODO: Implement avatar removal
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Odstraneni fotky - pripravujeme')),
+    // Zobrazit potvrzovací dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(
+          'Odstranit fotku?',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        content: Text(
+          'Opravdu chcete odstranit svou profilovou fotku?',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Zrusit'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Odstranit'),
+          ),
+        ],
+      ),
     );
+
+    if (confirmed != true) return;
+
+    setState(() => _isUploadingAvatar = true);
+
+    try {
+      await ref.read(profileNotifierProvider.notifier).deleteAvatar();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Fotka profilu odstranena'),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Chyba: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingAvatar = false);
+      }
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -472,11 +532,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     ),
 
                     const SizedBox(height: 32),
-
-                    // Additional options
-                    _OptionsSection(),
-
-                    const SizedBox(height: 32),
                   ],
                 ),
               ),
@@ -680,104 +735,3 @@ class _FormField extends StatelessWidget {
   }
 }
 
-/// Additional options section
-class _OptionsSection extends StatelessWidget {
-  const _OptionsSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          _OptionTile(
-            icon: Icons.lock_outline,
-            title: 'Soukromy ucet',
-            subtitle: 'Pouze schvaleni uzivatele te uvidí',
-            trailing: Switch(
-              value: false,
-              onChanged: (_) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Pripravujeme...')),
-                );
-              },
-              activeTrackColor: AppColors.primary,
-              thumbColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return Colors.white;
-                }
-                return AppColors.textMuted;
-              }),
-            ),
-          ),
-          Divider(height: 1, indent: 56, color: AppColors.textMuted.withAlpha(20)),
-          _OptionTile(
-            icon: Icons.notifications_outlined,
-            title: 'Notifikace',
-            subtitle: 'Nastaveni upozorneni',
-            onTap: () => context.go('/settings'),
-          ),
-          Divider(height: 1, indent: 56, color: AppColors.textMuted.withAlpha(20)),
-          _OptionTile(
-            icon: Icons.security,
-            title: 'Soukromi a bezpecnost',
-            subtitle: 'Heslo, 2FA, prihlaseni',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Pripravujeme...')),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Option tile
-class _OptionTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-
-  const _OptionTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    this.trailing,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.textSecondary),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          color: AppColors.textMuted,
-          fontSize: 12,
-        ),
-      ),
-      trailing: trailing ?? Icon(
-        Icons.chevron_right,
-        color: AppColors.textMuted,
-      ),
-      onTap: onTap,
-    );
-  }
-}

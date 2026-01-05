@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../models/post_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/posts_provider.dart';
+import '../services/share_service.dart';
 import '../utils/helpers.dart';
+import '../utils/haptic_utils.dart';
 import '../theme/theme.dart';
 import 'user_avatar.dart';
+import 'common/mention_text_field.dart';
 
+/// Post karta s Functional Dark designem
 class PostCard extends ConsumerStatefulWidget {
   final PostModel post;
   final VoidCallback? onTap;
@@ -45,13 +50,14 @@ class _PostCardState extends ConsumerState<PostCard> {
     final userId = ref.read(authServiceProvider).currentUser?.id;
     if (userId == null) return;
 
+    HapticUtils.lightImpact();
+
     try {
       await ref.read(reactionServiceProvider).toggleReaction(
             postId: _post.id,
             type: type,
           );
 
-      // Refresh post data
       final updatedPost = await ref.read(postServiceProvider).getPost(_post.id);
       if (updatedPost != null && mounted) {
         setState(() => _post = updatedPost);
@@ -60,7 +66,10 @@ class _PostCardState extends ConsumerState<PostCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Chyba: ${e.toString()}')),
+          SnackBar(
+            content: Text('Chyba: ${e.toString()}'),
+            backgroundColor: AppColors.functionalSurface,
+          ),
         );
       }
     }
@@ -75,225 +84,254 @@ class _PostCardState extends ConsumerState<PostCard> {
     final canDelete = isAdmin || isOwner;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withAlpha(8),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(40),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: AppColors.functionalSurface,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 8, 0),
-                child: Row(
-                  children: [
-                    // Avatar with gradient border
-                    Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: (_post.author?.isAdmin ?? false)
-                            ? AppColors.primaryGradient
-                            : null,
-                        border: (_post.author?.isAdmin ?? false)
-                            ? null
-                            : Border.all(color: AppColors.surfaceLight, width: 2),
-                      ),
-                      child: UserAvatar(
-                        imageUrl: _post.author?.avatarUrl,
-                        name: _post.author?.username ?? 'Uzivatel',
-                        size: 40,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  _post.author?.username ?? 'Uzivatel',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 15,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (_post.author?.isAdmin ?? false) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    gradient: AppColors.primaryGradient,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: const Text(
-                                    'ADMIN',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            Helpers.formatTimeAgo(_post.createdAt),
-                            style: TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (canDelete)
-                      PopupMenuButton(
-                        icon: Icon(Icons.more_horiz, color: AppColors.textMuted, size: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        itemBuilder: (context) => [
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Row(
-                              children: [
-                                Icon(Icons.delete_outline, color: AppColors.error, size: 20),
-                                const SizedBox(width: 12),
-                                Text('Smazat', style: TextStyle(color: AppColors.error)),
-                              ],
-                            ),
-                          ),
-                        ],
-                        onSelected: (value) {
-                          if (value == 'delete') {
-                            _showDeleteDialog();
-                          }
-                        },
-                      ),
-                  ],
-                ),
-              ),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header - Avatar, jmeno, cas
+                _buildHeader(canDelete),
 
-              // Content
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Text(
-                  _post.content,
+                const SizedBox(height: 12),
+
+                // Content
+                MentionText(
+                  text: _post.content,
                   style: const TextStyle(
-                    fontSize: 15,
-                    height: 1.4,
-                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    height: 1.5,
+                    color: Colors.white,
                   ),
                   maxLines: 6,
                   overflow: TextOverflow.ellipsis,
+                  onMentionTap: (username) => _navigateToUserProfile(username),
+                  onHashtagTap: (hashtag) => _navigateToHashtag(hashtag),
                 ),
-              ),
 
-              // Image
-              if (_post.imageUrl != null) ...[
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                // Image
+                if (_post.imageUrl != null) ...[
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
                     child: CachedNetworkImage(
                       imageUrl: _post.imageUrl!,
                       width: double.infinity,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceLight,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        height: 180,
+                        color: AppColors.functionalBorder,
                         child: const Center(
                           child: CircularProgressIndicator(
-                            color: AppColors.primary,
+                            color: AppColors.accent,
                             strokeWidth: 2,
                           ),
                         ),
                       ),
                       errorWidget: (context, url, error) => Container(
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceLight,
-                          borderRadius: BorderRadius.circular(12),
+                        height: 180,
+                        color: AppColors.functionalBorder,
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          color: AppColors.functionalMuted,
+                          size: 40,
                         ),
-                        child: const Icon(Icons.broken_image_outlined,
-                          color: AppColors.textMuted, size: 40),
                       ),
                     ),
                   ),
+                ],
+
+                // Divider
+                Container(
+                  margin: const EdgeInsets.only(top: 16),
+                  height: 1,
+                  color: AppColors.functionalBorder,
+                ),
+
+                // Actions
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: _buildActions(userId),
                 ),
               ],
-
-              // Stats & Actions
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                child: Row(
-                  children: [
-                    // Comments count
-                    _StatBadge(
-                      icon: Icons.chat_bubble_outline,
-                      count: _post.commentCount,
-                      label: 'komentaru',
-                    ),
-                    const Spacer(),
-                    // Quick like button
-                    _QuickReactionButton(
-                      isLiked: userId != null && _post.getUserReactionType(userId) == 'like',
-                      count: _post.totalReactions,
-                      onTap: () => _handleReaction('like'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  /// Header s avatarem a info
+  Widget _buildHeader(bool canDelete) {
+    return Row(
+      children: [
+        // Avatar
+        UserAvatar(
+          imageUrl: _post.author?.avatarUrl,
+          name: _post.author?.username ?? 'Uzivatel',
+          size: 40,
+        ),
+        const SizedBox(width: 12),
+        // Info
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      _post.author?.username ?? 'Uzivatel',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (_post.author?.isAdmin ?? false) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withAlpha(30),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: AppColors.accent.withAlpha(100),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        'ADMIN',
+                        style: TextStyle(
+                          color: AppColors.accent,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                Helpers.formatTimeAgo(_post.createdAt),
+                style: TextStyle(
+                  color: AppColors.functionalMuted,
+                  fontSize: 11,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Menu
+        if (canDelete)
+          PopupMenuButton(
+            icon: Icon(
+              Icons.more_horiz,
+              color: AppColors.functionalMuted,
+              size: 20,
+            ),
+            color: AppColors.functionalSurface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_outline, color: AppColors.error, size: 18),
+                    const SizedBox(width: 10),
+                    Text('Smazat', style: TextStyle(color: AppColors.error)),
+                  ],
+                ),
+              ),
+            ],
+            onSelected: (value) {
+              if (value == 'delete') {
+                _showDeleteDialog();
+              }
+            },
+          ),
+      ],
+    );
+  }
+
+  /// Action bar
+  Widget _buildActions(String? userId) {
+    return Row(
+      children: [
+        // Comments
+        _ActionButton(
+          icon: Icons.chat_bubble_outline,
+          label: '${_post.commentCount}',
+          onTap: widget.onTap,
+        ),
+        const SizedBox(width: 16),
+        // Share
+        _ActionButton(
+          icon: Icons.share_outlined,
+          onTap: () {
+            HapticUtils.lightImpact();
+            ShareService.sharePost(_post);
+          },
+        ),
+        const Spacer(),
+        // Like
+        _LikeButton(
+          isLiked: userId != null && _post.getUserReactionType(userId) == 'like',
+          count: _post.totalReactions,
+          onTap: () => _handleReaction('like'),
+        ),
+      ],
+    );
+  }
+
+  void _navigateToUserProfile(String username) {
+    context.push('/search?q=@$username');
+  }
+
+  void _navigateToHashtag(String hashtag) {
+    context.push('/search?q=%23$hashtag');
+  }
+
   void _showDeleteDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Smazat prispevek?'),
-        content: const Text('Tato akce je nevratna.'),
+        backgroundColor: AppColors.functionalSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text(
+          'Smazat prispevek?',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'Tato akce je nevratna.',
+          style: TextStyle(color: AppColors.functionalMuted),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Zrusit'),
+            child: Text(
+              'Zrusit',
+              style: TextStyle(color: AppColors.functionalMuted),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -309,45 +347,57 @@ class _PostCardState extends ConsumerState<PostCard> {
   }
 }
 
-/// Stat badge widget pro zobrazení počtu komentářů atd.
-class _StatBadge extends StatelessWidget {
+/// Action button
+class _ActionButton extends StatelessWidget {
   final IconData icon;
-  final int count;
-  final String label;
+  final String? label;
+  final VoidCallback? onTap;
 
-  const _StatBadge({
+  const _ActionButton({
     required this.icon,
-    required this.count,
-    required this.label,
+    this.label,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 18, color: AppColors.textMuted),
-        const SizedBox(width: 6),
-        Text(
-          '$count $label',
-          style: TextStyle(
-            fontSize: 13,
-            color: AppColors.textMuted,
-            fontWeight: FontWeight.w500,
-          ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: AppColors.functionalMuted,
+            ),
+            if (label != null) ...[
+              const SizedBox(width: 6),
+              Text(
+                label!,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.functionalMuted,
+                ),
+              ),
+            ],
+          ],
         ),
-      ],
+      ),
     );
   }
 }
 
-/// Quick reaction button (like)
-class _QuickReactionButton extends StatelessWidget {
+/// Like button
+class _LikeButton extends StatelessWidget {
   final bool isLiked;
   final int count;
   final VoidCallback onTap;
 
-  const _QuickReactionButton({
+  const _LikeButton({
     required this.isLiked,
     required this.count,
     required this.onTap,
@@ -355,47 +405,42 @@ class _QuickReactionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: isLiked
-                ? AppColors.primary.withAlpha(25)
-                : AppColors.surfaceLight,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isLiked
-                  ? AppColors.primary.withAlpha(100)
-                  : Colors.white.withAlpha(10),
-              width: 1,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isLiked
+              ? AppColors.accent.withAlpha(25)
+              : AppColors.functionalBorder.withAlpha(100),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isLiked ? AppColors.accent : Colors.transparent,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+              size: 16,
+              color: isLiked ? AppColors.accent : AppColors.functionalMuted,
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                size: 18,
-                color: isLiked ? AppColors.primary : AppColors.textMuted,
-              ),
-              if (count > 0) ...[
-                const SizedBox(width: 6),
-                Text(
-                  '$count',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isLiked ? AppColors.primary : AppColors.textSecondary,
-                  ),
+            if (count > 0) ...[
+              const SizedBox(width: 6),
+              Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isLiked ? AppColors.accent : AppColors.functionalMuted,
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );

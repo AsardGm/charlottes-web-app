@@ -23,8 +23,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Profil ma vlastni AppBar
-    final showAppBar = _currentIndex != 2;
+    // Feed (0) a Profil (2) maji vlastni header/AppBar
+    final showAppBar = _currentIndex == 1; // Pouze pro Comms
 
     return Scaffold(
       appBar: showAppBar

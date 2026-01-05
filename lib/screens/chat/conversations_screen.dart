@@ -6,6 +6,7 @@ import '../../theme/theme.dart';
 import '../../models/conversation_model.dart';
 import '../../providers/chat_provider.dart';
 
+/// Obrazovka konverzaci - Functional Dark design
 class ConversationsScreen extends ConsumerStatefulWidget {
   const ConversationsScreen({super.key});
 
@@ -40,6 +41,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     final conversationsAsync = ref.watch(conversationsProvider);
 
     return Scaffold(
+      backgroundColor: AppColors.functionalBg,
       body: conversationsAsync.when(
         data: (conversations) {
           if (conversations.isEmpty) {
@@ -47,6 +49,8 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
           }
           return RefreshIndicator(
             onRefresh: () => ref.refresh(conversationsProvider.future),
+            color: AppColors.accent,
+            backgroundColor: AppColors.functionalSurface,
             child: ListView.builder(
               itemCount: conversations.length,
               itemBuilder: (context, index) {
@@ -59,17 +63,30 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: AppColors.accent),
+        ),
         error: (error, _) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 16),
-              Text('Chyba: ${error.toString()}'),
+              Text(
+                'Chyba: ${error.toString()}',
+                style: TextStyle(color: AppColors.functionalMuted),
+              ),
               const SizedBox(height: 16),
-              FilledButton(
+              TextButton(
                 onPressed: () => ref.refresh(conversationsProvider),
+                style: TextButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
                 child: const Text('Zkusit znovu'),
               ),
             ],
@@ -78,6 +95,8 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showNewChatDialog(context),
+        backgroundColor: AppColors.accent,
+        foregroundColor: Colors.black,
         child: const Icon(Icons.edit),
       ),
     );
@@ -91,14 +110,15 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
           Icon(
             Icons.chat_bubble_outline,
             size: 64,
-            color: AppColors.textMuted,
+            color: AppColors.functionalMuted.withAlpha(100),
           ),
           const SizedBox(height: 16),
-          Text(
+          const Text(
             'Zadne zpravy',
             style: TextStyle(
               fontSize: 18,
-              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 8),
@@ -106,14 +126,22 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
             'Zacni konverzaci s nekym!',
             style: TextStyle(
               fontSize: 14,
-              color: AppColors.textMuted,
+              color: AppColors.functionalMuted,
             ),
           ),
           const SizedBox(height: 24),
-          FilledButton.icon(
+          TextButton.icon(
             onPressed: () => _showNewChatDialog(context),
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add, size: 20),
             label: const Text('Nova zprava'),
+            style: TextButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
           ),
         ],
       ),
@@ -124,7 +152,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.functionalSurface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -133,6 +161,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
   }
 }
 
+/// Dlazdice konverzace - Functional Dark design
 class _ConversationTile extends ConsumerWidget {
   final ConversationModel conversation;
   final VoidCallback onTap;
@@ -171,7 +200,7 @@ class _ConversationTile extends ConsumerWidget {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: AppColors.surfaceLight,
+              color: AppColors.functionalBorder,
               width: 0.5,
             ),
           ),
@@ -183,7 +212,7 @@ class _ConversationTile extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: AppColors.primary.withAlpha(40),
+                  backgroundColor: AppColors.accent.withAlpha(40),
                   backgroundImage:
                       displayAvatar != null ? NetworkImage(displayAvatar) : null,
                   child: displayAvatar == null
@@ -192,14 +221,14 @@ class _ConversationTile extends ConsumerWidget {
                               ? displayName[0].toUpperCase()
                               : '?',
                           style: TextStyle(
-                            color: AppColors.primary,
+                            color: AppColors.accent,
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
                           ),
                         )
                       : null,
                 ),
-                // Online indicator (placeholder)
+                // Online indicator
                 Positioned(
                   right: 0,
                   bottom: 0,
@@ -210,7 +239,7 @@ class _ConversationTile extends ConsumerWidget {
                       color: AppColors.success,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppColors.background,
+                        color: AppColors.functionalBg,
                         width: 2,
                       ),
                     ),
@@ -232,10 +261,10 @@ class _ConversationTile extends ConsumerWidget {
                         child: Text(
                           displayName,
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight:
                                 hasUnread ? FontWeight.w600 : FontWeight.w500,
-                            color: AppColors.textPrimary,
+                            color: Colors.white,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -247,7 +276,7 @@ class _ConversationTile extends ConsumerWidget {
                           child: Icon(
                             Icons.lock,
                             size: 14,
-                            color: AppColors.success,
+                            color: AppColors.accent,
                           ),
                         ),
                     ],
@@ -258,10 +287,10 @@ class _ConversationTile extends ConsumerWidget {
                   Text(
                     messagePreview,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       color: hasUnread
-                          ? AppColors.textSecondary
-                          : AppColors.textMuted,
+                          ? Colors.white.withAlpha(200)
+                          : AppColors.functionalMuted,
                       fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
                     ),
                     maxLines: 1,
@@ -280,9 +309,10 @@ class _ConversationTile extends ConsumerWidget {
                   Text(
                     timeago.format(lastMessage.createdAt, locale: 'cs'),
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
+                      fontFamily: 'monospace',
                       color:
-                          hasUnread ? AppColors.primary : AppColors.textMuted,
+                          hasUnread ? AppColors.accent : AppColors.functionalMuted,
                       fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),
@@ -292,14 +322,14 @@ class _ConversationTile extends ConsumerWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: AppColors.accent,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       conversation.unreadCount.toString(),
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
+                        color: Colors.black,
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -314,6 +344,7 @@ class _ConversationTile extends ConsumerWidget {
   }
 }
 
+/// Sheet pro novou konverzaci - Functional Dark design
 class _NewChatSheet extends ConsumerStatefulWidget {
   const _NewChatSheet();
 
@@ -353,7 +384,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.functionalSurface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -378,7 +409,12 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Chyba: ${e.toString()}')),
+          SnackBar(
+            content: Text('Chyba: ${e.toString()}'),
+            backgroundColor: AppColors.functionalSurface,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
         );
       }
     }
@@ -400,7 +436,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.textMuted,
+                color: AppColors.functionalMuted.withAlpha(100),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -413,12 +449,12 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
+                      const Text(
                         'Nova zprava',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: Colors.white,
                         ),
                       ),
                       TextButton.icon(
@@ -426,22 +462,34 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
                           Navigator.pop(context);
                           _showCreateGroupDialog(context);
                         },
-                        icon: const Icon(Icons.group_add, size: 20),
-                        label: const Text('Skupina'),
+                        icon: Icon(Icons.group_add, size: 20, color: AppColors.accent),
+                        label: Text('Skupina', style: TextStyle(color: AppColors.accent)),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Hledat uzivatele...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                  // Search field - Functional Dark
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.functionalBg,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    onChanged: _search,
+                    child: TextField(
+                      controller: _searchController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Hledat uzivatele...',
+                        hintStyle: TextStyle(color: AppColors.functionalMuted),
+                        prefixIcon: Icon(Icons.search, color: AppColors.accent),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: AppColors.functionalBg,
+                      ),
+                      onChanged: _search,
+                    ),
                   ),
                 ],
               ),
@@ -449,14 +497,14 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
             // Results
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(child: CircularProgressIndicator(color: AppColors.accent))
                   : _searchResults.isEmpty
                       ? Center(
                           child: Text(
                             _searchController.text.length < 2
                                 ? 'Zadej jmeno uzivatele'
                                 : 'Zadni uzivatele nenalezeni',
-                            style: TextStyle(color: AppColors.textMuted),
+                            style: TextStyle(color: AppColors.functionalMuted),
                           ),
                         )
                       : ListView.builder(
@@ -466,16 +514,26 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
                             final user = _searchResults[index];
                             return ListTile(
                               leading: CircleAvatar(
+                                backgroundColor: AppColors.accent.withAlpha(40),
                                 backgroundImage: user.avatarUrl != null
                                     ? NetworkImage(user.avatarUrl!)
                                     : null,
                                 child: user.avatarUrl == null
-                                    ? Text(user.username[0].toUpperCase())
+                                    ? Text(
+                                        user.username[0].toUpperCase(),
+                                        style: TextStyle(color: AppColors.accent),
+                                      )
                                     : null,
                               ),
-                              title: Text(user.username),
-                              trailing: const Icon(Icons.arrow_forward_ios,
-                                  size: 16),
+                              title: Text(
+                                user.username,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              trailing: Icon(
+                                Icons.arrow_forward_ios,
+                                size: 16,
+                                color: AppColors.functionalMuted,
+                              ),
                               onTap: () => _startConversation(user.id),
                             );
                           },
@@ -488,7 +546,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
   }
 }
 
-/// Widget pro vytvoření skupinového chatu
+/// Widget pro vytvoření skupinového chatu - Functional Dark design
 class _CreateGroupSheet extends ConsumerStatefulWidget {
   const _CreateGroupSheet();
 
@@ -551,14 +609,24 @@ class _CreateGroupSheetState extends ConsumerState<_CreateGroupSheet> {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Zadej nazev skupiny')),
+        SnackBar(
+          content: const Text('Zadej nazev skupiny'),
+          backgroundColor: AppColors.functionalSurface,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
       );
       return;
     }
 
     if (_selectedUserIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vyber alespon jednoho uzivatele')),
+        SnackBar(
+          content: const Text('Vyber alespon jednoho uzivatele'),
+          backgroundColor: AppColors.functionalSurface,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
       );
       return;
     }
@@ -580,7 +648,12 @@ class _CreateGroupSheetState extends ConsumerState<_CreateGroupSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Chyba: ${e.toString()}')),
+          SnackBar(
+            content: Text('Chyba: ${e.toString()}'),
+            backgroundColor: AppColors.functionalSurface,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
         );
       }
     } finally {
@@ -606,7 +679,7 @@ class _CreateGroupSheetState extends ConsumerState<_CreateGroupSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.textMuted,
+                color: AppColors.functionalMuted.withAlpha(100),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -619,35 +692,57 @@ class _CreateGroupSheetState extends ConsumerState<_CreateGroupSheet> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
+                      const Text(
                         'Nova skupina',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: Colors.white,
                         ),
                       ),
                       _isCreating
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 24,
                               height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.accent,
+                              ),
                             )
                           : TextButton(
                               onPressed: _createGroup,
+                              style: TextButton.styleFrom(
+                                backgroundColor: AppColors.accent,
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
                               child: const Text('Vytvorit'),
                             ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   // Group name
-                  TextField(
-                    controller: _nameController,
-                    decoration: InputDecoration(
-                      hintText: 'Nazev skupiny',
-                      prefixIcon: const Icon(Icons.group),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.functionalBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      controller: _nameController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Nazev skupiny',
+                        hintStyle: TextStyle(color: AppColors.functionalMuted),
+                        prefixIcon: Icon(Icons.group, color: AppColors.accent),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: AppColors.functionalBg,
                       ),
                     ),
                   ),
@@ -669,11 +764,15 @@ class _CreateGroupSheetState extends ConsumerState<_CreateGroupSheet> {
                                   children: [
                                     CircleAvatar(
                                       radius: 20,
+                                      backgroundColor: AppColors.accent.withAlpha(40),
                                       backgroundImage: user.avatarUrl != null
                                           ? NetworkImage(user.avatarUrl!)
                                           : null,
                                       child: user.avatarUrl == null
-                                          ? Text(user.username[0].toUpperCase())
+                                          ? Text(
+                                              user.username[0].toUpperCase(),
+                                              style: TextStyle(color: AppColors.accent),
+                                            )
                                           : null,
                                     ),
                                     const SizedBox(height: 4),
@@ -681,7 +780,7 @@ class _CreateGroupSheetState extends ConsumerState<_CreateGroupSheet> {
                                       user.username,
                                       style: TextStyle(
                                         fontSize: 10,
-                                        color: AppColors.textMuted,
+                                        color: AppColors.functionalMuted,
                                       ),
                                     ),
                                   ],
@@ -714,16 +813,27 @@ class _CreateGroupSheetState extends ConsumerState<_CreateGroupSheet> {
                     const SizedBox(height: 12),
                   ],
                   // Search users
-                  TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Pridat uzivatele...',
-                      prefixIcon: const Icon(Icons.person_add),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.functionalBg,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    onChanged: _search,
+                    child: TextField(
+                      controller: _searchController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Pridat uzivatele...',
+                        hintStyle: TextStyle(color: AppColors.functionalMuted),
+                        prefixIcon: Icon(Icons.person_add, color: AppColors.accent),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: AppColors.functionalBg,
+                      ),
+                      onChanged: _search,
+                    ),
                   ),
                 ],
               ),
@@ -731,14 +841,14 @@ class _CreateGroupSheetState extends ConsumerState<_CreateGroupSheet> {
             // Search results
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(child: CircularProgressIndicator(color: AppColors.accent))
                   : _searchResults.isEmpty
                       ? Center(
                           child: Text(
                             _searchController.text.length < 2
                                 ? 'Hledej uzivatele k pridani'
                                 : 'Zadni uzivatele nenalezeni',
-                            style: TextStyle(color: AppColors.textMuted),
+                            style: TextStyle(color: AppColors.functionalMuted),
                           ),
                         )
                       : ListView.builder(
@@ -748,17 +858,23 @@ class _CreateGroupSheetState extends ConsumerState<_CreateGroupSheet> {
                             final user = _searchResults[index];
                             return ListTile(
                               leading: CircleAvatar(
+                                backgroundColor: AppColors.accent.withAlpha(40),
                                 backgroundImage: user.avatarUrl != null
                                     ? NetworkImage(user.avatarUrl!)
                                     : null,
                                 child: user.avatarUrl == null
-                                    ? Text(user.username[0].toUpperCase())
+                                    ? Text(
+                                        user.username[0].toUpperCase(),
+                                        style: TextStyle(color: AppColors.accent),
+                                      )
                                     : null,
                               ),
-                              title: Text(user.username),
+                              title: Text(
+                                user.username,
+                                style: const TextStyle(color: Colors.white),
+                              ),
                               trailing: IconButton(
-                                icon: Icon(Icons.add_circle,
-                                    color: AppColors.primary),
+                                icon: Icon(Icons.add_circle, color: AppColors.accent),
                                 onPressed: () => _addUser(user),
                               ),
                             );

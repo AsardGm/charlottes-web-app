@@ -1,22 +1,86 @@
 {
-    "name": "Charlotte's Web",
-    "short_name": "Charlotte",
-    "description": "Charlotte's Web - komunitni aplikace s feedem, chatem a gamifikaci",
+    "name": "Buds and Buddies",
+    "short_name": "Buds",
+    "description": "Buds and Buddies - komunitni aplikace s feedem, chatem a gamifikaci",
     "start_url": "/",
     "id": "/",
     "display": "standalone",
-    "display_override": ["standalone", "minimal-ui"],
+    "display_override": [
+        "standalone",
+        "minimal-ui"
+    ],
     "background_color": "#0D1B2A",
-    "theme_color": "#C41E24",
+    "theme_color": "#00D4FF",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
-    "categories": ["social", "lifestyle"],
+    "categories": [
+        "social",
+        "lifestyle"
+    ],
     "lang": "cs",
     "dir": "ltr",
     "scope": "/",
     "permissions_policy": {
-        "notifications": ["self"]
+        "notifications": [
+            "self"
+        ]
     },
+    "screenshots": [
+        {
+            "src": "screenshots/feed.png",
+            "sizes": "1080x1920",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Feed obrazovka"
+        },
+        {
+            "src": "screenshots/profile.png",
+            "sizes": "1080x1920",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Profil obrazovka"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Novy prispevek",
+            "short_name": "Novy",
+            "description": "Vytvorit novy prispevek",
+            "url": "/create-post",
+            "icons": [
+                {
+                    "src": "icons/shortcut-post.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Chat",
+            "short_name": "Chat",
+            "description": "Otevrit chat",
+            "url": "/chat",
+            "icons": [
+                {
+                    "src": "icons/shortcut-chat.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Profil",
+            "short_name": "Profil",
+            "description": "Muj profil",
+            "url": "/profile",
+            "icons": [
+                {
+                    "src": "icons/shortcut-profile.png",
+                    "sizes": "96x96"
+                }
+            ]
+        }
+    ],
+    "related_applications": [],
+    "handle_links": "preferred",
     "icons": [
         {
             "src": "icons/Icon-192.png",
@@ -40,46 +104,5 @@
             "type": "image/png",
             "purpose": "maskable"
         }
-    ],
-    "screenshots": [
-        {
-            "src": "screenshots/feed.png",
-            "sizes": "1080x1920",
-            "type": "image/png",
-            "form_factor": "narrow",
-            "label": "Feed obrazovka"
-        },
-        {
-            "src": "screenshots/profile.png",
-            "sizes": "1080x1920",
-            "type": "image/png",
-            "form_factor": "narrow",
-            "label": "Profil obrazovka"
-        }
-    ],
-    "shortcuts": [
-        {
-            "name": "Novy prispevek",
-            "short_name": "Novy",
-            "description": "Vytvorit novy prispevek",
-            "url": "/create-post",
-            "icons": [{ "src": "icons/shortcut-post.png", "sizes": "96x96" }]
-        },
-        {
-            "name": "Chat",
-            "short_name": "Chat",
-            "description": "Otevrit chat",
-            "url": "/chat",
-            "icons": [{ "src": "icons/shortcut-chat.png", "sizes": "96x96" }]
-        },
-        {
-            "name": "Profil",
-            "short_name": "Profil",
-            "description": "Muj profil",
-            "url": "/profile",
-            "icons": [{ "src": "icons/shortcut-profile.png", "sizes": "96x96" }]
-        }
-    ],
-    "related_applications": [],
-    "handle_links": "preferred"
+    ]
 }

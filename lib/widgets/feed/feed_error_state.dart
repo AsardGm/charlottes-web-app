@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/theme.dart';
+import '../../utils/error_messages.dart';
 
 /// Widget pro zobrazení chybového stavu feedu
 ///
@@ -57,7 +58,7 @@ class FeedErrorState extends StatelessWidget {
 
             // Popis chyby
             Text(
-              error.toString(),
+              ErrorMessages.getReadableError(error),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,

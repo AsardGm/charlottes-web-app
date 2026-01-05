@@ -21,21 +21,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <!-- SEO -->
-  <title>Charlotte's Web</title>
-  <meta name="description" content="Charlotte's Web - komunitni aplikace s feedem, chatem a gamifikaci">
-  <meta name="keywords" content="charlottes web, komunita, chat, feed, gamifikace">
-  <meta name="author" content="Charlotte's Web">
+  <title>Buds and Buddies</title>
+  <meta name="description" content="Buds and Buddies - komunitni aplikace s feedem, chatem a gamifikaci">
+  <meta name="keywords" content="buds and buddies, komunita, chat, feed, gamifikace">
+  <meta name="author" content="Buds and Buddies">
 
   <!-- Theme colors -->
-  <meta name="theme-color" content="#C41E24">
-  <meta name="msapplication-navbutton-color" content="#C41E24">
-  <meta name="msapplication-TileColor" content="#0D1B2A">
+  <meta name="theme-color" content="#00D4FF">
+  <meta name="msapplication-navbutton-color" content="#00D4FF">
+  <meta name="msapplication-TileColor" content="#0A0A0F">
 
   <!-- iOS PWA meta tags -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Charlotte's Web">
+  <meta name="apple-mobile-web-app-title" content="Buds and Buddies">
 
   <!-- iOS icons -->
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
@@ -66,12 +66,12 @@
     import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js';
 
     const firebaseConfig = {
-      apiKey: "AIzaSyCp2it9pVTSSvUVqK9m70hxJ0Q_7qKz-8A",
-      authDomain: "spiderbagzz.firebaseapp.com",
-      projectId: "spiderbagzz",
-      storageBucket: "spiderbagzz.firebasestorage.app",
-      messagingSenderId: "700570202812",
-      appId: "1:700570202812:web:71e6b3df01815714f996b9"
+      apiKey: "AIzaSyAV3W6DuCbCyZZDo5LWkwrSUUER4qZzhJI",
+      authDomain: "charlottes-web-app.firebaseapp.com",
+      projectId: "charlottes-web-app",
+      storageBucket: "charlottes-web-app.firebasestorage.app",
+      messagingSenderId: "66173275380",
+      appId: "1:66173275380:web:ec9c80a5a0679b9d1be2a1"
     };
 
     // Initialize Firebase
@@ -118,18 +118,7 @@
     // Handle foreground messages
     onMessage(messaging, (payload) => {
       console.log('[FCM] Foreground message:', payload);
-
-      // Show notification manually for foreground
-      if (Notification.permission === 'granted') {
-        new Notification(payload.notification?.title || 'SpiderBagzz', {
-          body: payload.notification?.body || '',
-          icon: '/icons/Icon-192.png',
-          badge: '/icons/Icon-192.png',
-          tag: payload.data?.tag || 'foreground',
-          data: payload.data
-        });
-      }
-
+      // Notifikace se zobrazuje automaticky pres FCM, nemusime ji zobrazovat manualne
       // Dispatch custom event for Flutter to catch
       window.dispatchEvent(new CustomEvent('fcm-message', { detail: payload }));
     });
@@ -140,18 +129,18 @@
     html, body {
       margin: 0;
       padding: 0;
-      background-color: #0D1B2A;
+      background-color: #0A0A0F;
       overflow: hidden;
     }
 
-    /* Loading screen */
+    /* Loading screen - Functional Dark theme */
     #loading {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: linear-gradient(180deg, #0D1B2A 0%, #1C3148 50%, #0D1B2A 100%);
+      background: #0A0A0F;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -163,24 +152,26 @@
       width: 150px;
       height: 150px;
       animation: pulse 2s ease-in-out infinite;
+      filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.5));
     }
 
     #loading .spinner {
       margin-top: 30px;
       width: 40px;
       height: 40px;
-      border: 3px solid rgba(196, 30, 36, 0.3);
-      border-top-color: #C41E24;
+      border: 3px solid rgba(0, 212, 255, 0.2);
+      border-top-color: #00D4FF;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
 
     #loading .text {
       margin-top: 20px;
-      color: #F5F0E6;
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 14px;
-      opacity: 0.7;
+      color: #8B8B8B;
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
     }
 
     @keyframes pulse {
@@ -196,9 +187,9 @@
 <body>
   <!-- Loading screen -->
   <div id="loading">
-    <img src="icons/Icon-512.png" alt="SpiderBagzz">
+    <img src="icons/Icon-512.png" alt="Charlotte's Web">
     <div class="spinner"></div>
-    <div class="text">Nacitam...</div>
+    <div class="text">Inicializace...</div>
   </div>
 
   <script>

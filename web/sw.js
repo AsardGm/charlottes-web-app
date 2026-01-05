@@ -1,6 +1,6 @@
 // Charlotte's Web Service Worker pro PWA a Push Notifications
 // Podporuje iOS 16.4+ PWA Push Notifications
-const CACHE_NAME = 'charlottes-web-v4';
+const CACHE_NAME = 'charlottes-web-v5';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache
@@ -17,7 +17,7 @@ const PRECACHE_ASSETS = [
 
 // Install event - cache assets
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker v4...');
+  console.log('[SW] Installing service worker v5...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[SW] Caching app shell');
@@ -30,7 +30,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - cleanup old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker v4...');
+  console.log('[SW] Activating service worker v5...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -88,53 +88,14 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Push notification event - funguje na iOS 16.4+ PWA
+// Push notification event - delegovano na firebase-messaging-sw.js
+// Tento handler slouzi jako fallback pro pripad, ze FCM SW neni aktivni
 self.addEventListener('push', (event) => {
-  console.log('[SW] Push notification received');
-
-  let data = {
-    title: "Charlotte's Web",
-    body: 'Nova notifikace',
-    icon: '/icons/Icon-192.png',
-    badge: '/icons/Icon-192.png',
-    tag: 'default',
-    data: {},
-  };
-
+  // Zkontroluj jestli FCM SW zpracoval zpravu
   if (event.data) {
-    try {
-      const payload = event.data.json();
-      data = {
-        title: payload.notification?.title || payload.title || data.title,
-        body: payload.notification?.body || payload.body || data.body,
-        icon: payload.notification?.icon || payload.icon || data.icon,
-        badge: payload.notification?.badge || payload.badge || data.badge,
-        tag: payload.data?.tag || payload.tag || data.tag,
-        data: payload.data || {},
-      };
-    } catch (e) {
-      console.log('[SW] Push data parse error, using text:', e);
-      data.body = event.data.text();
-    }
+    console.log('[SW] Push received (fallback handler)');
+    // Neprovadej nic - FCM SW by mel zpracovat
   }
-
-  const options = {
-    body: data.body,
-    icon: data.icon,
-    badge: data.badge,
-    tag: data.tag,
-    data: data.data,
-    // iOS nepodporuje vibrace
-    ...(!/iPhone|iPad|iPod/.test(navigator?.userAgent || '') && { vibrate: [100, 50, 100] }),
-    requireInteraction: false,
-    // iOS nepodporuje actions v notifikacích
-    renotify: true,
-    silent: false,
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
 });
 
 // Notification click event

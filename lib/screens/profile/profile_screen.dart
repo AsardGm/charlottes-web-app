@@ -17,7 +17,7 @@ final userPostsProvider = FutureProvider.family<List<PostModel>, String>((ref, o
   return service.getPostsByUser(oderId);
 });
 
-/// Obrazovka profilu uzivatele - Instagram styl
+/// Obrazovka profilu uzivatele - Functional Dark design
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
@@ -46,12 +46,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final userAsync = ref.watch(currentUserProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.functionalBg,
       body: userAsync.when(
         data: (user) {
           if (user == null) {
-            return const Center(
-              child: Text('Neprihlaseny uzivatel'),
+            return Center(
+              child: Text(
+                'Neprihlaseny uzivatel',
+                style: TextStyle(color: AppColors.functionalMuted),
+              ),
             );
           }
 
@@ -59,36 +62,50 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             headerSliverBuilder: (context, innerBoxIsScrolled) => [
               // App Bar
               SliverAppBar(
-                backgroundColor: AppColors.background,
+                backgroundColor: AppColors.functionalBg,
                 pinned: true,
                 title: Row(
                   children: [
                     Text(
                       user.username,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
                       ),
                     ),
-                    if (user.isAdmin)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: Icon(
-                          Icons.verified,
-                          size: 18,
-                          color: AppColors.primary,
+                    if (user.isAdmin) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withAlpha(30),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: AppColors.accent.withAlpha(100),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          'ADMIN',
+                          style: TextStyle(
+                            color: AppColors.accent,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
+                    ],
                   ],
                 ),
                 actions: [
                   IconButton(
-                    icon: const Icon(Icons.add_box_outlined),
+                    icon: Icon(Icons.add_box_outlined, color: AppColors.functionalMuted),
                     onPressed: () => context.go('/create-post'),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.menu),
+                    icon: Icon(Icons.menu, color: AppColors.functionalMuted),
                     onPressed: () => _showProfileMenu(context),
                   ),
                 ],
@@ -99,10 +116,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    // Banner
-                    ProfileBanner(
+                    // Banner - Functional Dark gradient
+                    Container(
                       height: 100,
-                      style: BannerStyle.gradient,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.accent.withAlpha(40),
+                            AppColors.functionalSurface,
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
                     ),
                     // Avatar pozicovany dole
                     Positioned(
@@ -188,10 +214,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         ProfileBio(
                           bio: user.bio!,
                           onTagTap: (tag) {
-                            // TODO: vyhledat tag
+                            context.push('/search?q=%23$tag');
                           },
                           onMentionTap: (username) {
-                            // TODO: prejit na profil
+                            context.push('/search?q=@$username');
                           },
                         ),
                         const SizedBox(height: 8),
@@ -206,22 +232,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         const SizedBox(height: 12),
                       ],
 
-                      // Tlacitko Upravit profil
+                      // Tlacitko Upravit profil - Functional Dark
                       SizedBox(
                         width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () => context.go('/edit-profile'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.textPrimary,
-                            side: BorderSide(color: AppColors.textMuted.withAlpha(50)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => context.go('/edit-profile'),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: AppColors.functionalSurface,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  'Upravit profil',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                          ),
-                          child: const Text(
-                            'Upravit profil',
-                            style: TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
                       ),
@@ -237,16 +272,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 ),
               ),
 
-              // Taby
+              // Taby - Functional Dark
               SliverPersistentHeader(
                 pinned: true,
                 delegate: _TabBarDelegate(
                   TabBar(
                     controller: _tabController,
-                    labelColor: AppColors.textPrimary,
-                    unselectedLabelColor: AppColors.textMuted,
-                    indicatorColor: AppColors.textPrimary,
-                    indicatorWeight: 1,
+                    labelColor: AppColors.accent,
+                    unselectedLabelColor: AppColors.functionalMuted,
+                    indicatorColor: AppColors.accent,
+                    indicatorWeight: 2,
+                    dividerColor: AppColors.functionalBorder,
                     tabs: const [
                       Tab(icon: Icon(Icons.grid_on, size: 24)),
                       Tab(icon: Icon(Icons.bookmark_border, size: 24)),
@@ -271,9 +307,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: AppColors.accent),
+        ),
         error: (error, _) => Center(
-          child: Text('Chyba: ${error.toString()}'),
+          child: Text(
+            'Chyba: ${error.toString()}',
+            style: TextStyle(color: AppColors.error),
+          ),
         ),
       ),
     );
@@ -282,7 +323,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   void _showProfileMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.functionalSurface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -295,7 +336,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.textMuted.withAlpha(50),
+                color: AppColors.functionalMuted.withAlpha(100),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -332,7 +373,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 context.go('/leaderboard');
               },
             ),
-            const Divider(height: 1),
+            Divider(height: 1, color: AppColors.functionalBorder),
             _MenuTile(
               icon: Icons.settings,
               label: 'Nastaveni',
@@ -381,7 +422,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 }
 
-/// Sloupec statistiky
+/// Sloupec statistiky - Functional Dark
 class _StatColumn extends StatelessWidget {
   final int count;
   final String label;
@@ -402,18 +443,19 @@ class _StatColumn extends StatelessWidget {
         children: [
           Text(
             _formatCount(count),
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
             style: TextStyle(
-              fontSize: 13,
-              color: AppColors.textSecondary,
+              fontSize: 12,
+              color: AppColors.functionalMuted,
+              fontFamily: 'monospace',
             ),
           ),
         ],
@@ -433,7 +475,7 @@ class _StatColumn extends StatelessWidget {
   }
 }
 
-/// Delegate pro tab bar
+/// Delegate pro tab bar - Functional Dark
 class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   final TabBar tabBar;
 
@@ -442,7 +484,7 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: AppColors.background,
+      color: AppColors.functionalBg,
       child: tabBar,
     );
   }
@@ -457,7 +499,7 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(covariant _TabBarDelegate oldDelegate) => false;
 }
 
-/// Polozka menu
+/// Polozka menu - Functional Dark
 class _MenuTile extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -474,11 +516,11 @@ class _MenuTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: color ?? AppColors.textPrimary),
+      leading: Icon(icon, color: color ?? AppColors.functionalMuted),
       title: Text(
         label,
         style: TextStyle(
-          color: color ?? AppColors.textPrimary,
+          color: color ?? Colors.white,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -487,7 +529,7 @@ class _MenuTile extends StatelessWidget {
   }
 }
 
-/// Featured odznaky v radku
+/// Featured odznaky v radku - Functional Dark
 class _FeaturedBadgesRow extends ConsumerWidget {
   const _FeaturedBadgesRow();
 
@@ -516,13 +558,14 @@ class _FeaturedBadgesRow extends ConsumerWidget {
                         height: 64,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
+                          color: AppColors.functionalSurface,
                           border: Border.all(
-                            color: AppColors.textMuted.withAlpha(50),
+                            color: AppColors.functionalBorder,
                           ),
                         ),
                         child: Icon(
                           Icons.add,
-                          color: AppColors.textMuted,
+                          color: AppColors.functionalMuted,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -530,7 +573,7 @@ class _FeaturedBadgesRow extends ConsumerWidget {
                         'Vse',
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textMuted,
+                          color: AppColors.functionalMuted,
                         ),
                       ),
                     ],
@@ -570,9 +613,9 @@ class _FeaturedBadgesRow extends ConsumerWidget {
                         width: 64,
                         child: Text(
                           badge.badge.name,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 11,
-                            color: AppColors.textPrimary,
+                            color: Colors.white,
                           ),
                           textAlign: TextAlign.center,
                           maxLines: 1,
@@ -593,7 +636,7 @@ class _FeaturedBadgesRow extends ConsumerWidget {
   }
 }
 
-/// Grid prispevku uzivatele
+/// Grid prispevku uzivatele - Functional Dark
 class _PostsGrid extends ConsumerWidget {
   final String userId;
 
@@ -613,15 +656,15 @@ class _PostsGrid extends ConsumerWidget {
                 Icon(
                   Icons.camera_alt_outlined,
                   size: 64,
-                  color: AppColors.textMuted.withAlpha(80),
+                  color: AppColors.functionalMuted.withAlpha(80),
                 ),
                 const SizedBox(height: 16),
-                Text(
+                const Text(
                   'Zatim zadne prispevky',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -629,7 +672,7 @@ class _PostsGrid extends ConsumerWidget {
                   'Sdilej sve fotky a prispevky',
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.textMuted,
+                    color: AppColors.functionalMuted,
                   ),
                 ),
               ],
@@ -638,11 +681,11 @@ class _PostsGrid extends ConsumerWidget {
         }
 
         return GridView.builder(
-          padding: const EdgeInsets.all(1),
+          padding: const EdgeInsets.all(2),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
-            crossAxisSpacing: 1,
-            mainAxisSpacing: 1,
+            crossAxisSpacing: 2,
+            mainAxisSpacing: 2,
           ),
           itemCount: posts.length,
           itemBuilder: (context, index) {
@@ -651,7 +694,9 @@ class _PostsGrid extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: AppColors.accent),
+      ),
       error: (error, _) => Center(
         child: Text('Chyba: $error', style: TextStyle(color: AppColors.error)),
       ),
@@ -659,7 +704,7 @@ class _PostsGrid extends ConsumerWidget {
   }
 }
 
-/// Polozka gridu prispevku
+/// Polozka gridu prispevku - Functional Dark
 class _PostGridItem extends StatelessWidget {
   final PostModel post;
 
@@ -670,7 +715,7 @@ class _PostGridItem extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.go('/post/${post.id}'),
       child: Container(
-        color: AppColors.surface,
+        color: AppColors.functionalSurface,
         child: post.imageUrl != null
             ? Image.network(
                 post.imageUrl!,
@@ -684,11 +729,11 @@ class _PostGridItem extends StatelessWidget {
 
   Widget _buildPlaceholder() {
     return Container(
-      color: AppColors.surfaceLight,
+      color: AppColors.functionalSurface,
       child: Center(
         child: Icon(
           Icons.image,
-          color: AppColors.textMuted,
+          color: AppColors.functionalMuted,
           size: 32,
         ),
       ),
@@ -698,13 +743,13 @@ class _PostGridItem extends StatelessWidget {
   Widget _buildTextPreview() {
     return Container(
       padding: const EdgeInsets.all(8),
-      color: AppColors.surfaceLight,
+      color: AppColors.functionalSurface,
       child: Center(
         child: Text(
           post.content,
           style: TextStyle(
             fontSize: 12,
-            color: AppColors.textSecondary,
+            color: AppColors.functionalMuted,
           ),
           maxLines: 4,
           overflow: TextOverflow.ellipsis,
@@ -715,7 +760,7 @@ class _PostGridItem extends StatelessWidget {
   }
 }
 
-/// Grid ulozenych prispevku
+/// Grid ulozenych prispevku - Functional Dark
 class _SavedPostsGrid extends ConsumerWidget {
   const _SavedPostsGrid();
 
@@ -733,15 +778,15 @@ class _SavedPostsGrid extends ConsumerWidget {
                 Icon(
                   Icons.bookmark_border,
                   size: 64,
-                  color: AppColors.textMuted.withAlpha(80),
+                  color: AppColors.functionalMuted.withAlpha(80),
                 ),
                 const SizedBox(height: 16),
-                Text(
+                const Text(
                   'Zadne ulozene prispevky',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -749,7 +794,7 @@ class _SavedPostsGrid extends ConsumerWidget {
                   'Uloz si zajimave prispevky',
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.textMuted,
+                    color: AppColors.functionalMuted,
                   ),
                 ),
               ],
@@ -758,11 +803,11 @@ class _SavedPostsGrid extends ConsumerWidget {
         }
 
         return GridView.builder(
-          padding: const EdgeInsets.all(1),
+          padding: const EdgeInsets.all(2),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
-            crossAxisSpacing: 1,
-            mainAxisSpacing: 1,
+            crossAxisSpacing: 2,
+            mainAxisSpacing: 2,
           ),
           itemCount: posts.length,
           itemBuilder: (context, index) {
@@ -771,7 +816,9 @@ class _SavedPostsGrid extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: AppColors.accent),
+      ),
       error: (error, _) => Center(
         child: Text('Chyba: $error', style: TextStyle(color: AppColors.error)),
       ),
@@ -779,7 +826,7 @@ class _SavedPostsGrid extends ConsumerWidget {
   }
 }
 
-/// Grid oznacenych prispevku
+/// Grid oznacenych prispevku - Functional Dark
 class _TaggedPostsGrid extends StatelessWidget {
   const _TaggedPostsGrid();
 
@@ -792,15 +839,15 @@ class _TaggedPostsGrid extends StatelessWidget {
           Icon(
             Icons.person_pin_outlined,
             size: 64,
-            color: AppColors.textMuted.withAlpha(80),
+            color: AppColors.functionalMuted.withAlpha(80),
           ),
           const SizedBox(height: 16),
-          Text(
+          const Text(
             'Zadne oznaceni',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 8),
@@ -808,7 +855,7 @@ class _TaggedPostsGrid extends StatelessWidget {
             'Prispevky kde jsi oznacen',
             style: TextStyle(
               fontSize: 14,
-              color: AppColors.textMuted,
+              color: AppColors.functionalMuted,
             ),
           ),
         ],

@@ -83,3 +83,52 @@ final usersProvider =
 final statsProvider = FutureProvider<Map<String, int>>((ref) async {
   return await ref.read(adminServiceProvider).getStats();
 });
+
+/// Notifier pro vyhledávání uživatelů (pro @mentions)
+class UserSearchNotifier extends Notifier<AsyncValue<List<UserModel>>> {
+  String _lastQuery = '';
+
+  @override
+  AsyncValue<List<UserModel>> build() {
+    return const AsyncValue.data([]);
+  }
+
+  /// Vyhledá uživatele podle query
+  Future<void> search(String query) async {
+    if (query.isEmpty) {
+      state = const AsyncValue.data([]);
+      return;
+    }
+
+    // Debounce - pokud se query změnilo, nezpracovávej starý výsledek
+    _lastQuery = query;
+
+    state = const AsyncValue.loading();
+
+    try {
+      final adminService = ref.read(adminServiceProvider);
+      final users = await adminService.searchUsers(query);
+
+      // Zkontroluj, že query je stále aktuální
+      if (_lastQuery == query) {
+        state = AsyncValue.data(users);
+      }
+    } catch (e, st) {
+      if (_lastQuery == query) {
+        state = AsyncValue.error(e, st);
+      }
+    }
+  }
+
+  /// Vyčistí výsledky vyhledávání
+  void clear() {
+    _lastQuery = '';
+    state = const AsyncValue.data([]);
+  }
+}
+
+/// Provider pro vyhledávání uživatelů
+final userSearchProvider =
+    NotifierProvider<UserSearchNotifier, AsyncValue<List<UserModel>>>(() {
+  return UserSearchNotifier();
+});

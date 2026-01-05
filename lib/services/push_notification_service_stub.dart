@@ -1,47 +1,61 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 
-/// Stub implementace pro non-web platformy (iOS, Android)
-/// Tyto platformy používají firebase_messaging package
-class PushNotificationServiceImpl {
-  static PushNotificationServiceImpl? _instance;
-  static PushNotificationServiceImpl get instance =>
-      _instance ??= PushNotificationServiceImpl._();
+import 'web_push_service.dart';
 
-  PushNotificationServiceImpl._();
+/// Stub implementace pro non-web platformy
+///
+/// Tato třída se používá na iOS/Android, kde push notifikace
+/// řeší nativní Firebase SDK (firebase_messaging).
+class WebPushServiceImpl implements WebPushService {
+  final _notificationController =
+      StreamController<Map<String, dynamic>>.broadcast();
 
-  StreamController<Map<String, dynamic>>? _messageController;
+  @override
+  Stream<Map<String, dynamic>> get onNotification =>
+      _notificationController.stream;
 
-  Stream<Map<String, dynamic>> get onMessage {
-    _messageController ??= StreamController<Map<String, dynamic>>.broadcast();
-    return _messageController!.stream;
-  }
+  @override
+  String? get currentToken => null;
 
+  @override
+  bool get isEnabled => false;
+
+  @override
+  String get platform => 'native';
+
+  @override
+  bool get isStandalone => false;
+
+  @override
+  bool get isPushSupported => false;
+
+  @override
   Future<void> initialize() async {
-    debugPrint('[PushNotification] Stub - use firebase_messaging for mobile');
+    // Nic - na nativních platformách používáme firebase_messaging
   }
 
-  Future<String> checkPermission() async {
-    return 'unsupported';
+  @override
+  Future<String> requestPermission() async {
+    return 'denied';
   }
 
-  Future<bool> requestPermission() async {
-    return false;
-  }
+  @override
+  Future<void> onUserLoggedIn() async {}
 
-  Future<bool> subscribe() async {
-    return false;
-  }
+  @override
+  Future<void> onUserLoggedOut() async {}
 
-  Future<void> unsubscribe() async {}
+  @override
+  Future<void> removeToken() async {}
 
-  Future<void> showLocalNotification({
-    required String title,
-    required String body,
-    String? tag,
-  }) async {}
+  @override
+  Future<void> sendTestNotification() async {}
 
+  @override
   void dispose() {
-    _messageController?.close();
+    _notificationController.close();
   }
 }
+
+/// Factory funkce pro vytvoření instance
+WebPushService createWebPushService() => WebPushServiceImpl();

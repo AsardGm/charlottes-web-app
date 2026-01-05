@@ -10,7 +10,9 @@ import '../../providers/posts_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/thread_type_provider.dart';
 import '../../services/storage_service.dart';
+import '../../widgets/common/mention_text_field.dart';
 
+/// Obrazovka pro vytvoreni noveho prispevku - Functional Dark design
 class CreatePostScreen extends ConsumerStatefulWidget {
   const CreatePostScreen({super.key});
 
@@ -51,6 +53,16 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       initialDate: _selectedDeadline ?? now.add(const Duration(days: 7)),
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.dark(
+            primary: AppColors.accent,
+            surface: AppColors.functionalSurface,
+          ),
+          dialogBackgroundColor: AppColors.functionalBg,
+        ),
+        child: child!,
+      ),
     );
 
     if (date != null && mounted) {
@@ -58,6 +70,16 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         context: context,
         initialTime: TimeOfDay.fromDateTime(
           _selectedDeadline ?? DateTime.now().add(const Duration(hours: 1)),
+        ),
+        builder: (context, child) => Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppColors.accent,
+              surface: AppColors.functionalSurface,
+            ),
+            dialogBackgroundColor: AppColors.functionalBg,
+          ),
+          child: child!,
         ),
       );
 
@@ -82,7 +104,12 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   Future<void> _createPost() async {
     if (_contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Napiste neco...')),
+        SnackBar(
+          content: const Text('Napiste neco...'),
+          backgroundColor: AppColors.functionalSurface,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
       );
       return;
     }
@@ -106,13 +133,29 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       if (mounted) {
         context.go('/');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Prispevek vytvoren!')),
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: AppColors.accent, size: 20),
+                const SizedBox(width: 10),
+                const Text('Prispevek vytvoren!'),
+              ],
+            ),
+            backgroundColor: AppColors.functionalSurface,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Chyba: ${e.toString()}')),
+          SnackBar(
+            content: Text('Chyba: ${e.toString()}'),
+            backgroundColor: AppColors.functionalSurface,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
         );
       }
     } finally {
@@ -128,25 +171,59 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     final threadTypesAsync = ref.watch(threadTypesProvider);
 
     return Scaffold(
+      backgroundColor: AppColors.functionalBg,
       appBar: AppBar(
-        title: const Text('Novy prispevek'),
+        backgroundColor: AppColors.functionalBg,
+        elevation: 0,
+        title: const Text(
+          'Novy prispevek',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: Icon(Icons.close, color: AppColors.functionalMuted),
           onPressed: () => context.go('/'),
         ),
         actions: [
-          FilledButton(
-            onPressed: _isLoading ? null : _createPost,
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Publikovat'),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: TextButton(
+              onPressed: _isLoading ? null : _createPost,
+              style: TextButton.styleFrom(
+                backgroundColor: _isLoading
+                    ? AppColors.functionalBorder
+                    : AppColors.accent,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: _isLoading
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.functionalMuted,
+                      ),
+                    )
+                  : const Text(
+                      'Publikovat',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+            ),
           ),
-          const SizedBox(width: 8),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: AppColors.functionalBorder.withAlpha(128),
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -161,12 +238,13 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                   Text(
                     'Typ vlakna',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
+                      color: AppColors.functionalMuted,
+                      fontSize: 12,
                       fontWeight: FontWeight.w500,
+                      fontFamily: 'monospace',
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
@@ -182,7 +260,6 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                               setState(() {
                                 _selectedThreadType =
                                     isSelected ? null : threadType;
-                                // Vymaž deadline pokud typ nepodporuje
                                 if (_selectedThreadType?.hasDeadline != true) {
                                   _selectedDeadline = null;
                                 }
@@ -193,7 +270,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                       }).toList(),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                 ],
               ),
               loading: () => const SizedBox.shrink(),
@@ -208,12 +285,13 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                   Text(
                     'Kategorie',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
+                      color: AppColors.functionalMuted,
+                      fontSize: 12,
                       fontWeight: FontWeight.w500,
+                      fontFamily: 'monospace',
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
@@ -230,7 +308,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                                       isSelected ? null : category;
                                 });
                               },
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(18),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
                                 padding: const EdgeInsets.symmetric(
@@ -239,14 +317,14 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? category.colorValue.withAlpha(30)
-                                      : AppColors.surfaceLight,
-                                  borderRadius: BorderRadius.circular(20),
+                                      ? AppColors.accent.withAlpha(25)
+                                      : AppColors.functionalSurface,
+                                  borderRadius: BorderRadius.circular(18),
                                   border: Border.all(
                                     color: isSelected
-                                        ? category.colorValue
-                                        : Colors.white.withAlpha(10),
-                                    width: isSelected ? 1.5 : 1,
+                                        ? AppColors.accent
+                                        : Colors.transparent,
+                                    width: 1.5,
                                   ),
                                 ),
                                 child: Row(
@@ -256,8 +334,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                                       category.iconData,
                                       size: 16,
                                       color: isSelected
-                                          ? category.colorValue
-                                          : AppColors.textMuted,
+                                          ? AppColors.accent
+                                          : AppColors.functionalMuted,
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
@@ -266,10 +344,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                                         fontSize: 13,
                                         fontWeight: isSelected
                                             ? FontWeight.w600
-                                            : FontWeight.w500,
+                                            : FontWeight.w400,
                                         color: isSelected
-                                            ? category.colorValue
-                                            : AppColors.textSecondary,
+                                            ? AppColors.accent
+                                            : Colors.white,
                                       ),
                                     ),
                                   ],
@@ -281,7 +359,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                       }).toList(),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                 ],
               ),
               loading: () => const SizedBox.shrink(),
@@ -293,50 +371,119 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
               Text(
                 'Termin',
                 style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 13,
+                  color: AppColors.functionalMuted,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
+                  fontFamily: 'monospace',
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _selectDeadline,
-                      icon: const Icon(Icons.schedule),
-                      label: Text(
-                        _selectedDeadline != null
-                            ? _formatDeadline(_selectedDeadline!)
-                            : 'Vybrat termin',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _selectDeadline,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.functionalSurface,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: _selectedDeadline != null
+                                  ? AppColors.accent.withAlpha(100)
+                                  : Colors.transparent,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.schedule,
+                                size: 18,
+                                color: _selectedDeadline != null
+                                    ? AppColors.accent
+                                    : AppColors.functionalMuted,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                _selectedDeadline != null
+                                    ? _formatDeadline(_selectedDeadline!)
+                                    : 'Vybrat termin',
+                                style: TextStyle(
+                                  color: _selectedDeadline != null
+                                      ? Colors.white
+                                      : AppColors.functionalMuted,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
                   if (_selectedDeadline != null) ...[
                     const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: _clearDeadline,
-                      icon: const Icon(Icons.close),
-                      style: IconButton.styleFrom(
-                        backgroundColor: AppColors.surfaceLight,
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _clearDeadline,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.functionalSurface,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            size: 20,
+                            color: AppColors.functionalMuted,
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
             ],
 
-            TextField(
-              controller: _contentController,
-              maxLines: null,
-              minLines: 5,
-              decoration: InputDecoration(
+            // Text input
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.functionalSurface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: MentionTextField(
+                controller: _contentController,
+                maxLines: null,
+                minLines: 6,
                 hintText: _getHintText(),
-                border: const OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: _getHintText(),
+                  hintStyle: TextStyle(
+                    color: AppColors.functionalMuted,
+                    fontSize: 15,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: AppColors.functionalSurface,
+                  contentPadding: const EdgeInsets.all(16),
+                ),
               ),
             ),
             const SizedBox(height: 16),
+
+            // Selected image preview
             if (_selectedImage != null) ...[
               Stack(
                 children: [
@@ -352,11 +499,23 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                   Positioned(
                     top: 8,
                     right: 8,
-                    child: IconButton.filled(
-                      onPressed: _removeImage,
-                      icon: const Icon(Icons.close),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.black54,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _removeImage,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withAlpha(150),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -364,18 +523,24 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
               ),
               const SizedBox(height: 16),
             ],
+
+            // Image picker buttons
             Row(
               children: [
-                OutlinedButton.icon(
-                  onPressed: () => _pickImage(ImageSource.gallery),
-                  icon: const Icon(Icons.photo_library),
-                  label: const Text('Galerie'),
+                Expanded(
+                  child: _MediaButton(
+                    icon: Icons.photo_library_outlined,
+                    label: 'Galerie',
+                    onTap: () => _pickImage(ImageSource.gallery),
+                  ),
                 ),
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: () => _pickImage(ImageSource.camera),
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text('Fotoaparat'),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MediaButton(
+                    icon: Icons.camera_alt_outlined,
+                    label: 'Fotoaparat',
+                    onTap: () => _pickImage(ImageSource.camera),
+                  ),
                 ),
               ],
             ),
@@ -420,6 +585,57 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   }
 }
 
+/// Tlacitko pro vyber media - Functional Dark design
+class _MediaButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _MediaButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: AppColors.functionalSurface,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: AppColors.functionalMuted,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: AppColors.functionalMuted,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Thread type chip - Functional Dark design
 class _ThreadTypeChip extends StatelessWidget {
   final ThreadTypeModel threadType;
   final bool isSelected;
@@ -437,20 +653,18 @@ class _ThreadTypeChip extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: isSelected
-                ? threadType.colorValue.withAlpha(30)
-                : AppColors.surfaceLight,
-            borderRadius: BorderRadius.circular(20),
+                ? AppColors.accent.withAlpha(25)
+                : AppColors.functionalSurface,
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: isSelected
-                  ? threadType.colorValue
-                  : Colors.white.withAlpha(10),
-              width: isSelected ? 1.5 : 1,
+              color: isSelected ? AppColors.accent : Colors.transparent,
+              width: 1.5,
             ),
           ),
           child: Row(
@@ -465,10 +679,8 @@ class _ThreadTypeChip extends StatelessWidget {
                 threadType.name,
                 style: TextStyle(
                   fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected
-                      ? threadType.colorValue
-                      : AppColors.textSecondary,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected ? AppColors.accent : Colors.white,
                 ),
               ),
               if (threadType.hasDeadline) ...[
@@ -476,9 +688,7 @@ class _ThreadTypeChip extends StatelessWidget {
                 Icon(
                   Icons.schedule,
                   size: 12,
-                  color: isSelected
-                      ? threadType.colorValue
-                      : AppColors.textMuted,
+                  color: isSelected ? AppColors.accent : AppColors.functionalMuted,
                 ),
               ],
             ],

@@ -15,56 +15,36 @@ class NotificationsScreen extends ConsumerWidget {
     final notificationsAsync = ref.watch(notificationNotifierProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.functionalBg,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.functionalBg,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary.withAlpha(40),
-                    AppColors.primary.withAlpha(20),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.notifications_rounded,
-                color: AppColors.primary,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Notifikace',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+        title: const Text(
+          'Notifikace',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
         ),
         actions: [
           PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: AppColors.textSecondary),
+            icon: Icon(Icons.more_vert, color: AppColors.functionalMuted),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            color: AppColors.surface,
+            color: AppColors.functionalSurface,
             onSelected: (value) {
               if (value == 'read_all') {
                 ref.read(notificationNotifierProvider.notifier).markAllAsRead();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: const Text('Vse oznaceno jako prectene'),
-                    backgroundColor: AppColors.success,
+                    backgroundColor: AppColors.functionalSurface,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                 );
@@ -77,7 +57,7 @@ class NotificationsScreen extends ConsumerWidget {
                 value: 'read_all',
                 child: Row(
                   children: [
-                    Icon(Icons.done_all, color: AppColors.success, size: 20),
+                    Icon(Icons.done_all, color: AppColors.accent, size: 20),
                     const SizedBox(width: 12),
                     const Text('Oznacit vse jako prectene'),
                   ],
@@ -121,8 +101,8 @@ class NotificationsScreen extends ConsumerWidget {
           }
 
           return RefreshIndicator(
-            color: AppColors.primary,
-            backgroundColor: AppColors.surface,
+            color: AppColors.accent,
+            backgroundColor: AppColors.functionalSurface,
             onRefresh: () => ref.read(notificationNotifierProvider.notifier).refresh(),
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -166,11 +146,11 @@ class NotificationsScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(color: AppColors.primary),
+              CircularProgressIndicator(color: AppColors.accent),
               const SizedBox(height: 16),
               Text(
                 'Nacitam notifikace...',
-                style: TextStyle(color: AppColors.textMuted),
+                style: TextStyle(color: AppColors.functionalMuted),
               ),
             ],
           ),
@@ -190,7 +170,7 @@ class NotificationsScreen extends ConsumerWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.textMuted,
+              color: AppColors.functionalMuted,
               letterSpacing: 0.5,
             ),
           ),
@@ -198,7 +178,7 @@ class NotificationsScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.primary.withAlpha(20),
+              color: AppColors.accent.withAlpha(30),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -206,7 +186,7 @@ class NotificationsScreen extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: AppColors.primary,
+                color: AppColors.accent,
               ),
             ),
           ),
@@ -221,38 +201,33 @@ class NotificationsScreen extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 120,
-            height: 120,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
-              gradient: RadialGradient(
-                colors: [
-                  AppColors.primary.withAlpha(30),
-                  AppColors.primary.withAlpha(5),
-                ],
-              ),
-              shape: BoxShape.circle,
+              color: AppColors.functionalSurface,
+              borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(
-              Icons.notifications_off_rounded,
-              size: 56,
-              color: AppColors.primary.withAlpha(150),
+              Icons.notifications_off_outlined,
+              size: 40,
+              color: AppColors.functionalMuted,
             ),
           ),
-          const SizedBox(height: 24),
-          Text(
+          const SizedBox(height: 20),
+          const Text(
             'Zadne notifikace',
             style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Az se neco stane, das se tady',
             style: TextStyle(
-              fontSize: 15,
-              color: AppColors.textMuted,
+              fontSize: 14,
+              color: AppColors.functionalMuted,
             ),
           ),
         ],
@@ -268,25 +243,25 @@ class NotificationsScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
-                color: AppColors.error.withAlpha(20),
-                shape: BoxShape.circle,
+                color: AppColors.functionalSurface,
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
                 Icons.error_outline_rounded,
-                size: 40,
+                size: 32,
                 color: AppColors.error,
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
+            const SizedBox(height: 20),
+            const Text(
               'Nepodarilo se nacist',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: Colors.white,
               ),
             ),
             const SizedBox(height: 8),
@@ -294,21 +269,17 @@ class NotificationsScreen extends ConsumerWidget {
               error,
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.textMuted,
+                color: AppColors.functionalMuted,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
+            const SizedBox(height: 20),
+            TextButton.icon(
               onPressed: () => ref.read(notificationNotifierProvider.notifier).refresh(),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Zkusit znovu'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              icon: Icon(Icons.refresh, color: AppColors.accent),
+              label: Text(
+                'Zkusit znovu',
+                style: TextStyle(color: AppColors.accent),
               ),
             ),
           ],
@@ -355,62 +326,37 @@ class _NotificationCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
           color: AppColors.error,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.delete_rounded, color: Colors.white, size: 24),
-            SizedBox(height: 4),
-            Text(
-              'Smazat',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
+        padding: const EdgeInsets.only(right: 20),
+        child: const Icon(Icons.delete_rounded, color: Colors.white, size: 22),
       ),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
-          color: notification.isRead
-              ? AppColors.surface
-              : AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
+          color: AppColors.functionalSurface,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: notification.isRead
-                ? Colors.white.withAlpha(5)
-                : typeInfo.color.withAlpha(40),
-            width: notification.isRead ? 1 : 2,
+                ? Colors.transparent
+                : AppColors.accent.withAlpha(60),
+            width: 1,
           ),
-          boxShadow: notification.isRead
-              ? null
-              : [
-                  BoxShadow(
-                    color: typeInfo.color.withAlpha(20),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
         ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Avatar nebo ikona
                   _buildAvatar(typeInfo),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
                   // Obsah
                   Expanded(
                     child: Column(
@@ -425,7 +371,7 @@ class _NotificationCard extends StatelessWidget {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: typeInfo.color.withAlpha(20),
+                                color: typeInfo.color.withAlpha(25),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
@@ -454,7 +400,7 @@ class _NotificationCard extends StatelessWidget {
                               Helpers.formatTimeAgo(notification.createdAt),
                               style: TextStyle(
                                 fontSize: 11,
-                                color: AppColors.textMuted,
+                                color: AppColors.functionalMuted,
                               ),
                             ),
                           ],
@@ -466,21 +412,21 @@ class _NotificationCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: notification.isRead
-                                ? FontWeight.w500
-                                : FontWeight.w700,
-                            color: AppColors.textPrimary,
+                                ? FontWeight.w400
+                                : FontWeight.w600,
+                            color: Colors.white,
                             height: 1.3,
                           ),
                         ),
                         // Body
                         if (notification.body != null &&
                             notification.body!.isNotEmpty) ...[
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
                           Text(
                             notification.body!,
                             style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.textSecondary,
+                              color: AppColors.functionalMuted,
                               height: 1.4,
                             ),
                             maxLines: 2,
@@ -493,23 +439,12 @@ class _NotificationCard extends StatelessWidget {
                   // Unread indicator
                   if (!notification.isRead)
                     Container(
-                      width: 10,
-                      height: 10,
-                      margin: const EdgeInsets.only(left: 8),
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.only(left: 8, top: 4),
                       decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          colors: [
-                            typeInfo.color,
-                            typeInfo.color.withAlpha(150),
-                          ],
-                        ),
+                        color: AppColors.accent,
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: typeInfo.color.withAlpha(100),
-                            blurRadius: 6,
-                          ),
-                        ],
                       ),
                     ),
                 ],
@@ -528,7 +463,7 @@ class _NotificationCard extends StatelessWidget {
           UserAvatar(
             imageUrl: notification.actor!.avatarUrl,
             name: notification.actor!.username,
-            size: 48,
+            size: 44,
           ),
           Positioned(
             right: -2,
@@ -539,7 +474,7 @@ class _NotificationCard extends StatelessWidget {
                 color: typeInfo.color,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.surface,
+                  color: AppColors.functionalSurface,
                   width: 2,
                 ),
               ),
@@ -555,23 +490,16 @@ class _NotificationCard extends StatelessWidget {
     }
 
     return Container(
-      width: 48,
-      height: 48,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            typeInfo.color.withAlpha(40),
-            typeInfo.color.withAlpha(20),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(14),
+        color: typeInfo.color.withAlpha(25),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(
         typeInfo.icon,
         color: typeInfo.color,
-        size: 24,
+        size: 22,
       ),
     );
   }

@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
+import 'web_push_service.dart';
 
 /// Služba pro autentizaci uživatelů
 ///
@@ -64,14 +66,26 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    return await _supabase.auth.signInWithPassword(
+    final response = await _supabase.auth.signInWithPassword(
       email: email,
       password: password,
     );
+
+    // Registruj push token po přihlášení (web)
+    if (kIsWeb && response.user != null) {
+      WebPushService.instance.onUserLoggedIn();
+    }
+
+    return response;
   }
 
   /// Odhlášení uživatele
   Future<void> signOut() async {
+    // Odregistruj push token před odhlášením (web)
+    if (kIsWeb) {
+      await WebPushService.instance.onUserLoggedOut();
+    }
+
     await _supabase.auth.signOut();
   }
 
@@ -114,5 +128,43 @@ class AuthService {
   /// Odešle email pro reset hesla
   Future<void> resetPassword(String email) async {
     await _supabase.auth.resetPasswordForEmail(email);
+  }
+
+  /// Změní heslo přihlášeného uživatele
+  Future<void> updatePassword(String newPassword) async {
+    await _supabase.auth.updateUser(
+      UserAttributes(password: newPassword),
+    );
+  }
+
+  /// Ověří aktuální heslo (re-autentizace)
+  Future<bool> verifyCurrentPassword(String password) async {
+    final user = currentUser;
+    if (user?.email == null) return false;
+
+    try {
+      await _supabase.auth.signInWithPassword(
+        email: user!.email!,
+        password: password,
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Získá aktivní sessions uživatele
+  Future<Session?> getCurrentSession() async {
+    return _supabase.auth.currentSession;
+  }
+
+  /// Aktualizuje nastavení soukromí (is_private)
+  Future<void> updatePrivacySettings({required bool isPrivate}) async {
+    final user = currentUser;
+    if (user == null) return;
+
+    await _supabase.from('profiles').update({
+      'is_private': isPrivate,
+    }).eq('id', user.id);
   }
 }

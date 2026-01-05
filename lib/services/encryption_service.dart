@@ -12,6 +12,7 @@ class EncryptionService {
 
   final _secureStorage = const FlutterSecureStorage();
   final _x25519 = X25519();
+  final _ed25519 = Ed25519();
 
   // Vytvoří novou instanci AES-GCM pro každou operaci
   AesGcm get _aesGcm => AesGcm.with256bits();
@@ -19,14 +20,23 @@ class EncryptionService {
   // Klíče pro secure storage
   static const _identityPrivateKeyKey = 'identity_private_key';
   static const _identityPublicKeyKey = 'identity_public_key';
+  static const _signingPrivateKeyKey = 'signing_private_key';
+  static const _signingPublicKeyKey = 'signing_public_key';
   static const _signedPrekeyPrivateKey = 'signed_prekey_private';
   static const _signedPrekeyPublicKey = 'signed_prekey_public';
 
-  /// Vygeneruje nový pár identity klíčů
+  /// Vygeneruje nový pár identity klíčů (X25519 pro key exchange)
+  /// a signing klíčů (Ed25519 pro podpisy)
   Future<KeyPairData> generateIdentityKeyPair() async {
+    // X25519 klíče pro key exchange
     final keyPair = await _x25519.newKeyPair();
     final privateKey = await keyPair.extractPrivateKeyBytes();
     final publicKey = (await keyPair.extractPublicKey()).bytes;
+
+    // Ed25519 klíče pro podpisy
+    final signingKeyPair = await _ed25519.newKeyPair();
+    final signingPrivateKey = await signingKeyPair.extractPrivateKeyBytes();
+    final signingPublicKey = (await signingKeyPair.extractPublicKey()).bytes;
 
     // Uloží do secure storage
     await _secureStorage.write(
@@ -37,10 +47,20 @@ class EncryptionService {
       key: _identityPublicKeyKey,
       value: base64Encode(publicKey),
     );
+    await _secureStorage.write(
+      key: _signingPrivateKeyKey,
+      value: base64Encode(signingPrivateKey),
+    );
+    await _secureStorage.write(
+      key: _signingPublicKeyKey,
+      value: base64Encode(signingPublicKey),
+    );
 
     return KeyPairData(
       privateKey: privateKey,
       publicKey: publicKey,
+      signingPrivateKey: signingPrivateKey,
+      signingPublicKey: signingPublicKey,
     );
   }
 
@@ -268,20 +288,74 @@ class EncryptionService {
     final privateKey = await _secureStorage.read(key: _identityPrivateKeyKey);
     return privateKey != null;
   }
+
+  /// Podepíše data pomocí Ed25519
+  Future<String> signData(Uint8List data) async {
+    final signingPrivateKeyStr =
+        await _secureStorage.read(key: _signingPrivateKeyKey);
+    if (signingPrivateKeyStr == null) {
+      throw Exception('Signing key not found');
+    }
+
+    final signingPrivateKey = base64Decode(signingPrivateKeyStr);
+
+    // Vytvoření KeyPair z private key
+    final keyPair = await _ed25519.newKeyPairFromSeed(signingPrivateKey);
+
+    // Podepsání dat
+    final signature = await _ed25519.sign(data, keyPair: keyPair);
+
+    return base64Encode(signature.bytes);
+  }
+
+  /// Ověří podpis pomocí Ed25519 veřejného klíče
+  Future<bool> verifySignature({
+    required Uint8List data,
+    required String signatureBase64,
+    required String signingPublicKeyBase64,
+  }) async {
+    try {
+      final signatureBytes = base64Decode(signatureBase64);
+      final signingPublicKeyBytes = base64Decode(signingPublicKeyBase64);
+
+      final publicKey = SimplePublicKey(
+        signingPublicKeyBytes,
+        type: KeyPairType.ed25519,
+      );
+
+      final signature = Signature(signatureBytes, publicKey: publicKey);
+
+      return await _ed25519.verify(data, signature: signature);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Získá signing public key z úložiště
+  Future<String?> getSigningPublicKey() async {
+    final key = await _secureStorage.read(key: _signingPublicKeyKey);
+    return key;
+  }
 }
 
 /// Data klíčového páru
 class KeyPairData {
   final List<int> privateKey;
   final List<int> publicKey;
+  final List<int>? signingPrivateKey;
+  final List<int>? signingPublicKey;
 
   KeyPairData({
     required this.privateKey,
     required this.publicKey,
+    this.signingPrivateKey,
+    this.signingPublicKey,
   });
 
   String get publicKeyBase64 => base64Encode(publicKey);
   String get privateKeyBase64 => base64Encode(privateKey);
+  String? get signingPublicKeyBase64 =>
+      signingPublicKey != null ? base64Encode(signingPublicKey!) : null;
 
   Uint8List get publicKeyBytes => Uint8List.fromList(publicKey);
   Uint8List get privateKeyBytes => Uint8List.fromList(privateKey);

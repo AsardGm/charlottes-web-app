@@ -430,7 +430,9 @@ class _SearchSheetState extends ConsumerState<SearchSheet>
                 label: 'Uživatelé',
                 color: AppColors.primary,
                 onTap: () {
-                  // TODO: Navigate to users
+                  // Přepnout na tab uživatelé ve výsledcích
+                  _searchController.text = ' ';
+                  _onSearchSubmitted(' ');
                 },
               ),
             ),
@@ -441,7 +443,9 @@ class _SearchSheetState extends ConsumerState<SearchSheet>
                 label: 'Tagy',
                 color: AppColors.info,
                 onTap: () {
-                  // TODO: Navigate to tags
+                  // Vyhledat hashtag
+                  _searchController.text = '#';
+                  _focusNode.requestFocus();
                 },
               ),
             ),
@@ -452,7 +456,9 @@ class _SearchSheetState extends ConsumerState<SearchSheet>
                 label: 'Kategorie',
                 color: AppColors.success,
                 onTap: () {
-                  // TODO: Navigate to categories
+                  // Zavřít search a otevřít feed s filtry
+                  Navigator.pop(context);
+                  // Feed screen má vlastní filtry pro kategorie
                 },
               ),
             ),

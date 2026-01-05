@@ -23,7 +23,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       primaryColor: AppColors.primary,
-      scaffoldBackgroundColor: AppColors.background,
+      scaffoldBackgroundColor: AppColors.functionalBg,
       fontFamily: GoogleFonts.rajdhani().fontFamily,
       colorScheme: ColorScheme.dark(
         primary: AppColors.primary,
@@ -63,33 +63,33 @@ class AppTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.primary.withAlpha(30),
+        backgroundColor: AppColors.functionalBg,
+        indicatorColor: AppColors.accent.withAlpha(30),
         surfaceTintColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return GoogleFonts.rajdhani(
-              color: AppColors.primary,  // Cervena kdyz vybrano
+              color: AppColors.accent,  // Cyan kdyz vybrano
               fontSize: 12,
               fontWeight: FontWeight.w700,
             );
           }
           return GoogleFonts.rajdhani(
-            color: AppColors.textMuted,
+            color: AppColors.functionalMuted,
             fontSize: 12,
             fontWeight: FontWeight.w500,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: AppColors.primary, size: 26);
+            return const IconThemeData(color: AppColors.accent, size: 26);
           }
-          return const IconThemeData(color: AppColors.textMuted, size: 24);
+          return const IconThemeData(color: AppColors.functionalMuted, size: 24);
         }),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceLight,
+        fillColor: AppColors.functionalSurface,
         hintStyle: GoogleFonts.rajdhani(
           color: AppColors.textMuted,
           fontWeight: FontWeight.w500,
@@ -343,17 +343,287 @@ class AppTheme {
     );
   }
 
-  /// Svetle tema
+  /// Svetle tema - plna implementace
   static ThemeData get lightTheme {
-    return darkTheme.copyWith(
+    // Light theme colors
+    const backgroundLight = Color(0xFFF8F9FA);
+    const surfaceLight = Color(0xFFFFFFFF);
+    const surfaceLightElevated = Color(0xFFF0F2F5);
+    const textPrimaryLight = Color(0xFF1A1A2E);
+    const textSecondaryLight = Color(0xFF4A4A5A);
+    const textMutedLight = Color(0xFF8A8A9A);
+
+    final headlineTextTheme = GoogleFonts.bangersTextTheme(
+      ThemeData.light().textTheme,
+    );
+
+    final bodyTextTheme = GoogleFonts.rajdhaniTextTheme(
+      ThemeData.light().textTheme,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: const Color(0xFFF5F0E6),  // Kremova
+      primaryColor: AppColors.primary,
+      scaffoldBackgroundColor: backgroundLight,
+      fontFamily: GoogleFonts.rajdhani().fontFamily,
       colorScheme: ColorScheme.light(
         primary: AppColors.primary,
+        onPrimary: Colors.white,
         secondary: AppColors.secondary,
-        tertiary: AppColors.accent,
-        surface: const Color(0xFFF5F0E6),
+        onSecondary: Colors.white,
+        tertiary: AppColors.secondaryDark,
+        onTertiary: Colors.white,
+        surface: surfaceLight,
+        onSurface: textPrimaryLight,
         error: AppColors.error,
+        onError: Colors.white,
+      ),
+      appBarTheme: AppBarTheme(
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: surfaceLight,
+        foregroundColor: textPrimaryLight,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: GoogleFonts.bangers(
+          color: textPrimaryLight,
+          fontSize: 24,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 2,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 2,
+        color: surfaceLight,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.black.withAlpha(20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: surfaceLight,
+        indicatorColor: AppColors.primary.withAlpha(30),
+        surfaceTintColor: Colors.transparent,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return GoogleFonts.rajdhani(
+              color: AppColors.primary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            );
+          }
+          return GoogleFonts.rajdhani(
+            color: textMutedLight,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: AppColors.primary, size: 26);
+          }
+          return IconThemeData(color: textMutedLight, size: 24);
+        }),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surfaceLightElevated,
+        hintStyle: GoogleFonts.rajdhani(
+          color: textMutedLight,
+          fontWeight: FontWeight.w500,
+        ),
+        labelStyle: GoogleFonts.rajdhani(
+          color: textSecondaryLight,
+          fontWeight: FontWeight.w500,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.grey.shade300,
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.error, width: 1),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: GoogleFonts.rajdhani(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          textStyle: GoogleFonts.rajdhani(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: textSecondaryLight,
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+      dividerTheme: DividerThemeData(
+        color: Colors.grey.shade200,
+        thickness: 1,
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: textPrimaryLight,
+        contentTextStyle: GoogleFonts.rajdhani(
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: surfaceLight,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        titleTextStyle: GoogleFonts.bangers(
+          color: textPrimaryLight,
+          fontSize: 24,
+          letterSpacing: 1.5,
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: surfaceLight,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: surfaceLight,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 4,
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: surfaceLightElevated,
+        selectedColor: AppColors.primary.withAlpha(30),
+        labelStyle: GoogleFonts.rajdhani(
+          color: textPrimaryLight,
+          fontWeight: FontWeight.w600,
+        ),
+        side: BorderSide(color: Colors.grey.shade300),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      tabBarTheme: TabBarThemeData(
+        labelColor: AppColors.primary,
+        unselectedLabelColor: textMutedLight,
+        indicatorColor: AppColors.primary,
+        labelStyle: GoogleFonts.rajdhani(
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelStyle: GoogleFonts.rajdhani(
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.primary,
+        linearTrackColor: Color(0xFFE0E0E0),
+      ),
+      textTheme: TextTheme(
+        displayLarge: headlineTextTheme.displayLarge?.copyWith(
+          color: textPrimaryLight,
+          letterSpacing: 3,
+        ),
+        displayMedium: headlineTextTheme.displayMedium?.copyWith(
+          color: textPrimaryLight,
+          letterSpacing: 2.5,
+        ),
+        displaySmall: headlineTextTheme.displaySmall?.copyWith(
+          color: textPrimaryLight,
+          letterSpacing: 2,
+        ),
+        headlineLarge: headlineTextTheme.headlineLarge?.copyWith(
+          color: textPrimaryLight,
+          letterSpacing: 2,
+        ),
+        headlineMedium: headlineTextTheme.headlineMedium?.copyWith(
+          color: textPrimaryLight,
+          letterSpacing: 1.5,
+        ),
+        headlineSmall: headlineTextTheme.headlineSmall?.copyWith(
+          color: textPrimaryLight,
+          letterSpacing: 1,
+        ),
+        titleLarge: bodyTextTheme.titleLarge?.copyWith(
+          color: textPrimaryLight,
+          fontWeight: FontWeight.w700,
+        ),
+        titleMedium: bodyTextTheme.titleMedium?.copyWith(
+          color: textPrimaryLight,
+          fontWeight: FontWeight.w600,
+        ),
+        titleSmall: bodyTextTheme.titleSmall?.copyWith(
+          color: textPrimaryLight,
+          fontWeight: FontWeight.w600,
+        ),
+        bodyLarge: bodyTextTheme.bodyLarge?.copyWith(
+          color: textPrimaryLight,
+          fontWeight: FontWeight.w500,
+        ),
+        bodyMedium: bodyTextTheme.bodyMedium?.copyWith(
+          color: textSecondaryLight,
+          fontWeight: FontWeight.w500,
+        ),
+        bodySmall: bodyTextTheme.bodySmall?.copyWith(
+          color: textMutedLight,
+          fontWeight: FontWeight.w500,
+        ),
+        labelLarge: bodyTextTheme.labelLarge?.copyWith(
+          color: textPrimaryLight,
+          fontWeight: FontWeight.w600,
+        ),
+        labelMedium: bodyTextTheme.labelMedium?.copyWith(
+          color: textSecondaryLight,
+          fontWeight: FontWeight.w600,
+        ),
+        labelSmall: bodyTextTheme.labelSmall?.copyWith(
+          color: textMutedLight,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
