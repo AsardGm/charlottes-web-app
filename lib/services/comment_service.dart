@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/comment_model.dart';
 import 'push_sender_service.dart';
 import 'block_service.dart';
+import 'content_moderation_service.dart';
 
 /// Služba pro práci s komentáři
 ///
@@ -15,6 +16,9 @@ class CommentService {
 
   /// Block service pro filtrování zablokovaných
   final BlockService _blockService = BlockService();
+
+  /// Content moderation service pro kontrolu zakázaných slov
+  final ContentModerationService _moderationService = ContentModerationService();
 
   /// Načte komentáře k příspěvku
   ///
@@ -38,11 +42,17 @@ class CommentService {
   }
 
   /// Přidá nový komentář
+  ///
+  /// Před vytvořením zkontroluje obsah na zakázaná slova.
+  /// Vyhodí [ContentBlockedException] pokud obsahuje zakázaný obsah.
   Future<CommentModel> addComment({
     required String postId,
     required String content,
   }) async {
     final userId = _supabase.auth.currentUser!.id;
+
+    // Kontrola obsahu na zakázaná slova
+    await _moderationService.validateContent(content);
 
     final response = await _supabase
         .from('comments')

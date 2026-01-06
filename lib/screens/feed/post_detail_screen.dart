@@ -5,6 +5,8 @@ import '../../models/comment_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/posts_provider.dart';
 import '../../services/comment_service.dart';
+import '../../services/content_moderation_service.dart';
+import '../../theme/theme.dart';
 import '../../widgets/post_card.dart';
 import '../../widgets/post_detail/post_detail.dart';
 
@@ -70,6 +72,64 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
     }
   }
 
+  /// Zobrazí dialog o zablokovaném obsahu
+  void _showContentBlockedDialog(String message, List<String> blockedWords) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.functionalSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Komentar nelze odeslat',
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              message,
+              style: TextStyle(color: AppColors.functionalMuted, fontSize: 14),
+            ),
+            if (blockedWords.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: blockedWords.map((word) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withAlpha(50),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red.withAlpha(100)),
+                  ),
+                  child: Text(
+                    word,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                )).toList(),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Rozumim', style: TextStyle(color: AppColors.accent)),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Odešle nový komentář
   Future<void> _postComment() async {
     if (_commentController.text.trim().isEmpty) return;
@@ -89,6 +149,10 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
 
       // Aktualizovat příspěvek (počet komentářů)
       ref.invalidate(singlePostProvider(widget.postId));
+    } on ContentBlockedException catch (e) {
+      if (mounted) {
+        _showContentBlockedDialog(e.message, e.blockedWords);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

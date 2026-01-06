@@ -10,6 +10,7 @@ import '../../providers/posts_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/thread_type_provider.dart';
 import '../../services/storage_service.dart';
+import '../../services/content_moderation_service.dart';
 import '../../widgets/common/mention_text_field.dart';
 
 /// Obrazovka pro vytvoreni noveho prispevku - Functional Dark design
@@ -101,6 +102,73 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     setState(() => _selectedDeadline = null);
   }
 
+  void _showContentBlockedDialog(String message, List<String> blockedWords) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.functionalSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+            const SizedBox(width: 12),
+            const Text(
+              'Obsah nelze publikovat',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              message,
+              style: TextStyle(color: AppColors.functionalMuted, fontSize: 14),
+            ),
+            if (blockedWords.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Problematicka slova:',
+                style: TextStyle(
+                  color: AppColors.functionalMuted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: blockedWords.map((word) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withAlpha(50),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red.withAlpha(100)),
+                  ),
+                  child: Text(
+                    word,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                )).toList(),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Rozumim',
+              style: TextStyle(color: AppColors.accent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _createPost() async {
     if (_contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -146,6 +214,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
         );
+      }
+    } on ContentBlockedException catch (e) {
+      if (mounted) {
+        _showContentBlockedDialog(e.message, e.blockedWords);
       }
     } catch (e) {
       if (mounted) {

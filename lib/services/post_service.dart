@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/post_model.dart';
 import 'block_service.dart';
+import 'content_moderation_service.dart';
 
 /// Služba pro práci s příspěvky
 ///
@@ -12,6 +13,9 @@ class PostService {
 
   /// Block service pro filtrování zablokovaných
   final BlockService _blockService = BlockService();
+
+  /// Content moderation service pro kontrolu zakázaných slov
+  final ContentModerationService _moderationService = ContentModerationService();
 
   /// SQL dotaz pro načtení příspěvku s relacemi
   static const String _selectQuery = '''
@@ -122,6 +126,9 @@ class PostService {
   }
 
   /// Vytvoří nový příspěvek
+  ///
+  /// Před vytvořením zkontroluje obsah na zakázaná slova.
+  /// Vyhodí [ContentBlockedException] pokud obsahuje zakázaný obsah.
   Future<PostModel> createPost({
     required String content,
     String? imageUrl,
@@ -131,6 +138,9 @@ class PostService {
   }) async {
     final userId = _supabase.auth.currentUser!.id;
     final now = DateTime.now().toIso8601String();
+
+    // Kontrola obsahu na zakázaná slova
+    await _moderationService.validateContent(content);
 
     final response = await _supabase
         .from('posts')
