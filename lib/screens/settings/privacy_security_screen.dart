@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/block_provider.dart';
 import '../../services/auth_service.dart';
 
 /// Obrazovka nastaveni soukromi a bezpecnosti
@@ -131,6 +132,43 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                 isPrivate: _isPrivate,
                 isLoading: _isLoading,
                 onChanged: _togglePrivateAccount,
+              ),
+              Divider(height: 1, color: AppColors.textMuted.withAlpha(20)),
+              // Zablokovaní uživatelé
+              Consumer(
+                builder: (context, ref, _) {
+                  final countAsync = ref.watch(blockedUsersCountProvider);
+                  return ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withAlpha(20),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.block, color: AppColors.error),
+                    ),
+                    title: Text(
+                      'Zablokovani uzivatele',
+                      style: TextStyle(color: AppColors.textPrimary),
+                    ),
+                    subtitle: countAsync.when(
+                      data: (count) => Text(
+                        count > 0 ? '$count zablokovanych' : 'Zadni zablokovani',
+                        style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                      ),
+                      loading: () => Text(
+                        'Nacitani...',
+                        style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                      ),
+                      error: (_, _) => Text(
+                        'Zadni zablokovani',
+                        style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                      ),
+                    ),
+                    trailing: Icon(Icons.chevron_right, color: AppColors.textMuted),
+                    onTap: () => context.push('/blocked-users'),
+                  );
+                },
               ),
             ],
           ),

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/theme.dart';
 import '../../providers/follow_provider.dart';
+import '../../services/follow_service.dart';
 
-/// Tlacitko pro sledovani/odsledovani uzivatele
+/// Tlacitko pro sledovani/odsledovani uzivatele s podporou soukromych uctu
 class FollowButton extends ConsumerStatefulWidget {
   /// ID uzivatele ke sledovani
   final String userId;
@@ -12,13 +13,13 @@ class FollowButton extends ConsumerStatefulWidget {
   final bool compact;
 
   /// Callback po zmene stavu sledovani
-  final void Function(bool isFollowing)? onFollowChanged;
+  final void Function(FollowStatus status)? onStatusChanged;
 
   const FollowButton({
     super.key,
     required this.userId,
     this.compact = false,
-    this.onFollowChanged,
+    this.onStatusChanged,
   });
 
   @override
@@ -49,17 +50,18 @@ class _FollowButtonState extends ConsumerState<FollowButton>
     super.dispose();
   }
 
-  Future<void> _toggleFollow(bool currentlyFollowing) async {
+  Future<void> _toggleFollow(FollowStatus currentStatus) async {
     if (_isLoading) return;
 
     setState(() => _isLoading = true);
     _animationController.forward();
 
     try {
-      final isNowFollowing =
-          await ref.read(followNotifierProvider.notifier).toggleFollow(widget.userId);
+      final newStatus = await ref
+          .read(followNotifierProvider.notifier)
+          .toggleFollowOrRequest(widget.userId);
 
-      widget.onFollowChanged?.call(isNowFollowing);
+      widget.onStatusChanged?.call(newStatus);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -79,16 +81,16 @@ class _FollowButtonState extends ConsumerState<FollowButton>
 
   @override
   Widget build(BuildContext context) {
-    final isFollowingAsync = ref.watch(isFollowingProvider(widget.userId));
+    final statusAsync = ref.watch(followStatusProvider(widget.userId));
 
-    return isFollowingAsync.when(
-      data: (isFollowing) => _buildButton(isFollowing),
-      loading: () => _buildButton(false, isLoadingState: true),
-      error: (_, _) => _buildButton(false),
+    return statusAsync.when(
+      data: (status) => _buildButton(status),
+      loading: () => _buildButton(FollowStatus.notFollowing, isLoadingState: true),
+      error: (_, _) => _buildButton(FollowStatus.notFollowing),
     );
   }
 
-  Widget _buildButton(bool isFollowing, {bool isLoadingState = false}) {
+  Widget _buildButton(FollowStatus status, {bool isLoadingState = false}) {
     final showLoading = _isLoading || isLoadingState;
 
     return ScaleTransition(
@@ -97,27 +99,27 @@ class _FollowButtonState extends ConsumerState<FollowButton>
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
         child: widget.compact
-            ? _buildCompactButton(isFollowing, showLoading)
-            : _buildFullButton(isFollowing, showLoading),
+            ? _buildCompactButton(status, showLoading)
+            : _buildFullButton(status, showLoading),
       ),
     );
   }
 
-  Widget _buildFullButton(bool isFollowing, bool showLoading) {
+  Widget _buildFullButton(FollowStatus status, bool showLoading) {
+    final (backgroundColor, foregroundColor, borderSide, text, icon) = _getButtonStyle(status);
+
     return SizedBox(
       height: 36,
       child: ElevatedButton(
-        onPressed: showLoading ? null : () => _toggleFollow(isFollowing),
+        onPressed: showLoading ? null : () => _toggleFollow(status),
         style: ElevatedButton.styleFrom(
-          backgroundColor: isFollowing ? AppColors.surface : AppColors.primary,
-          foregroundColor: isFollowing ? AppColors.textPrimary : Colors.white,
+          backgroundColor: backgroundColor,
+          foregroundColor: foregroundColor,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
-            side: isFollowing
-                ? BorderSide(color: AppColors.textMuted.withAlpha(50))
-                : BorderSide.none,
+            side: borderSide,
           ),
         ),
         child: showLoading
@@ -126,22 +128,18 @@ class _FollowButtonState extends ConsumerState<FollowButton>
                 height: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: isFollowing ? AppColors.textPrimary : Colors.white,
+                  color: foregroundColor,
                 ),
               )
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (isFollowing) ...[
-                    Icon(
-                      Icons.check,
-                      size: 16,
-                      color: AppColors.textPrimary,
-                    ),
+                  if (icon != null) ...[
+                    Icon(icon, size: 16, color: foregroundColor),
                     const SizedBox(width: 6),
                   ],
                   Text(
-                    isFollowing ? 'Sledujete' : 'Sledovat',
+                    text,
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -153,18 +151,20 @@ class _FollowButtonState extends ConsumerState<FollowButton>
     );
   }
 
-  Widget _buildCompactButton(bool isFollowing, bool showLoading) {
+  Widget _buildCompactButton(FollowStatus status, bool showLoading) {
+    final (backgroundColor, foregroundColor, borderSide, text, _) = _getButtonStyle(status);
+
     return SizedBox(
       height: 32,
       child: OutlinedButton(
-        onPressed: showLoading ? null : () => _toggleFollow(isFollowing),
+        onPressed: showLoading ? null : () => _toggleFollow(status),
         style: OutlinedButton.styleFrom(
-          backgroundColor: isFollowing ? Colors.transparent : AppColors.primary,
-          foregroundColor: isFollowing ? AppColors.textPrimary : Colors.white,
+          backgroundColor: status == FollowStatus.notFollowing
+              ? AppColors.primary
+              : Colors.transparent,
+          foregroundColor: foregroundColor,
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          side: BorderSide(
-            color: isFollowing ? AppColors.textMuted.withAlpha(80) : AppColors.primary,
-          ),
+          side: borderSide,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(6),
           ),
@@ -175,11 +175,11 @@ class _FollowButtonState extends ConsumerState<FollowButton>
                 height: 14,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: isFollowing ? AppColors.textMuted : Colors.white,
+                  color: foregroundColor,
                 ),
               )
             : Text(
-                isFollowing ? 'Sledujete' : 'Sledovat',
+                text,
                 style: const TextStyle(
                   fontWeight: FontWeight.w500,
                   fontSize: 12,
@@ -188,19 +188,49 @@ class _FollowButtonState extends ConsumerState<FollowButton>
       ),
     );
   }
+
+  /// Vrací styl tlačítka podle stavu
+  (Color, Color, BorderSide, String, IconData?) _getButtonStyle(FollowStatus status) {
+    switch (status) {
+      case FollowStatus.following:
+        return (
+          AppColors.surface,
+          AppColors.textPrimary,
+          BorderSide(color: AppColors.textMuted.withAlpha(50)),
+          'Sledujete',
+          Icons.check,
+        );
+      case FollowStatus.requested:
+        return (
+          AppColors.surface,
+          AppColors.textSecondary,
+          BorderSide(color: AppColors.textMuted.withAlpha(50)),
+          'Pozadano',
+          Icons.schedule,
+        );
+      case FollowStatus.notFollowing:
+        return (
+          AppColors.primary,
+          Colors.white,
+          BorderSide.none,
+          'Sledovat',
+          null,
+        );
+    }
+  }
 }
 
 /// Ikonove tlacitko pro sledovani (pouziti v listech)
 class FollowIconButton extends ConsumerStatefulWidget {
   final String userId;
   final double size;
-  final void Function(bool isFollowing)? onFollowChanged;
+  final void Function(FollowStatus status)? onStatusChanged;
 
   const FollowIconButton({
     super.key,
     required this.userId,
     this.size = 24,
-    this.onFollowChanged,
+    this.onStatusChanged,
   });
 
   @override
@@ -210,15 +240,16 @@ class FollowIconButton extends ConsumerStatefulWidget {
 class _FollowIconButtonState extends ConsumerState<FollowIconButton> {
   bool _isLoading = false;
 
-  Future<void> _toggleFollow(bool currentlyFollowing) async {
+  Future<void> _toggleFollow(FollowStatus currentStatus) async {
     if (_isLoading) return;
 
     setState(() => _isLoading = true);
 
     try {
-      final isNowFollowing =
-          await ref.read(followNotifierProvider.notifier).toggleFollow(widget.userId);
-      widget.onFollowChanged?.call(isNowFollowing);
+      final newStatus = await ref
+          .read(followNotifierProvider.notifier)
+          .toggleFollowOrRequest(widget.userId);
+      widget.onStatusChanged?.call(newStatus);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -237,10 +268,10 @@ class _FollowIconButtonState extends ConsumerState<FollowIconButton> {
 
   @override
   Widget build(BuildContext context) {
-    final isFollowingAsync = ref.watch(isFollowingProvider(widget.userId));
+    final statusAsync = ref.watch(followStatusProvider(widget.userId));
 
-    return isFollowingAsync.when(
-      data: (isFollowing) => _buildIcon(isFollowing),
+    return statusAsync.when(
+      data: (status) => _buildIcon(status),
       loading: () => SizedBox(
         width: widget.size,
         height: widget.size,
@@ -249,11 +280,11 @@ class _FollowIconButtonState extends ConsumerState<FollowIconButton> {
           color: AppColors.textMuted,
         ),
       ),
-      error: (_, _) => _buildIcon(false),
+      error: (_, _) => _buildIcon(FollowStatus.notFollowing),
     );
   }
 
-  Widget _buildIcon(bool isFollowing) {
+  Widget _buildIcon(FollowStatus status) {
     if (_isLoading) {
       return SizedBox(
         width: widget.size,
@@ -265,21 +296,36 @@ class _FollowIconButtonState extends ConsumerState<FollowIconButton> {
       );
     }
 
+    final (icon, color) = _getIconStyle(status);
+
     return GestureDetector(
-      onTap: () => _toggleFollow(isFollowing),
+      onTap: () => _toggleFollow(status),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: isFollowing ? AppColors.primary.withAlpha(20) : Colors.transparent,
+          color: status == FollowStatus.following
+              ? AppColors.primary.withAlpha(20)
+              : Colors.transparent,
           shape: BoxShape.circle,
         ),
         child: Icon(
-          isFollowing ? Icons.person_remove : Icons.person_add,
+          icon,
           size: widget.size,
-          color: isFollowing ? AppColors.primary : AppColors.textMuted,
+          color: color,
         ),
       ),
     );
+  }
+
+  (IconData, Color) _getIconStyle(FollowStatus status) {
+    switch (status) {
+      case FollowStatus.following:
+        return (Icons.person_remove, AppColors.primary);
+      case FollowStatus.requested:
+        return (Icons.schedule, AppColors.textMuted);
+      case FollowStatus.notFollowing:
+        return (Icons.person_add, AppColors.textMuted);
+    }
   }
 }

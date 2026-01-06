@@ -7,6 +7,7 @@ import '../../providers/badge_provider.dart';
 import '../../providers/bookmark_provider.dart';
 import '../../providers/posts_provider.dart';
 import '../../providers/profile_provider.dart';
+import '../../providers/follow_provider.dart';
 import '../../models/post_model.dart';
 import '../../models/badge_model.dart';
 import '../../widgets/profile/profile.dart';
@@ -327,21 +328,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.7,
+      ),
       builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.functionalMuted.withAlpha(100),
-                borderRadius: BorderRadius.circular(2),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.functionalMuted.withAlpha(100),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            _MenuTile(
+              const SizedBox(height: 16),
+              _MenuTile(
               icon: Icons.emoji_events,
               label: 'Gamifikace',
               onTap: () {
@@ -374,6 +380,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               },
             ),
             Divider(height: 1, color: AppColors.functionalBorder),
+            // Žádosti o sledování s badge
+            Consumer(
+              builder: (context, ref, _) {
+                final countAsync = ref.watch(pendingRequestsCountProvider);
+                return countAsync.when(
+                  data: (count) => _MenuTileWithBadge(
+                    icon: Icons.person_add,
+                    label: 'Zadosti o sledovani',
+                    badgeCount: count,
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/follow-requests');
+                    },
+                  ),
+                  loading: () => _MenuTile(
+                    icon: Icons.person_add,
+                    label: 'Zadosti o sledovani',
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/follow-requests');
+                    },
+                  ),
+                  error: (_, _) => _MenuTile(
+                    icon: Icons.person_add,
+                    label: 'Zadosti o sledovani',
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/follow-requests');
+                    },
+                  ),
+                );
+              },
+            ),
             _MenuTile(
               icon: Icons.settings,
               label: 'Nastaveni',
@@ -400,8 +439,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 LogoutDialog.show(context);
               },
             ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -523,6 +563,58 @@ class _MenuTile extends StatelessWidget {
           color: color ?? Colors.white,
           fontWeight: FontWeight.w500,
         ),
+      ),
+      onTap: onTap,
+    );
+  }
+}
+
+/// Polozka menu s badge - Functional Dark
+class _MenuTileWithBadge extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final int badgeCount;
+  final VoidCallback onTap;
+
+  const _MenuTileWithBadge({
+    required this.icon,
+    required this.label,
+    required this.badgeCount,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: AppColors.functionalMuted),
+      title: Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          if (badgeCount > 0) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.accent,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                badgeCount > 99 ? '99+' : badgeCount.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
       onTap: onTap,
     );

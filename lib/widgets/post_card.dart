@@ -6,11 +6,13 @@ import '../models/post_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/posts_provider.dart';
 import '../services/share_service.dart';
+import '../services/report_service.dart';
 import '../utils/helpers.dart';
 import '../utils/haptic_utils.dart';
 import '../theme/theme.dart';
 import 'user_avatar.dart';
 import 'common/mention_text_field.dart';
+import 'report_dialog.dart';
 
 /// Post karta s Functional Dark designem
 class PostCard extends ConsumerStatefulWidget {
@@ -100,7 +102,7 @@ class _PostCardState extends ConsumerState<PostCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header - Avatar, jmeno, cas
-                _buildHeader(canDelete),
+                _buildHeader(canDelete: canDelete, isOwner: isOwner),
 
                 const SizedBox(height: 12),
 
@@ -171,87 +173,106 @@ class _PostCardState extends ConsumerState<PostCard> {
   }
 
   /// Header s avatarem a info
-  Widget _buildHeader(bool canDelete) {
+  Widget _buildHeader({required bool canDelete, required bool isOwner}) {
     return Row(
       children: [
-        // Avatar
-        UserAvatar(
-          imageUrl: _post.author?.avatarUrl,
-          name: _post.author?.username ?? 'Uzivatel',
-          size: 40,
-        ),
-        const SizedBox(width: 12),
-        // Info
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      _post.author?.username ?? 'Uzivatel',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: Colors.white,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (_post.author?.isAdmin ?? false) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent.withAlpha(30),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: AppColors.accent.withAlpha(100),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        'ADMIN',
-                        style: TextStyle(
-                          color: AppColors.accent,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 2),
-              Text(
-                Helpers.formatTimeAgo(_post.createdAt),
-                style: TextStyle(
-                  color: AppColors.functionalMuted,
-                  fontSize: 11,
-                  fontFamily: 'monospace',
-                ),
-              ),
-            ],
+        // Avatar - kliknutím na profil
+        GestureDetector(
+          onTap: () => context.push('/profile/${_post.authorId}'),
+          child: UserAvatar(
+            imageUrl: _post.author?.avatarUrl,
+            name: _post.author?.username ?? 'Uzivatel',
+            size: 40,
           ),
         ),
-        // Menu
-        if (canDelete)
-          PopupMenuButton(
-            icon: Icon(
-              Icons.more_horiz,
-              color: AppColors.functionalMuted,
-              size: 20,
+        const SizedBox(width: 12),
+        // Info - kliknutím na profil
+        Expanded(
+          child: GestureDetector(
+            onTap: () => context.push('/profile/${_post.authorId}'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _post.author?.username ?? 'Uzivatel',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (_post.author?.isAdmin ?? false) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withAlpha(30),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: AppColors.accent.withAlpha(100),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          'ADMIN',
+                          style: TextStyle(
+                            color: AppColors.accent,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  Helpers.formatTimeAgo(_post.createdAt),
+                  style: TextStyle(
+                    color: AppColors.functionalMuted,
+                    fontSize: 11,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ],
             ),
-            color: AppColors.functionalSurface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            itemBuilder: (context) => [
+          ),
+        ),
+        // Menu - vzdy zobrazeno
+        PopupMenuButton(
+          icon: Icon(
+            Icons.more_horiz,
+            color: AppColors.functionalMuted,
+            size: 20,
+          ),
+          color: AppColors.functionalSurface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          itemBuilder: (context) => [
+            // Nahlasit - pro vsechny krome vlastnika
+            if (!isOwner)
+              PopupMenuItem(
+                value: 'report',
+                child: Row(
+                  children: [
+                    Icon(Icons.flag_outlined, color: AppColors.functionalMuted, size: 18),
+                    const SizedBox(width: 10),
+                    Text('Nahlasit', style: TextStyle(color: AppColors.textPrimary)),
+                  ],
+                ),
+              ),
+            // Smazat - pouze pro vlastnika nebo admina
+            if (canDelete)
               PopupMenuItem(
                 value: 'delete',
                 child: Row(
@@ -262,13 +283,15 @@ class _PostCardState extends ConsumerState<PostCard> {
                   ],
                 ),
               ),
-            ],
-            onSelected: (value) {
-              if (value == 'delete') {
-                _showDeleteDialog();
-              }
-            },
-          ),
+          ],
+          onSelected: (value) {
+            if (value == 'delete') {
+              _showDeleteDialog();
+            } else if (value == 'report') {
+              _showReportDialog();
+            }
+          },
+        ),
       ],
     );
   }
@@ -343,6 +366,17 @@ class _PostCardState extends ConsumerState<PostCard> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showReportDialog() {
+    ReportDialog.show(
+      context: context,
+      contentType: ReportContentType.post,
+      contentId: _post.id,
+      contentPreview: _post.content.length > 100
+          ? '${_post.content.substring(0, 100)}...'
+          : _post.content,
     );
   }
 }

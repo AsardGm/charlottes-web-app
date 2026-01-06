@@ -14,13 +14,21 @@ import '../screens/feed/post_detail_screen.dart';
 import '../screens/admin/admin_dashboard.dart';
 import '../screens/admin/user_management_screen.dart';
 import '../screens/admin/post_management_screen.dart';
+import '../screens/admin/reports_screen.dart';
+import '../screens/admin/analytics_screen.dart';
+import '../screens/admin/moderation_screen.dart';
+import '../screens/admin/content_management_screen.dart';
+import '../screens/admin/user_tools_screen.dart';
+import '../screens/admin/audit_log_screen.dart';
 import '../screens/chat/chat_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/settings/privacy_security_screen.dart';
+import '../screens/settings/blocked_users_screen.dart';
 import '../screens/search/search_screen.dart';
 import '../screens/profile/edit_profile_screen.dart';
 import '../screens/profile/user_profile_screen.dart';
+import '../screens/profile/follow_requests_screen.dart';
 import '../screens/gamification/gamification_screen.dart';
 import '../screens/gamification/cards_screen.dart';
 import '../screens/gamification/leaderboard_screen.dart';
@@ -155,6 +163,30 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/admin/posts',
         builder: (context, state) => const PostManagementScreen(),
       ),
+      GoRoute(
+        path: '/admin/reports',
+        builder: (context, state) => const ReportsScreen(),
+      ),
+      GoRoute(
+        path: '/admin/analytics',
+        builder: (context, state) => const AnalyticsScreen(),
+      ),
+      GoRoute(
+        path: '/admin/moderation',
+        builder: (context, state) => const ModerationScreen(),
+      ),
+      GoRoute(
+        path: '/admin/content',
+        builder: (context, state) => const ContentManagementScreen(),
+      ),
+      GoRoute(
+        path: '/admin/user-tools',
+        builder: (context, state) => const UserToolsScreen(),
+      ),
+      GoRoute(
+        path: '/admin/audit-log',
+        builder: (context, state) => const AuditLogScreen(),
+      ),
 
       // Profile
       GoRoute(
@@ -170,6 +202,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/edit-profile',
         builder: (context, state) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: '/follow-requests',
+        builder: (context, state) => const FollowRequestsScreen(),
       ),
 
       // Chat
@@ -192,6 +228,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/privacy-security',
         builder: (context, state) => const PrivacySecurityScreen(),
+      ),
+      GoRoute(
+        path: '/blocked-users',
+        builder: (context, state) => const BlockedUsersScreen(),
       ),
       GoRoute(
         path: '/search',

@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/comment_model.dart';
 import 'push_sender_service.dart';
+import 'block_service.dart';
 
 /// Služba pro práci s komentáři
 ///
@@ -12,9 +13,13 @@ class CommentService {
   /// Push sender pro notifikace
   final PushSenderService _pushSender = PushSenderService.instance;
 
+  /// Block service pro filtrování zablokovaných
+  final BlockService _blockService = BlockService();
+
   /// Načte komentáře k příspěvku
   ///
   /// Vrací seznam komentářů seřazený od nejstaršího.
+  /// Automaticky filtruje komentáře od zablokovaných uživatelů.
   Future<List<CommentModel>> getComments(String postId) async {
     final response = await _supabase
         .from('comments')
@@ -22,8 +27,13 @@ class CommentService {
         .eq('post_id', postId)
         .order('created_at', ascending: true);
 
+    // Získej seznam zablokovaných uživatelů
+    final blockedIds = await _blockService.getAllBlockedIds();
+
+    // Filtruj komentáře od zablokovaných uživatelů
     return (response as List)
         .map((json) => CommentModel.fromJson(json as Map<String, dynamic>))
+        .where((comment) => !blockedIds.contains(comment.authorId))
         .toList();
   }
 

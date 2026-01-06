@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/posts_provider.dart';
 import '../../providers/thread_type_provider.dart';
+import '../../providers/follow_provider.dart';
 import '../../models/post_model.dart';
 import '../../models/thread_type_model.dart';
 import '../../theme/theme.dart';
@@ -201,6 +202,25 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
+                // Follow requests button
+                Consumer(
+                  builder: (context, ref, _) {
+                    final countAsync = ref.watch(pendingRequestsCountProvider);
+                    final count = countAsync.maybeWhen(
+                      data: (c) => c,
+                      orElse: () => 0,
+                    );
+                    return _buildIconButton(
+                      icon: Icons.person_add_outlined,
+                      onTap: () {
+                        HapticUtils.lightImpact();
+                        context.push('/follow-requests');
+                      },
+                      badgeCount: count,
+                    );
+                  },
+                ),
+                const SizedBox(width: 6),
                 // Notifications button
                 _buildIconButton(
                   icon: Icons.notifications_outlined,
@@ -230,6 +250,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     required IconData icon,
     required VoidCallback onTap,
     bool hasNotification = false,
+    int badgeCount = 0,
   }) {
     return Stack(
       children: [
@@ -263,6 +284,31 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
               decoration: BoxDecoration(
                 color: AppColors.accent,
                 shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        if (badgeCount > 0)
+          Positioned(
+            right: 0,
+            top: 0,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.accent,
+                shape: BoxShape.circle,
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 18,
+                minHeight: 18,
+              ),
+              child: Text(
+                badgeCount > 99 ? '99+' : badgeCount.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
               ),
             ),
           ),

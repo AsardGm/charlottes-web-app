@@ -494,6 +494,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final conversation = conversationAsync.value;
     final chatTitle = conversation?.getDisplayName(currentUserId) ?? 'Chat';
     final avatarUrl = conversation?.getDisplayAvatar(currentUserId);
+    final otherUserId = conversation?.isDirect == true
+        ? conversation?.getOtherParticipant(currentUserId)?.userId
+        : null;
 
     // Listen to real-time messages
     ref.listen(messageStreamProvider(widget.conversationId), (_, next) {
@@ -503,7 +506,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     });
 
     return Scaffold(
-      appBar: _buildAppBar(chatTitle, avatarUrl),
+      appBar: _buildAppBar(chatTitle, avatarUrl, otherUserId),
       body: Column(
         children: [
           // Offline queue indicator
@@ -585,48 +588,51 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(String chatTitle, String? avatarUrl) {
+  PreferredSizeWidget _buildAppBar(String chatTitle, String? avatarUrl, String? otherUserId) {
     return AppBar(
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         onPressed: () => context.pop(),
       ),
-      title: Row(
-        children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-            child: avatarUrl == null
-                ? Text(
-                    chatTitle.isNotEmpty ? chatTitle[0].toUpperCase() : '?',
-                    style: const TextStyle(fontSize: 12),
-                  )
-                : null,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  chatTitle,
-                  style: const TextStyle(fontSize: 16),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Row(
-                  children: [
-                    Icon(Icons.lock, size: 12, color: AppColors.success),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Sifrovano',
-                      style: TextStyle(fontSize: 11, color: AppColors.success),
-                    ),
-                  ],
-                ),
-              ],
+      title: GestureDetector(
+        onTap: otherUserId != null ? () => context.push('/profile/$otherUserId') : null,
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 16,
+              backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+              child: avatarUrl == null
+                  ? Text(
+                      chatTitle.isNotEmpty ? chatTitle[0].toUpperCase() : '?',
+                      style: const TextStyle(fontSize: 12),
+                    )
+                  : null,
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    chatTitle,
+                    style: const TextStyle(fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Row(
+                    children: [
+                      Icon(Icons.lock, size: 12, color: AppColors.success),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Sifrovano',
+                        style: TextStyle(fontSize: 11, color: AppColors.success),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
       actions: [
         IconButton(

@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/post_model.dart';
+import 'block_service.dart';
 
 /// Služba pro práci s příspěvky
 ///
@@ -8,6 +9,9 @@ import '../models/post_model.dart';
 class PostService {
   /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
+
+  /// Block service pro filtrování zablokovaných
+  final BlockService _blockService = BlockService();
 
   /// SQL dotaz pro načtení příspěvku s relacemi
   static const String _selectQuery = '''
@@ -65,6 +69,9 @@ class PostService {
           .neq('status', 'resolved');
     }
 
+    // Získej seznam zablokovaných uživatelů
+    final blockedIds = await _blockService.getAllBlockedIds();
+
     // Řazení - připnuté první, pak podle data
     final response = pinnedFirst
         ? await query
@@ -75,9 +82,13 @@ class PostService {
             .order('created_at', ascending: false)
             .range(offset, offset + limit - 1);
 
-    return (response as List)
+    // Filtruj příspěvky od zablokovaných uživatelů
+    final posts = (response as List)
         .map((json) => PostModel.fromJson(json as Map<String, dynamic>))
+        .where((post) => !blockedIds.contains(post.authorId))
         .toList();
+
+    return posts;
   }
 
   /// Načte jeden příspěvek podle ID

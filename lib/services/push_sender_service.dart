@@ -187,6 +187,38 @@ class PushSenderService {
     );
   }
 
+  /// Odesle notifikaci o zadosti o sledovani
+  Future<void> sendFollowRequestNotification({
+    required String targetUserId,
+  }) async {
+    final actorName = await _getCurrentUserName();
+
+    await sendNotification(
+      userId: targetUserId,
+      type: 'follow_request',
+      actorName: actorName,
+      data: {
+        'actor_id': _supabase.auth.currentUser!.id,
+      },
+    );
+  }
+
+  /// Odesle notifikaci o prijeti zadosti o sledovani
+  Future<void> sendFollowRequestAcceptedNotification({
+    required String requesterId,
+  }) async {
+    final actorName = await _getCurrentUserName();
+
+    await sendNotification(
+      userId: requesterId,
+      type: 'follow_request_accepted',
+      actorName: actorName,
+      data: {
+        'actor_id': _supabase.auth.currentUser!.id,
+      },
+    );
+  }
+
   /// Ziska jmeno aktualniho uzivatele z profilu
   Future<String> _getCurrentUserName() async {
     final userId = _supabase.auth.currentUser?.id;

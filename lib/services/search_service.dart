@@ -2,17 +2,23 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/post_model.dart';
 import '../models/user_model.dart';
+import 'block_service.dart';
 
 /// Služba pro vyhledávání
 ///
 /// Umožňuje vyhledávat příspěvky a uživatele v databázi.
+/// Automaticky filtruje výsledky od zablokovaných uživatelů.
 class SearchService {
   /// Supabase klient
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  /// Block service pro filtrování zablokovaných
+  final BlockService _blockService = BlockService();
+
   /// Vyhledá příspěvky podle obsahu
   ///
   /// Hledá v textu příspěvků pomocí ILIKE (case-insensitive).
+  /// Automaticky filtruje příspěvky od zablokovaných uživatelů.
   Future<List<PostModel>> searchPosts(
     String query, {
     int limit = 20,
@@ -33,14 +39,20 @@ class SearchService {
         .order('created_at', ascending: false)
         .range(offset, offset + limit - 1);
 
+    // Získej seznam zablokovaných uživatelů
+    final blockedIds = await _blockService.getAllBlockedIds();
+
+    // Filtruj příspěvky od zablokovaných uživatelů
     return (response as List)
         .map((p) => PostModel.fromJson(p as Map<String, dynamic>))
+        .where((post) => !blockedIds.contains(post.authorId))
         .toList();
   }
 
   /// Vyhledá uživatele podle jména nebo bio
   ///
   /// Hledá v uživatelském jméně a popisu profilu.
+  /// Automaticky filtruje zablokované uživatele z výsledků.
   Future<List<UserModel>> searchUsers(
     String query, {
     int limit = 20,
@@ -50,6 +62,9 @@ class SearchService {
 
     try {
       debugPrint('Searching users for: $query');
+
+      // Získej seznam zablokovaných uživatelů
+      final blockedIds = await _blockService.getAllBlockedIds();
 
       // Hledani podle username
       final response = await _supabase
@@ -65,6 +80,7 @@ class SearchService {
 
       final users = response
           .map((u) => UserModel.fromJson(u))
+          .where((user) => !blockedIds.contains(user.id))
           .toList();
 
       // Pokud nenajdeme podle username, zkus bio
@@ -78,6 +94,7 @@ class SearchService {
 
         return (bioResponse as List)
             .map((u) => UserModel.fromJson(u as Map<String, dynamic>))
+            .where((user) => !blockedIds.contains(user.id))
             .toList();
       }
 

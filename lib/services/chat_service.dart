@@ -8,11 +8,13 @@ import '../models/poll_model.dart';
 import '../models/user_model.dart';
 import 'encryption_service.dart';
 import 'push_sender_service.dart';
+import 'block_service.dart';
 
 class ChatService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final EncryptionService _encryption = EncryptionService();
   final PushSenderService _pushSender = PushSenderService.instance;
+  final BlockService _blockService = BlockService();
 
   // Cache pro session klíče konverzací
   final Map<String, SecretKey> _sessionKeys = {};
@@ -210,7 +212,15 @@ class ChatService {
   }
 
   /// Získá nebo vytvoří direct konverzaci s uživatelem
+  ///
+  /// Vyhodí výjimku, pokud je uživatel vzájemně zablokován.
   Future<String> getOrCreateDirectConversation(String otherUserId) async {
+    // Zkontroluj vzájemné blokování
+    final isMutuallyBlocked = await _blockService.isMutuallyBlocked(otherUserId);
+    if (isMutuallyBlocked) {
+      throw Exception('Nelze zahájit konverzaci se zablokovaným uživatelem');
+    }
+
     final response = await _supabase.rpc(
       'get_or_create_direct_conversation',
       params: {'other_user_id': otherUserId},
@@ -980,6 +990,8 @@ class ChatService {
   // ============================================
 
   /// Vyhledá uživatele podle jména
+  ///
+  /// Automaticky filtruje zablokované uživatele z výsledků.
   Future<List<UserModel>> searchUsers(String query) async {
     final response = await _supabase
         .from('profiles')
@@ -988,8 +1000,13 @@ class ChatService {
         .ilike('username', '%$query%')
         .limit(20);
 
+    // Získej seznam zablokovaných uživatelů
+    final blockedIds = await _blockService.getAllBlockedIds();
+
+    // Filtruj zablokované uživatele z výsledků
     return (response as List)
         .map((u) => UserModel.fromJson(u as Map<String, dynamic>))
+        .where((user) => !blockedIds.contains(user.id))
         .toList();
   }
 }

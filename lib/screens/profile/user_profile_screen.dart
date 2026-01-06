@@ -5,13 +5,18 @@ import '../../theme/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/badge_provider.dart';
 import '../../providers/posts_provider.dart';
+import '../../providers/follow_provider.dart';
+import '../../providers/block_provider.dart';
 import '../../services/profile_service.dart';
 import '../../services/chat_service.dart';
+import '../../services/follow_service.dart';
+import '../../services/report_service.dart';
 import '../../models/user_model.dart';
 import '../../models/post_model.dart';
 import '../../models/badge_model.dart';
 import '../../widgets/profile/profile.dart';
 import '../../widgets/user_avatar.dart';
+import '../../widgets/report_dialog.dart';
 
 /// Provider pro ProfileService
 final profileServiceProvider = Provider<ProfileService>((ref) => ProfileService());
@@ -374,15 +379,10 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen>
           ),
         ),
       ],
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          // Grid prispevku
-          _UserPostsGrid(userId: widget.userId),
-
-          // Odznaky
-          _UserBadgesGrid(userId: widget.userId),
-        ],
+      body: _ProfileContentOrPrivate(
+        userId: widget.userId,
+        isPrivate: user.isPrivate,
+        tabController: _tabController,
       ),
     );
   }
@@ -418,13 +418,38 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen>
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.block),
-              title: const Text('Zablokovat'),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Blokovani - pripravujeme')),
+            // Blokování
+            Consumer(
+              builder: (context, ref, _) {
+                final isBlockedAsync = ref.watch(isBlockedProvider(user.id));
+                return isBlockedAsync.when(
+                  data: (isBlocked) => ListTile(
+                    leading: Icon(
+                      isBlocked ? Icons.check_circle : Icons.block,
+                      color: isBlocked ? AppColors.success : null,
+                    ),
+                    title: Text(isBlocked ? 'Odblokovat' : 'Zablokovat'),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await _toggleBlock(user.id, isBlocked);
+                    },
+                  ),
+                  loading: () => const ListTile(
+                    leading: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    title: Text('Zablokovat'),
+                  ),
+                  error: (_, _) => ListTile(
+                    leading: const Icon(Icons.block),
+                    title: const Text('Zablokovat'),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await _toggleBlock(user.id, false);
+                    },
+                  ),
                 );
               },
             ),
@@ -433,8 +458,11 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen>
               title: Text('Nahlasit', style: TextStyle(color: AppColors.error)),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Nahlaseni - pripravujeme')),
+                ReportDialog.show(
+                  context: context,
+                  contentType: ReportContentType.user,
+                  contentId: user.id,
+                  contentPreview: '@${user.username}',
                 );
               },
             ),
@@ -443,6 +471,44 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen>
         ),
       ),
     );
+  }
+
+  Future<void> _toggleBlock(String userId, bool isCurrentlyBlocked) async {
+    try {
+      await ref.read(blockNotifierProvider.notifier).toggleBlock(userId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isCurrentlyBlocked
+                  ? 'Uzivatel byl odblokovany'
+                  : 'Uzivatel byl zablokovany',
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+
+        // Pokud jsme zablokovali, vrat se zpet
+        if (!isCurrentlyBlocked) {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/');
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Chyba: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }
 
@@ -591,6 +657,149 @@ class _UserBadgesRow extends ConsumerWidget {
       },
       loading: () => const SizedBox.shrink(),
       error: (_, _) => const SizedBox.shrink(),
+    );
+  }
+}
+
+/// Widget pro zobrazeni obsahu nebo zpravy o soukromem profilu
+class _ProfileContentOrPrivate extends ConsumerWidget {
+  final String userId;
+  final bool isPrivate;
+  final TabController tabController;
+
+  const _ProfileContentOrPrivate({
+    required this.userId,
+    required this.isPrivate,
+    required this.tabController,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Pokud profil neni soukromy, zobraz obsah
+    if (!isPrivate) {
+      return TabBarView(
+        controller: tabController,
+        children: [
+          _UserPostsGrid(userId: userId),
+          _UserBadgesGrid(userId: userId),
+        ],
+      );
+    }
+
+    // Pro soukrome profily zkontroluj follow status
+    final followStatusAsync = ref.watch(followStatusProvider(userId));
+
+    return followStatusAsync.when(
+      data: (status) {
+        // Pokud uzivatel sleduje, zobraz obsah
+        if (status == FollowStatus.following) {
+          return TabBarView(
+            controller: tabController,
+            children: [
+              _UserPostsGrid(userId: userId),
+              _UserBadgesGrid(userId: userId),
+            ],
+          );
+        }
+
+        // Jinak zobraz zpravu o soukromem profilu
+        return _PrivateProfileMessage(
+          isRequested: status == FollowStatus.requested,
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, _) => TabBarView(
+        controller: tabController,
+        children: [
+          _UserPostsGrid(userId: userId),
+          _UserBadgesGrid(userId: userId),
+        ],
+      ),
+    );
+  }
+}
+
+/// Zprava o soukromem profilu
+class _PrivateProfileMessage extends StatelessWidget {
+  final bool isRequested;
+
+  const _PrivateProfileMessage({
+    this.isRequested = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.lock_outline,
+                size: 48,
+                color: AppColors.textMuted,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Soukromy ucet',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isRequested
+                  ? 'Pozadali jste o sledovani tohoto uctu.\nPockejte na schvaleni.'
+                  : 'Sledujte tento ucet, abyste videli\njeho prispevky a odznaky.',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textMuted,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (isRequested) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(20),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.schedule,
+                      size: 16,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Ceka na schvaleni',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

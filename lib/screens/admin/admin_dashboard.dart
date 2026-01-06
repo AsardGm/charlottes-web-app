@@ -214,15 +214,67 @@ class AdminDashboard extends ConsumerWidget {
               gradient: const LinearGradient(
                 colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
               ),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Brzy k dispozici'),
-                    backgroundColor: AppColors.warning,
+              onTap: () => context.go('/admin/reports'),
+            ),
+            const SizedBox(height: 32),
+
+            // Nástroje section
+            Text(
+              'Nastroje',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
-                );
-              },
-              comingSoon: true,
+            ),
+            const SizedBox(height: 16),
+
+            _ManagementCard(
+              icon: Icons.analytics,
+              title: 'Analytika',
+              subtitle: 'Detailni statistiky a prehled aktivity',
+              gradient: const LinearGradient(
+                colors: [Color(0xFF06B6D4), Color(0xFF3B82F6)],
+              ),
+              onTap: () => context.go('/admin/analytics'),
+            ),
+            const SizedBox(height: 12),
+            _ManagementCard(
+              icon: Icons.shield,
+              title: 'Moderace',
+              subtitle: 'Zakazana slova, spam filtr',
+              gradient: const LinearGradient(
+                colors: [Color(0xFFEF4444), Color(0xFFF97316)],
+              ),
+              onTap: () => context.go('/admin/moderation'),
+            ),
+            const SizedBox(height: 12),
+            _ManagementCard(
+              icon: Icons.content_paste,
+              title: 'Sprava obsahu',
+              subtitle: 'Pripnute prispevky, broadcast zpravy',
+              gradient: const LinearGradient(
+                colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+              ),
+              onTap: () => context.go('/admin/content'),
+            ),
+            const SizedBox(height: 12),
+            _ManagementCard(
+              icon: Icons.person_search,
+              title: 'Uzivatelske nastroje',
+              subtitle: 'GDPR export, docasne bany, varovani',
+              gradient: const LinearGradient(
+                colors: [Color(0xFF14B8A6), Color(0xFF22C55E)],
+              ),
+              onTap: () => context.go('/admin/user-tools'),
+            ),
+            const SizedBox(height: 12),
+            _ManagementCard(
+              icon: Icons.history,
+              title: 'Audit log',
+              subtitle: 'Historie admin akci',
+              gradient: const LinearGradient(
+                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+              ),
+              onTap: () => context.go('/admin/audit-log'),
             ),
             const SizedBox(height: 32),
 
@@ -354,7 +406,6 @@ class _ManagementCard extends StatelessWidget {
   final String subtitle;
   final Gradient gradient;
   final VoidCallback onTap;
-  final bool comingSoon;
 
   const _ManagementCard({
     required this.icon,
@@ -362,7 +413,6 @@ class _ManagementCard extends StatelessWidget {
     required this.subtitle,
     required this.gradient,
     required this.onTap,
-    this.comingSoon = false,
   });
 
   @override
@@ -397,38 +447,13 @@ class _ManagementCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        if (comingSoon) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.warning.withAlpha(30),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'Brzy',
-                              style: TextStyle(
-                                color: AppColors.warning,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
