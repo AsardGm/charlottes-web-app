@@ -7,22 +7,30 @@ set -e
 
 echo "=== Flutter CI Post Clone Script ==="
 echo "CI_PRIMARY_REPOSITORY_PATH: $CI_PRIMARY_REPOSITORY_PATH"
+echo "CI_WORKSPACE: $CI_WORKSPACE"
 
-# Navigate to the Flutter project root
-cd "$CI_PRIMARY_REPOSITORY_PATH/community_app"
+# Navigate to the Flutter project root (the repo root IS the Flutter project)
+cd "$CI_PRIMARY_REPOSITORY_PATH"
 
 echo "Current directory: $(pwd)"
 echo "Contents:"
 ls -la
 
+# Check if pubspec.yaml exists (verify we're in Flutter project)
+if [ ! -f "pubspec.yaml" ]; then
+    echo "ERROR: pubspec.yaml not found. Not in Flutter project root."
+    echo "Listing CI_PRIMARY_REPOSITORY_PATH contents:"
+    ls -la "$CI_PRIMARY_REPOSITORY_PATH"
+    exit 1
+fi
+
 # Install Flutter
-FLUTTER_VERSION="3.32.0"
 FLUTTER_PATH="$HOME/flutter"
 
 if [ -d "$FLUTTER_PATH" ]; then
     echo "Flutter directory exists, using it..."
 else
-    echo "Installing Flutter $FLUTTER_VERSION..."
+    echo "Installing Flutter (stable)..."
     git clone https://github.com/flutter/flutter.git --depth 1 -b stable "$FLUTTER_PATH"
 fi
 
