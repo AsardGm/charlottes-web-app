@@ -8,6 +8,7 @@ set -e
 echo "=== Flutter CI Post Clone Script ==="
 echo "CI_PRIMARY_REPOSITORY_PATH: $CI_PRIMARY_REPOSITORY_PATH"
 echo "CI_WORKSPACE: $CI_WORKSPACE"
+echo "HOME: $HOME"
 
 # Navigate to the Flutter project root (the repo root IS the Flutter project)
 cd "$CI_PRIMARY_REPOSITORY_PATH"
@@ -19,8 +20,6 @@ ls -la
 # Check if pubspec.yaml exists (verify we're in Flutter project)
 if [ ! -f "pubspec.yaml" ]; then
     echo "ERROR: pubspec.yaml not found. Not in Flutter project root."
-    echo "Listing CI_PRIMARY_REPOSITORY_PATH contents:"
-    ls -la "$CI_PRIMARY_REPOSITORY_PATH"
     exit 1
 fi
 
@@ -50,6 +49,17 @@ flutter precache --ios
 echo "Running flutter pub get..."
 flutter pub get
 
+# IMPORTANT: Create .xcode.env.local to tell Xcode where Flutter is
+echo "Creating .xcode.env.local for Xcode build phases..."
+echo "export FLUTTER_ROOT=\"$FLUTTER_PATH\"" > ios/.xcode.env.local
+cat ios/.xcode.env.local
+
+# Also update the main .xcode.env if it doesn't have the right path
+echo "Checking ios/.xcode.env..."
+if [ -f "ios/.xcode.env" ]; then
+    cat ios/.xcode.env
+fi
+
 # Generate iOS files (this creates Generated.xcconfig and other necessary files)
 echo "Generating iOS build files..."
 flutter build ios --config-only --no-codesign
@@ -62,6 +72,14 @@ ls -la
 
 echo "Flutter directory contents:"
 ls -la Flutter/
+
+# Verify Generated.xcconfig exists
+if [ -f "Flutter/Generated.xcconfig" ]; then
+    echo "Generated.xcconfig content:"
+    cat Flutter/Generated.xcconfig
+else
+    echo "WARNING: Generated.xcconfig not found!"
+fi
 
 # Install CocoaPods dependencies
 echo "Installing CocoaPods dependencies..."
