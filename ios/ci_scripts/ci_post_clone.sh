@@ -51,7 +51,7 @@ flutter pub get
 
 # IMPORTANT: Create .xcode.env.local to tell Xcode where Flutter is
 echo "Creating .xcode.env.local for Xcode build phases..."
-echo "export FLUTTER_ROOT=\"$FLUTTER_PATH\"" > ios/.xcode.env.local
+echo "FLUTTER_ROOT=$FLUTTER_PATH" > ios/.xcode.env.local
 cat ios/.xcode.env.local
 
 # Also update the main .xcode.env if it doesn't have the right path
