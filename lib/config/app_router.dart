@@ -33,6 +33,10 @@ import '../screens/gamification/gamification_screen.dart';
 import '../screens/gamification/cards_screen.dart';
 import '../screens/gamification/leaderboard_screen.dart';
 import '../screens/gamification/badges_screen.dart';
+import '../screens/scanner/scanner_screen.dart';
+import '../screens/scanner/scan_result_screen.dart';
+import '../screens/scanner/scan_history_screen.dart';
+import '../screens/brain_map/brain_map_screen.dart';
 
 /// Notifier pro refresh routeru při změně auth stavu
 class AuthChangeNotifier extends ChangeNotifier {
@@ -254,6 +258,28 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/badges',
         builder: (context, state) => const BadgesScreen(),
+      ),
+
+      // Scanner
+      GoRoute(
+        path: '/scanner',
+        builder: (context, state) => const ScannerScreen(),
+      ),
+      GoRoute(
+        path: '/scanner/result/:id',
+        builder: (context, state) => ScanResultScreen(
+          scanId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/scanner/history',
+        builder: (context, state) => const ScanHistoryScreen(),
+      ),
+
+      // Brain Map
+      GoRoute(
+        path: '/brain-map',
+        builder: (context, state) => const BrainMapScreen(),
       ),
     ],
   );

@@ -379,6 +379,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 context.go('/leaderboard');
               },
             ),
+            _MenuTile(
+              icon: Icons.psychology,
+              label: 'Terpene Brain Map',
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/brain-map');
+              },
+            ),
             Divider(height: 1, color: AppColors.functionalBorder),
             // Žádosti o sledování s badge
             Consumer(
