@@ -63,13 +63,23 @@ class HomeBottomNav extends ConsumerWidget {
               },
             ),
             _NavItem(
-              icon: Icons.person_outline,
-              activeIcon: Icons.person,
-              label: 'Profile',
+              icon: Icons.document_scanner_outlined,
+              activeIcon: Icons.document_scanner,
+              label: 'Skener',
               isActive: currentIndex == 2,
               onTap: () {
                 HapticUtils.selectionClick();
                 onDestinationSelected(2);
+              },
+            ),
+            _NavItem(
+              icon: Icons.person_outline,
+              activeIcon: Icons.person,
+              label: 'Profile',
+              isActive: currentIndex == 3,
+              onTap: () {
+                HapticUtils.selectionClick();
+                onDestinationSelected(3);
               },
             ),
           ],

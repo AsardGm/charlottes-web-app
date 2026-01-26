@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../feed/feed_screen.dart';
 import '../chat/conversations_screen.dart';
+import '../scanner/camera_scanner_screen.dart';
 import '../profile/profile_screen.dart';
 import '../../widgets/home/home_app_bar.dart';
 import '../../widgets/home/home_bottom_nav.dart';
@@ -18,12 +19,14 @@ class _HomeScreenState extends State<HomeScreen> {
   final _screens = const [
     FeedScreen(),
     ConversationsScreen(),
+    CameraScannerScreen(),
     ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
-    // Feed (0) a Profil (2) maji vlastni header/AppBar
+    // Feed (0) a Profil (3) maji vlastni header/AppBar
+    // Scanner (2) ma taky vlastni AppBar
     final showAppBar = _currentIndex == 1; // Pouze pro Comms
 
     return Scaffold(

@@ -45,6 +45,8 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Potrebujeme pristup ke kamere pro skenovani rostlin</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Potrebujeme pristup k mikrofonu pro nahravani hlasovych zprav</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
