@@ -27,4 +27,21 @@ class ApiConfig {
   /// Kontrola, zda jsou API klice nastaveny z environment
   static bool get isProduction =>
       tenorApiKey != 'AIzaSyBJIvOxLJOz-yBlO7NfQRo8r_SWJVJ22Wg';
+
+// Gemini API key
+  static const String geminiApiKey = String.fromEnvironment(
+    'GEMINI_API_KEY',
+    defaultValue: '',
+  );
+
+  static bool get hasGeminiKey => geminiApiKey.isNotEmpty;
+
+  static const String geminiBaseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+  // OpenAI API key
+  static const String openAiKey = String.fromEnvironment(
+    'OPENAI_API_KEY',
+    defaultValue: '',
+  );
+
+  static bool get hasOpenAiKey => openAiKey.isNotEmpty;
 }

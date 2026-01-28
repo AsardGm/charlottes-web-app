@@ -9,7 +9,6 @@ import '../../widgets/home/home_app_bar.dart';
 import '../../widgets/home/home_bottom_nav.dart';
 import '../../widgets/holotrop/holotrop_button.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 

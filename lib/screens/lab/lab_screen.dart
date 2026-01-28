@@ -70,7 +70,7 @@ class LabScreen extends ConsumerWidget {
             ),
           ),
 
-          // 4 moduly grid
+          // Moduly grid - grow tracking + games
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             sliver: SliverGrid(
@@ -161,6 +161,43 @@ class LabScreen extends ConsumerWidget {
                   ),
                   accentColor: const Color(0xFF00BFA5),
                   onTap: () => context.push('/holotrop'),
+                ),
+                // Games modules
+                _ModuleCard(
+                  title: 'CHECK-IN',
+                  subtitle: 'Daily Mood',
+                  icon: Icons.favorite,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1E3A5F), Color(0xFF0A1628)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  accentColor: const Color(0xFF4A90E2),
+                  onTap: () => context.push('/checkin'),
+                ),
+                _ModuleCard(
+                  title: 'TERPENES',
+                  subtitle: 'Match Game',
+                  icon: Icons.extension,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF8B4513), Color(0xFF2A1410)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  accentColor: const Color(0xFFFF8C00),
+                  onTap: () => context.push('/terpene-match'),
+                ),
+                _ModuleCard(
+                  title: 'SPIDER',
+                  subtitle: 'Focus & Breathe',
+                  icon: Icons.psychology,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF4A148C), Color(0xFF1A0A2A)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  accentColor: const Color(0xFFBA68C8),
+                  onTap: () => context.push('/spider-focus'),
                 ),
               ]),
             ),

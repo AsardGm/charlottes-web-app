@@ -59,8 +59,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
           colorScheme: ColorScheme.dark(
             primary: AppColors.accent,
             surface: AppColors.functionalSurface,
-          ),
-          dialogBackgroundColor: AppColors.functionalBg,
+          ), dialogTheme: DialogThemeData(backgroundColor: AppColors.functionalBg),
         ),
         child: child!,
       ),
@@ -77,8 +76,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             colorScheme: ColorScheme.dark(
               primary: AppColors.accent,
               surface: AppColors.functionalSurface,
-            ),
-            dialogBackgroundColor: AppColors.functionalBg,
+            ), dialogTheme: DialogThemeData(backgroundColor: AppColors.functionalBg),
           ),
           child: child!,
         ),

@@ -75,6 +75,61 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       context.push('/search?q=$query');
     }
   }
+void _showGamesMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.functionalSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '🎮 Mini Games',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Text('🌿', style: TextStyle(fontSize: 28)),
+              title: const Text('Terpene Match', style: TextStyle(color: Colors.white)),
+              subtitle: Text('Spoj terpeny s efekty', style: TextStyle(color: AppColors.functionalMuted)),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/terpene-match');
+              },
+            ),
+            ListTile(
+              leading: const Text('🕷️', style: TextStyle(fontSize: 28)),
+              title: const Text('Spider Focus', style: TextStyle(color: Colors.white)),
+              subtitle: Text('Dechová hra pro fokus', style: TextStyle(color: AppColors.functionalMuted)),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/spider-focus');
+              },
+            ),
+            ListTile(
+              leading: const Text('⏱️', style: TextStyle(fontSize: 28)),
+              title: const Text('Pass Timer', style: TextStyle(color: Colors.white)),
+              subtitle: Text('Férové předávání v kruhu', style: TextStyle(color: AppColors.functionalMuted)),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/pass-timer');
+              },
+            ),
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -221,6 +276,15 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   },
                 ),
                 const SizedBox(width: 6),
+                // Games button
+                _buildIconButton(
+                  icon: Icons.sports_esports_outlined,
+                  onTap: () {
+                    HapticUtils.lightImpact();
+                    _showGamesMenu(context);
+                  },
+                ),
+                const SizedBox(width: 6),
                 // Notifications button
                 _buildIconButton(
                   icon: Icons.notifications_outlined,
@@ -357,7 +421,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
         ),
       ),
       loading: () => const SizedBox(height: 44),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 

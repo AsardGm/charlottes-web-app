@@ -21,6 +21,10 @@ import '../screens/admin/content_management_screen.dart';
 import '../screens/admin/user_tools_screen.dart';
 import '../screens/admin/audit_log_screen.dart';
 import '../screens/chat/chat_screen.dart';
+import '../screens/checkin/daily_checkin_screen.dart';
+import '../screens/games/terpene_match_game.dart';
+import '../screens/games/spider_focus_game.dart';
+import '../screens/games/pass_timer_game.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/settings/privacy_security_screen.dart';
@@ -63,7 +67,7 @@ class AuthChangeNotifier extends ChangeNotifier {
 
 final _authChangeNotifier = AuthChangeNotifier();
 
-/// Cache pro onboarding status (aby se nevolalo SharedPreferences při každém redirectu)
+/// Cache pro onboarding status
 bool? _onboardingCompleted;
 
 /// Načte onboarding status z SharedPreferences
@@ -74,7 +78,7 @@ Future<bool> _checkOnboardingCompleted() async {
   return _onboardingCompleted!;
 }
 
-/// Resetuje cache (volat po změně onboarding statusu)
+/// Resetuje cache
 void resetOnboardingCache() {
   _onboardingCompleted = null;
 }
@@ -93,30 +97,24 @@ final routerProvider = Provider<GoRouter>((ref) {
                           state.matchedLocation == '/register' ||
                           state.matchedLocation == '/forgot-password';
 
-      // Splash screen se nezpracovává - nechej ho běžet
       if (isSplash) {
         return null;
       }
 
-      // Zkontroluj onboarding status
       final onboardingCompleted = await _checkOnboardingCompleted();
 
-      // Pokud onboarding není dokončen a není na onboarding stránce
       if (!onboardingCompleted && !isOnboarding) {
         return '/onboarding';
       }
 
-      // Pokud onboarding je dokončen a je na onboarding stránce
       if (onboardingCompleted && isOnboarding) {
         return isLoggedIn ? '/' : '/login';
       }
 
-      // Pokud není přihlášen a není na auth/onboarding stránce
       if (!isLoggedIn && !isAuthRoute && !isOnboarding) {
         return '/login';
       }
 
-      // Pokud je přihlášen a je na auth stránce
       if (isLoggedIn && isAuthRoute) {
         return '/';
       }
@@ -274,7 +272,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const BadgesScreen(),
       ),
 
-      // Scanner - přímo kamera
+      // Scanner
       GoRoute(
         path: '/scanner',
         builder: (context, state) => const CameraScannerScreen(),
@@ -371,6 +369,26 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/brain-map',
         builder: (context, state) => const BrainMapScreen(),
+      ),
+
+      // Daily Check-in
+      GoRoute(
+        path: '/checkin',
+        builder: (context, state) => const DailyCheckinScreen(),
+      ),
+
+      // Games
+      GoRoute(
+        path: '/terpene-match',
+        builder: (context, state) => const TerpeneMatchGame(),
+      ),
+      GoRoute(
+        path: '/spider-focus',
+        builder: (context, state) => const SpiderFocusGame(),
+      ),
+      GoRoute(
+        path: '/pass-timer',
+        builder: (context, state) => const PassTimerGame(),
       ),
     ],
   );
