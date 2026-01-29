@@ -14,7 +14,6 @@ import '../../widgets/common/skeleton_loading.dart';
 import '../../widgets/common/error_snackbar.dart';
 import '../../utils/haptic_utils.dart';
 
-/// Hlavni obrazovka feedu s Functional Dark designem
 class FeedScreen extends ConsumerStatefulWidget {
   const FeedScreen({super.key});
 
@@ -75,7 +74,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       context.push('/search?q=$query');
     }
   }
-void _showGamesMenu(BuildContext context) {
+
+  void _showGamesMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.functionalSurface,
@@ -89,7 +89,7 @@ void _showGamesMenu(BuildContext context) {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              '🎮 Mini Games',
+              '🎮 Mini Games & Tools',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20,
@@ -124,6 +124,25 @@ void _showGamesMenu(BuildContext context) {
                 context.push('/pass-timer');
               },
             ),
+            const Divider(color: Colors.white24),
+            ListTile(
+              leading: const Text('📚', style: TextStyle(fontSize: 28)),
+              title: const Text('Strain Database', style: TextStyle(color: Colors.white)),
+              subtitle: Text('Encyclopedia všech strainů', style: TextStyle(color: AppColors.functionalMuted)),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/strains');
+              },
+            ),
+            ListTile(
+              leading: const Text('🏆', style: TextStyle(fontSize: 28)),
+              title: const Text('Model of the Year', style: TextStyle(color: Colors.white)),
+              subtitle: Text('Hlasuj pro nejlepší strain', style: TextStyle(color: AppColors.functionalMuted)),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/model-of-year');
+              },
+            ),
             const SizedBox(height: 10),
           ],
         ),
@@ -146,14 +165,10 @@ void _showGamesMenu(BuildContext context) {
       body: SafeArea(
         child: Column(
           children: [
-            // === HORNI HEADER ===
             _buildHeader(threadTypesAsync, currentFilter, ref),
-
-            // === HLAVNI OBSAH ===
             Expanded(
               child: Row(
                 children: [
-                  // Feed
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: _onRefresh,
@@ -177,8 +192,6 @@ void _showGamesMenu(BuildContext context) {
                       ),
                     ),
                   ),
-
-                  // Desktop sidebar
                   if (isWideScreen)
                     const SizedBox(
                       width: 280,
@@ -198,7 +211,6 @@ void _showGamesMenu(BuildContext context) {
     );
   }
 
-  /// Horni header s vyhledavanim a filtry
   Widget _buildHeader(
     AsyncValue<List<ThreadTypeModel>> threadTypesAsync,
     PostsFilter currentFilter,
@@ -216,12 +228,10 @@ void _showGamesMenu(BuildContext context) {
       ),
       child: Column(
         children: [
-          // Search bar row
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
             child: Row(
               children: [
-                // Search field
                 Expanded(
                   child: Container(
                     height: 40,
@@ -257,7 +267,6 @@ void _showGamesMenu(BuildContext context) {
                   ),
                 ),
                 const SizedBox(width: 10),
-                // Follow requests button
                 Consumer(
                   builder: (context, ref, _) {
                     final countAsync = ref.watch(pendingRequestsCountProvider);
@@ -276,7 +285,6 @@ void _showGamesMenu(BuildContext context) {
                   },
                 ),
                 const SizedBox(width: 6),
-                // Games button
                 _buildIconButton(
                   icon: Icons.sports_esports_outlined,
                   onTap: () {
@@ -285,7 +293,6 @@ void _showGamesMenu(BuildContext context) {
                   },
                 ),
                 const SizedBox(width: 6),
-                // Notifications button
                 _buildIconButton(
                   icon: Icons.notifications_outlined,
                   onTap: () {
@@ -297,11 +304,7 @@ void _showGamesMenu(BuildContext context) {
               ],
             ),
           ),
-
-          // Filter chips
           _buildFilterChips(threadTypesAsync, currentFilter, ref),
-
-          // Active filters bar
           if (currentFilter.hasActiveFilters)
             _buildActiveFiltersBar(currentFilter),
         ],
@@ -309,7 +312,6 @@ void _showGamesMenu(BuildContext context) {
     );
   }
 
-  /// Tlacitko s ikonou
   Widget _buildIconButton({
     required IconData icon,
     required VoidCallback onTap,
@@ -380,7 +382,6 @@ void _showGamesMenu(BuildContext context) {
     );
   }
 
-  /// Filtrovaci chipy
   Widget _buildFilterChips(
     AsyncValue<List<ThreadTypeModel>> threadTypesAsync,
     PostsFilter currentFilter,
@@ -393,7 +394,6 @@ void _showGamesMenu(BuildContext context) {
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           children: [
-            // Chip "Vse"
             _FilterChip(
               label: 'Vse',
               icon: Icons.dashboard_outlined,
@@ -404,7 +404,6 @@ void _showGamesMenu(BuildContext context) {
               },
             ),
             const SizedBox(width: 8),
-            // Typy vlaken
             ...threadTypes.map((type) => Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: _FilterChip(
@@ -425,7 +424,6 @@ void _showGamesMenu(BuildContext context) {
     );
   }
 
-  /// Bar aktivnich filtru
   Widget _buildActiveFiltersBar(PostsFilter filter) {
     return Container(
       height: 36,
@@ -471,7 +469,6 @@ void _showGamesMenu(BuildContext context) {
   }
 }
 
-/// Filtrovaci chip button
 class _FilterChip extends StatelessWidget {
   final String label;
   final IconData? icon;

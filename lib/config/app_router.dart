@@ -25,6 +25,9 @@ import '../screens/checkin/daily_checkin_screen.dart';
 import '../screens/games/terpene_match_game.dart';
 import '../screens/games/spider_focus_game.dart';
 import '../screens/games/pass_timer_game.dart';
+import '../screens/strains/strain_database_screen.dart';
+import '../screens/strains/strain_detail_screen.dart';
+import '../screens/strains/model_of_year_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/settings/privacy_security_screen.dart';
@@ -56,7 +59,6 @@ import '../screens/holotrop/holotrop_screen.dart';
 import '../screens/wiki/wiki_screen.dart';
 import '../screens/wiki/wiki_article_screen.dart';
 
-/// Notifier pro refresh routeru při změně auth stavu
 class AuthChangeNotifier extends ChangeNotifier {
   AuthChangeNotifier() {
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
@@ -67,10 +69,8 @@ class AuthChangeNotifier extends ChangeNotifier {
 
 final _authChangeNotifier = AuthChangeNotifier();
 
-/// Cache pro onboarding status
 bool? _onboardingCompleted;
 
-/// Načte onboarding status z SharedPreferences
 Future<bool> _checkOnboardingCompleted() async {
   if (_onboardingCompleted != null) return _onboardingCompleted!;
   final prefs = await SharedPreferences.getInstance();
@@ -78,12 +78,10 @@ Future<bool> _checkOnboardingCompleted() async {
   return _onboardingCompleted!;
 }
 
-/// Resetuje cache
 void resetOnboardingCache() {
   _onboardingCompleted = null;
 }
 
-/// Provider pro GoRouter
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
@@ -97,44 +95,26 @@ final routerProvider = Provider<GoRouter>((ref) {
                           state.matchedLocation == '/register' ||
                           state.matchedLocation == '/forgot-password';
 
-      if (isSplash) {
-        return null;
-      }
+      if (isSplash) return null;
 
       final onboardingCompleted = await _checkOnboardingCompleted();
 
-      if (!onboardingCompleted && !isOnboarding) {
-        return '/onboarding';
-      }
-
-      if (onboardingCompleted && isOnboarding) {
-        return isLoggedIn ? '/' : '/login';
-      }
-
-      if (!isLoggedIn && !isAuthRoute && !isOnboarding) {
-        return '/login';
-      }
-
-      if (isLoggedIn && isAuthRoute) {
-        return '/';
-      }
+      if (!onboardingCompleted && !isOnboarding) return '/onboarding';
+      if (onboardingCompleted && isOnboarding) return isLoggedIn ? '/' : '/login';
+      if (!isLoggedIn && !isAuthRoute && !isOnboarding) return '/login';
+      if (isLoggedIn && isAuthRoute) return '/';
 
       return null;
     },
     routes: [
-      // Splash
       GoRoute(
         path: '/splash',
         builder: (context, state) => const SplashScreen(),
       ),
-
-      // Onboarding
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
       ),
-
-      // Auth
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
@@ -147,14 +127,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/forgot-password',
         builder: (context, state) => const ForgotPasswordScreen(),
       ),
-
-      // Home
       GoRoute(
         path: '/',
         builder: (context, state) => const HomeScreen(),
       ),
-
-      // Feed
       GoRoute(
         path: '/create-post',
         builder: (context, state) => const CreatePostScreen(),
@@ -165,8 +141,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           postId: state.pathParameters['id']!,
         ),
       ),
-
-      // Admin
       GoRoute(
         path: '/admin',
         builder: (context, state) => const AdminDashboard(),
@@ -203,8 +177,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/admin/audit-log',
         builder: (context, state) => const AuditLogScreen(),
       ),
-
-      // Profile
       GoRoute(
         path: '/profile',
         builder: (context, state) => const HomeScreen(),
@@ -223,16 +195,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/follow-requests',
         builder: (context, state) => const FollowRequestsScreen(),
       ),
-
-      // Chat
       GoRoute(
         path: '/chat/:id',
         builder: (context, state) => ChatScreen(
           conversationId: state.pathParameters['id']!,
         ),
       ),
-
-      // Other
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
@@ -253,8 +221,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/search',
         builder: (context, state) => const SearchScreen(),
       ),
-
-      // Gamification
       GoRoute(
         path: '/gamification',
         builder: (context, state) => const GamificationScreen(),
@@ -271,8 +237,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/badges',
         builder: (context, state) => const BadgesScreen(),
       ),
-
-      // Scanner
       GoRoute(
         path: '/scanner',
         builder: (context, state) => const CameraScannerScreen(),
@@ -370,14 +334,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/brain-map',
         builder: (context, state) => const BrainMapScreen(),
       ),
-
-      // Daily Check-in
       GoRoute(
         path: '/checkin',
         builder: (context, state) => const DailyCheckinScreen(),
       ),
-
-      // Games
       GoRoute(
         path: '/terpene-match',
         builder: (context, state) => const TerpeneMatchGame(),
@@ -389,6 +349,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/pass-timer',
         builder: (context, state) => const PassTimerGame(),
+      ),
+      GoRoute(
+        path: '/strains',
+        builder: (context, state) => const StrainDatabaseScreen(),
+      ),
+      GoRoute(
+        path: '/strain/:id',
+        builder: (context, state) => StrainDetailScreen(
+          strainId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/model-of-year',
+        builder: (context, state) => const ModelOfYearScreen(),
       ),
     ],
   );
