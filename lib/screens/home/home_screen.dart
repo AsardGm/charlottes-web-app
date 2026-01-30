@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../feed/feed_screen.dart';
 import '../chat/conversations_screen.dart';
-import '../scanner/camera_scanner_screen.dart';
+import '../wiki/wiki_screen.dart';
+import '../lab/lab_screen.dart';
 import '../profile/profile_screen.dart';
 import '../../widgets/home/home_app_bar.dart';
 import '../../widgets/home/home_bottom_nav.dart';
+import '../../widgets/holotrop/holotrop_button.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,23 +23,37 @@ class _HomeScreenState extends State<HomeScreen> {
   final _screens = const [
     FeedScreen(),
     ConversationsScreen(),
-    CameraScannerScreen(),
+    WikiScreen(),
+    LabScreen(),
     ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
-    // Feed (0) a Profil (3) maji vlastni header/AppBar
-    // Scanner (2) ma taky vlastni AppBar
+    // Feed (0) a Profil (4) maji vlastni header/AppBar
+    // Wiki (2) a Lab (3) maji taky vlastni AppBar
     final showAppBar = _currentIndex == 1; // Pouze pro Comms
 
     return Scaffold(
       appBar: showAppBar
           ? HomeAppBar(currentIndex: _currentIndex)
           : null,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+      body: Stack(
+        children: [
+          IndexedStack(
+            index: _currentIndex,
+            children: _screens,
+          ),
+          if (_currentIndex == 0 || _currentIndex == 1) // Pouze Hub a Comms
+            Positioned(
+              right: 20,
+              bottom: 80,
+              child: HolotropButton(
+                onTap: () => context.push('/holotrop'),
+                size: 44,
+              ),
+            ),
+        ],
       ),
       bottomNavigationBar: HomeBottomNav(
         currentIndex: _currentIndex,

@@ -37,6 +37,20 @@ import '../screens/scanner/scan_result_screen.dart';
 import '../screens/scanner/scan_history_screen.dart';
 import '../screens/scanner/camera_scanner_screen.dart';
 import '../screens/brain_map/brain_map_screen.dart';
+import '../screens/lab/lab_screen.dart';
+import '../screens/lab/lab_grow_list_screen.dart';
+import '../screens/lab/lab_create_grow_screen.dart';
+import '../screens/lab/chronos/chronos_timeline_screen.dart';
+import '../screens/lab/chronos/chronos_add_entry_screen.dart';
+import '../screens/lab/alchymista/alchymista_dashboard_screen.dart';
+import '../screens/lab/alchymista/alchymista_charts_screen.dart';
+import '../screens/lab/alchymista/alchymista_schedules_screen.dart';
+import '../screens/lab/oci_arasaky/oci_scanner_screen.dart';
+import '../screens/lab/oci_arasaky/oci_result_screen.dart';
+import '../screens/lab/ghost/ghost_protocol_screen.dart';
+import '../screens/holotrop/holotrop_screen.dart';
+import '../screens/wiki/wiki_screen.dart';
+import '../screens/wiki/wiki_article_screen.dart';
 
 /// Notifier pro refresh routeru při změně auth stavu
 class AuthChangeNotifier extends ChangeNotifier {
@@ -274,6 +288,83 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/scanner/history',
         builder: (context, state) => const ScanHistoryScreen(),
+      ),
+
+      // Lab
+      GoRoute(
+        path: '/lab',
+        builder: (context, state) => const LabScreen(),
+      ),
+      GoRoute(
+        path: '/lab/grows',
+        builder: (context, state) => const LabGrowListScreen(),
+      ),
+      GoRoute(
+        path: '/lab/create-grow',
+        builder: (context, state) => const LabCreateGrowScreen(),
+      ),
+      GoRoute(
+        path: '/lab/chronos/:growId',
+        builder: (context, state) => ChronosTimelineScreen(
+          growId: state.pathParameters['growId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/lab/chronos/:growId/add',
+        builder: (context, state) => ChronosAddEntryScreen(
+          growId: state.pathParameters['growId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/lab/alchymista/:growId',
+        builder: (context, state) => AlchymistaDashboardScreen(
+          growId: state.pathParameters['growId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/lab/alchymista/:growId/charts',
+        builder: (context, state) => AlchymistaChartsScreen(
+          growId: state.pathParameters['growId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/lab/schedules',
+        builder: (context, state) => const AlchymistaSchedulesScreen(),
+      ),
+      GoRoute(
+        path: '/lab/oci/:growId',
+        builder: (context, state) => OciScannerScreen(
+          growId: state.pathParameters['growId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/lab/oci/:growId/result/:diagnosticId',
+        builder: (context, state) => OciResultScreen(
+          growId: state.pathParameters['growId']!,
+          diagnosticId: state.pathParameters['diagnosticId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/lab/ghost',
+        builder: (context, state) => const GhostProtocolScreen(),
+      ),
+
+      // Holotrop
+      GoRoute(
+        path: '/holotrop',
+        builder: (context, state) => const HolotropScreen(),
+      ),
+
+      // Wiki
+      GoRoute(
+        path: '/wiki',
+        builder: (context, state) => const WikiScreen(),
+      ),
+      GoRoute(
+        path: '/wiki/article/:slug',
+        builder: (context, state) => WikiArticleScreen(
+          slug: state.pathParameters['slug']!,
+        ),
       ),
 
       // Brain Map

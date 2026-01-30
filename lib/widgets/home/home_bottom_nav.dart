@@ -63,9 +63,9 @@ class HomeBottomNav extends ConsumerWidget {
               },
             ),
             _NavItem(
-              icon: Icons.document_scanner_outlined,
-              activeIcon: Icons.document_scanner,
-              label: 'Skener',
+              icon: Icons.menu_book_outlined,
+              activeIcon: Icons.menu_book,
+              label: 'Wiki',
               isActive: currentIndex == 2,
               onTap: () {
                 HapticUtils.selectionClick();
@@ -73,13 +73,23 @@ class HomeBottomNav extends ConsumerWidget {
               },
             ),
             _NavItem(
-              icon: Icons.person_outline,
-              activeIcon: Icons.person,
-              label: 'Profile',
+              icon: Icons.science_outlined,
+              activeIcon: Icons.science,
+              label: 'Lab',
               isActive: currentIndex == 3,
               onTap: () {
                 HapticUtils.selectionClick();
                 onDestinationSelected(3);
+              },
+            ),
+            _NavItem(
+              icon: Icons.person_outline,
+              activeIcon: Icons.person,
+              label: 'Profile',
+              isActive: currentIndex == 4,
+              onTap: () {
+                HapticUtils.selectionClick();
+                onDestinationSelected(4);
               },
             ),
           ],

@@ -136,6 +136,14 @@ class SettingsScreen extends ConsumerWidget {
               _SettingsCard(
                 children: [
                   ListTile(
+                    leading: Icon(Icons.menu_book, color: AppColors.accent),
+                    title: const Text('Wiki / Encyklopedie'),
+                    subtitle: const Text('Kanabinoidy, terpeny, harm reduction'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/wiki'),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
                     leading: Icon(Icons.auto_awesome, color: AppColors.accent),
                     title: const Text('Spustit pruvodce'),
                     subtitle: const Text('Znovu zobrazit uvitani od Buddyho'),
