@@ -15,9 +15,9 @@ Future<void> main() async {
   // This prevents font loading flash and ensures diacritics render immediately
   await Future.wait([
     GoogleFonts.pendingFonts([
-      GoogleFonts.rajdhani(),
+      GoogleFonts.inter(), // Inter má plnou Czech support
       GoogleFonts.bangers(),
-      GoogleFonts.roboto(), // Fallback with full Czech support
+      GoogleFonts.roboto(), // Fallback
     ]),
   ]);
 

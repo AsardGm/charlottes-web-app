@@ -415,6 +415,38 @@ class _CameraScannerScreenState extends ConsumerState<CameraScannerScreen>
                 ),
               ],
             ),
+
+            // Quality Check Guide button
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.symmetric(horizontal: 40),
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/quality-check'),
+                icon: const Icon(Icons.verified_user, size: 18),
+                label: const Text(
+                  'Jak poznat kvalitní trávu',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(
+                    color: Colors.white.withAlpha(100),
+                    width: 1.5,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

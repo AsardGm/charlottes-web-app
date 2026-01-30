@@ -235,6 +235,18 @@ class LabScreen extends ConsumerWidget {
                   accentColor: const Color(0xFFFFB74D),
                   onTap: () => context.push('/myth-buster'),
                 ),
+                _ModuleCard(
+                  title: 'BRAIN HEATMAP',
+                  subtitle: 'Cognitive Trends',
+                  icon: Icons.bar_chart,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1A2A4A), Color(0xFF0D1A2A)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  accentColor: const Color(0xFF00E5FF),
+                  onTap: () => context.push('/brain-heatmap'),
+                ),
               ]),
             ),
           ),

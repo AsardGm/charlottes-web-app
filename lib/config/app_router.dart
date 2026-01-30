@@ -53,8 +53,10 @@ import '../screens/gamification/badges_screen.dart';
 import '../screens/scanner/scan_result_screen.dart';
 import '../screens/scanner/scan_history_screen.dart';
 import '../screens/scanner/camera_scanner_screen.dart';
+import '../screens/scanner/quality_check_screen.dart';
 import '../screens/brain_map/brain_map_screen.dart';
 import '../screens/lab/lab_screen.dart';
+import '../screens/lab/brain_heatmap_screen.dart';
 import '../screens/lab/lab_grow_list_screen.dart';
 import '../screens/lab/lab_create_grow_screen.dart';
 import '../screens/lab/chronos/chronos_timeline_screen.dart';
@@ -261,6 +263,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/scanner/history',
         builder: (context, state) => const ScanHistoryScreen(),
       ),
+      GoRoute(
+        path: '/quality-check',
+        builder: (context, state) => const QualityCheckScreen(),
+      ),
 
       // Lab
       GoRoute(
@@ -343,6 +349,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/brain-map',
         builder: (context, state) => const BrainMapScreen(),
+      ),
+      GoRoute(
+        path: '/brain-heatmap',
+        builder: (context, state) => const BrainHeatmapScreen(),
       ),
       GoRoute(
         path: '/checkin',

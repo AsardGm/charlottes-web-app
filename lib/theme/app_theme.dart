@@ -15,7 +15,7 @@ class AppTheme {
     );
 
     // Rajdhani pro body text - moderni a citelny
-    final bodyTextTheme = GoogleFonts.rajdhaniTextTheme(
+    final bodyTextTheme = GoogleFonts.interTextTheme(
       ThemeData.dark().textTheme,
     );
 
@@ -24,7 +24,7 @@ class AppTheme {
       brightness: Brightness.dark,
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.functionalBg,
-      fontFamily: GoogleFonts.rajdhani().fontFamily,
+      fontFamily: GoogleFonts.inter().fontFamily,
       fontFamilyFallback: const [
         'Roboto', // Fallback s plnou Czech support
         'Arial',
@@ -73,13 +73,13 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.rajdhani(
+            return GoogleFonts.inter(
               color: AppColors.accent,  // Cyan kdyz vybrano
               fontSize: 12,
               fontWeight: FontWeight.w700,
             );
           }
-          return GoogleFonts.rajdhani(
+          return GoogleFonts.inter(
             color: AppColors.functionalMuted,
             fontSize: 12,
             fontWeight: FontWeight.w500,
@@ -95,11 +95,11 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.functionalSurface,
-        hintStyle: GoogleFonts.rajdhani(
+        hintStyle: GoogleFonts.inter(
           color: AppColors.textMuted,
           fontWeight: FontWeight.w500,
         ),
-        labelStyle: GoogleFonts.rajdhani(
+        labelStyle: GoogleFonts.inter(
           color: AppColors.textSecondary,
           fontWeight: FontWeight.w500,
         ),
@@ -132,7 +132,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.rajdhani(
+          textStyle: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.5,
@@ -147,7 +147,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.rajdhani(
+          textStyle: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
@@ -156,7 +156,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.accent,  // Cyan
-          textStyle: GoogleFonts.rajdhani(
+          textStyle: GoogleFonts.inter(
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -169,7 +169,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.rajdhani(
+          textStyle: GoogleFonts.inter(
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -193,7 +193,7 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.surfaceElevated,
-        contentTextStyle: GoogleFonts.rajdhani(
+        contentTextStyle: GoogleFonts.inter(
           color: AppColors.textPrimary,
           fontWeight: FontWeight.w500,
         ),
@@ -235,7 +235,7 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surfaceLight,
         selectedColor: AppColors.primary.withAlpha(40),
-        labelStyle: GoogleFonts.rajdhani(
+        labelStyle: GoogleFonts.inter(
           color: AppColors.textPrimary,
           fontWeight: FontWeight.w600,
         ),
@@ -248,10 +248,10 @@ class AppTheme {
         labelColor: AppColors.accent,  // Cyan
         unselectedLabelColor: AppColors.textMuted,
         indicatorColor: AppColors.accent,
-        labelStyle: GoogleFonts.rajdhani(
+        labelStyle: GoogleFonts.inter(
           fontWeight: FontWeight.w700,
         ),
-        unselectedLabelStyle: GoogleFonts.rajdhani(
+        unselectedLabelStyle: GoogleFonts.inter(
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -362,7 +362,7 @@ class AppTheme {
       ThemeData.light().textTheme,
     );
 
-    final bodyTextTheme = GoogleFonts.rajdhaniTextTheme(
+    final bodyTextTheme = GoogleFonts.interTextTheme(
       ThemeData.light().textTheme,
     );
 
@@ -371,7 +371,7 @@ class AppTheme {
       brightness: Brightness.light,
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: backgroundLight,
-      fontFamily: GoogleFonts.rajdhani().fontFamily,
+      fontFamily: GoogleFonts.inter().fontFamily,
       fontFamilyFallback: const [
         'Roboto', // Fallback s plnou Czech support
         'Arial',
@@ -417,13 +417,13 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.rajdhani(
+            return GoogleFonts.inter(
               color: AppColors.primary,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             );
           }
-          return GoogleFonts.rajdhani(
+          return GoogleFonts.inter(
             color: textMutedLight,
             fontSize: 12,
             fontWeight: FontWeight.w500,
@@ -439,11 +439,11 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surfaceLightElevated,
-        hintStyle: GoogleFonts.rajdhani(
+        hintStyle: GoogleFonts.inter(
           color: textMutedLight,
           fontWeight: FontWeight.w500,
         ),
-        labelStyle: GoogleFonts.rajdhani(
+        labelStyle: GoogleFonts.inter(
           color: textSecondaryLight,
           fontWeight: FontWeight.w500,
         ),
@@ -476,7 +476,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.rajdhani(
+          textStyle: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.5,
@@ -486,7 +486,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: GoogleFonts.rajdhani(
+          textStyle: GoogleFonts.inter(
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -510,7 +510,7 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: textPrimaryLight,
-        contentTextStyle: GoogleFonts.rajdhani(
+        contentTextStyle: GoogleFonts.inter(
           color: Colors.white,
           fontWeight: FontWeight.w500,
         ),
@@ -549,7 +549,7 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: surfaceLightElevated,
         selectedColor: AppColors.primary.withAlpha(30),
-        labelStyle: GoogleFonts.rajdhani(
+        labelStyle: GoogleFonts.inter(
           color: textPrimaryLight,
           fontWeight: FontWeight.w600,
         ),
@@ -562,10 +562,10 @@ class AppTheme {
         labelColor: AppColors.primary,
         unselectedLabelColor: textMutedLight,
         indicatorColor: AppColors.primary,
-        labelStyle: GoogleFonts.rajdhani(
+        labelStyle: GoogleFonts.inter(
           fontWeight: FontWeight.w700,
         ),
-        unselectedLabelStyle: GoogleFonts.rajdhani(
+        unselectedLabelStyle: GoogleFonts.inter(
           fontWeight: FontWeight.w500,
         ),
       ),
