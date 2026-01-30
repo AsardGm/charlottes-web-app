@@ -356,9 +356,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => CreatePollDialog(
+      builder: (dialogContext) => CreatePollDialog(
         conversationId: widget.conversationId,
         onCreate: (question, options) async {
+          final messenger = ScaffoldMessenger.of(dialogContext);
           try {
             final chatService = ref.read(chatServiceProvider);
             await chatService.createPoll(
@@ -369,7 +370,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ref.invalidate(messagesProvider(widget.conversationId));
           } catch (e) {
             if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
+            messenger.showSnackBar(
               SnackBar(content: Text('Chyba: ${e.toString()}')),
             );
           }

@@ -163,10 +163,23 @@ class AdminService {
 
   /// Nastaví roli uživatele
   Future<void> setUserRole(String userId, String role) async {
-    await _supabase
+    final response = await _supabase
         .from('profiles')
         .update({'role': role})
-        .eq('id', userId);
+        .eq('id', userId)
+        .select()
+        .single();
+
+    // Ověření, že se role skutečně změnila
+    if (response['role'] != role) {
+      throw Exception('Nepodařilo se změnit roli uživatele. Zkontrolujte oprávnění.');
+    }
+
+    await logAction(
+      action: role == 'admin' ? 'make_admin' : 'remove_admin',
+      targetUserId: userId,
+      details: 'Nova role: $role',
+    );
   }
 
   /// Povýší uživatele na admina

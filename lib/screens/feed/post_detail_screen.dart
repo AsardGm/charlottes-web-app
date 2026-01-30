@@ -220,11 +220,12 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                       PostCard(
                         post: post,
                         onDelete: () async {
+                          final router = GoRouter.of(context);
                           await ref
                               .read(postsProvider.notifier)
                               .deletePost(post.id);
                           if (!mounted) return;
-                          context.go('/');
+                          router.go('/');
                         },
                       ),
                       const Divider(),

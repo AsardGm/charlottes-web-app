@@ -417,7 +417,7 @@ class _UserToolsScreenState extends ConsumerState<UserToolsScreen> {
       ),
     );
 
-    if (confirm != true) return;
+    if (confirm != true || !mounted) return;
 
     // Druhé potvrzení
     final doubleConfirm = await showDialog<bool>(
@@ -476,11 +476,13 @@ class _UserToolsScreenState extends ConsumerState<UserToolsScreen> {
       builder: (context) => _TemporaryBanDialog(
         user: user,
         onBan: (duration, reason) async {
+          final navigator = Navigator.of(context);
+          final messenger = ScaffoldMessenger.of(context);
           try {
             await ref.read(adminServiceProvider).temporaryBan(user.id, duration, reason);
             if (mounted) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
+              navigator.pop();
+              messenger.showSnackBar(
                 SnackBar(
                   content: Text('Uzivatel zablokovany na ${duration.inHours} hodin'),
                   backgroundColor: AppColors.success,
@@ -492,7 +494,7 @@ class _UserToolsScreenState extends ConsumerState<UserToolsScreen> {
             }
           } catch (e) {
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
+              messenger.showSnackBar(
                 SnackBar(
                   content: Text('Chyba: $e'),
                   backgroundColor: AppColors.error,
@@ -545,11 +547,14 @@ class _UserToolsScreenState extends ConsumerState<UserToolsScreen> {
               final message = messageController.text.trim();
               if (message.isEmpty) return;
 
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+
               try {
                 await ref.read(adminServiceProvider).sendWarning(user.id, message);
                 if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  navigator.pop();
+                  messenger.showSnackBar(
                     SnackBar(
                       content: const Text('Varovani odeslano'),
                       backgroundColor: AppColors.success,
@@ -558,7 +563,7 @@ class _UserToolsScreenState extends ConsumerState<UserToolsScreen> {
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     SnackBar(
                       content: Text('Chyba: $e'),
                       backgroundColor: AppColors.error,

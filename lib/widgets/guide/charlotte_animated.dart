@@ -16,6 +16,8 @@ enum CharlotteState {
   error,
   /// Ukazování na UI element
   pointing,
+  /// Meditacni mod - uklidnujici teal zare, pomaly puls
+  meditation,
 }
 
 /// Pokročilá animovaná verze průvodkyně Charlotte
@@ -135,6 +137,12 @@ class _CharlotteAnimatedState extends State<CharlotteAnimated>
         break;
       case CharlotteState.pointing:
         _currentGlowColor = AppColors.accent;
+        break;
+      case CharlotteState.meditation:
+        // Uklidnujici teal zare s pomalym pulzem
+        _currentGlowColor = const Color(0xFF00BFA5);
+        _glowController.duration = const Duration(milliseconds: 4000);
+        _floatController.duration = const Duration(milliseconds: 5000);
         break;
     }
     setState(() {});

@@ -365,7 +365,7 @@ class AnalyticsScreen extends ConsumerWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: stats.topPosters.length,
-        separatorBuilder: (_, __) => Divider(
+        separatorBuilder: (_, _) => Divider(
           height: 1,
           color: AppColors.surfaceLight,
         ),
@@ -483,7 +483,7 @@ class AnalyticsScreen extends ConsumerWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: stats.recentActivity.length,
-        separatorBuilder: (_, __) => Divider(
+        separatorBuilder: (_, _) => Divider(
           height: 1,
           color: AppColors.surfaceLight,
         ),

@@ -182,6 +182,101 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    /* PWA Update Banner */
+    #update-banner {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: linear-gradient(135deg, #1A1A24 0%, #12121A 100%);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      border-radius: 12px;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 10000;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 212, 255, 0.1);
+      opacity: 0;
+      transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+      max-width: 90%;
+    }
+
+    #update-banner.visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    #update-banner .update-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(0, 212, 255, 0.1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #update-banner .update-icon svg {
+      width: 24px;
+      height: 24px;
+      fill: #00D4FF;
+    }
+
+    #update-banner .update-text {
+      flex: 1;
+    }
+
+    #update-banner .update-title {
+      color: #FFFFFF;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    #update-banner .update-desc {
+      color: #8B8B8B;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 12px;
+    }
+
+    #update-banner .update-btn {
+      background: #00D4FF;
+      color: #0A0A0F;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    #update-banner .update-btn:hover {
+      background: #00BFEA;
+      transform: scale(1.02);
+    }
+
+    #update-banner .update-btn:active {
+      transform: scale(0.98);
+    }
+
+    #update-banner .close-btn {
+      background: none;
+      border: none;
+      color: #8B8B8B;
+      cursor: pointer;
+      padding: 4px;
+      margin-left: 8px;
+      transition: color 0.2s;
+    }
+
+    #update-banner .close-btn:hover {
+      color: #FFFFFF;
+    }
   </style>
 </head>
 <body>
@@ -192,7 +287,85 @@
     <div class="text">Inicializace...</div>
   </div>
 
+  <!-- PWA Update Banner -->
+  <div id="update-banner">
+    <div class="update-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M21 10.12h-6.78l2.74-2.82c-2.73-2.7-7.15-2.8-9.88-.1-2.73 2.71-2.73 7.08 0 9.79s7.15 2.71 9.88 0C18.32 15.65 19 14.08 19 12.1h2c0 1.98-.88 4.55-2.64 6.29-3.51 3.48-9.21 3.48-12.72 0-3.5-3.47-3.53-9.11-.02-12.58 3.51-3.47 9.14-3.47 12.65 0L21 3v7.12zM12.5 8v4.25l3.5 2.08-.72 1.21L11 13V8h1.5z"/>
+      </svg>
+    </div>
+    <div class="update-text">
+      <div class="update-title">Nova verze dostupna</div>
+      <div class="update-desc">Klikni pro aktualizaci aplikace</div>
+    </div>
+    <button class="update-btn" onclick="updateApp()">Aktualizovat</button>
+    <button class="close-btn" onclick="dismissUpdate()" title="Pozdeji">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+      </svg>
+    </button>
+  </div>
+
   <script>
+    // PWA Update handling
+    let newServiceWorker = null;
+
+    function showUpdateBanner() {
+      const banner = document.getElementById('update-banner');
+      if (banner) {
+        setTimeout(() => banner.classList.add('visible'), 100);
+      }
+    }
+
+    function dismissUpdate() {
+      const banner = document.getElementById('update-banner');
+      if (banner) {
+        banner.classList.remove('visible');
+      }
+    }
+
+    function updateApp() {
+      if (newServiceWorker) {
+        // Tell the new service worker to skip waiting
+        newServiceWorker.postMessage({ type: 'SKIP_WAITING' });
+      }
+      // Reload page to get new version
+      window.location.reload();
+    }
+
+    // Listen for service worker updates
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((registration) => {
+        // Check for updates on page load
+        registration.update();
+
+        // Listen for new service worker installing
+        registration.addEventListener('updatefound', () => {
+          const installingWorker = registration.installing;
+          if (!installingWorker) return;
+
+          installingWorker.addEventListener('statechange', () => {
+            if (installingWorker.state === 'installed') {
+              if (navigator.serviceWorker.controller) {
+                // New update available
+                console.log('[PWA] Nova verze dostupna!');
+                newServiceWorker = installingWorker;
+                showUpdateBanner();
+              }
+            }
+          });
+        });
+      });
+
+      // Handle controller change (when skipWaiting is called)
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+      });
+    }
+
     // Remove loading screen when Flutter is ready
     window.addEventListener('flutter-first-frame', function() {
       const loader = document.getElementById('loading');

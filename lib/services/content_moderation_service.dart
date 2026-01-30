@@ -77,28 +77,39 @@ class ContentModerationService {
   ];
 
   /// Zakazane polozky k prodeji (drogy, zbrane, porno atd.)
+  /// Vcetne ceskych skloneni
   static const List<String> _prohibitedItems = [
-    // Drogy
-    'marihuana', 'marijuana', 'konopi', 'trava', 'huleni', 'joint',
-    'kokain', 'cocaine', 'koks', 'snow', 'bile',
-    'heroin', 'smack', 'horse',
-    'pervitin', 'meth', 'crystal', 'ice', 'pernik',
-    'lsd', 'acid', 'tripy', 'houbicky', 'lysohlávky',
-    'extaze', 'mdma', 'molly', 'ecstasy',
-    'speed', 'amfetamin',
-    'crack', 'fentanyl',
-    'thc', 'cbd', 'hash', 'hasis',
-    'pregabalin', 'lyrica', 'tramadol', 'xanax', 'benzos',
+    // Drogy - marihuana a tvary
+    'marihuan', 'marijuan', 'ganja', 'gandza', // koren pro vsechny tvary
+    'konop', 'trav', 'hulen', 'joint', 'jointa', 'jointu', 'jointy',
+    // Kokain
+    'kokain', 'cocaine', 'koks', 'koksu', 'kokse',
+    // Heroin
+    'heroin', 'heroinu', 'smack', 'horse',
+    // Pervitin
+    'pervitin', 'pervitinu', 'meth', 'crystal', 'ice', 'pernik', 'perniku',
+    // LSD a houby
+    'lsd', 'acid', 'acidu', 'trip', 'tripy', 'tripu',
+    'houbick', 'lysohlav', 'magic mushroom',
+    // Extaze
+    'extaz', 'mdma', 'molly', 'ecstasy',
+    // Dalsi drogy
+    'speed', 'amfetamin', 'anfetamin',
+    'crack', 'cracku', 'fentanyl', 'fentanylu',
+    'thc', 'cbd', 'hash', 'hasis', 'hasise',
+    // Leky
+    'pregabalin', 'lyrica', 'lyricu', 'tramadol', 'tramadolu',
+    'xanax', 'xanaxu', 'benzo', 'benzos',
     // Zbrane
-    'pistole', 'revolver', 'puska', 'samopal', 'zbran',
-    'naboje', 'strelivo', 'munice',
-    'nuz', 'maceta', 'boxer', 'teleskop',
+    'pistol', 'revolver', 'pusk', 'samop', 'zbran', 'zbrani', 'zbrane',
+    'naboj', 'streliv', 'munic',
+    'nuz', 'noze', 'nozi', 'macet', 'boxer', 'boxeru', 'teleskop',
     'gun', 'weapon', 'ammo', 'ammunition',
     // Pornografie/nelegalni obsah
-    'cp', 'detskaporno', 'childporn',
+    'childporn', 'detskaporn',
     // Dalsi nelegalni
-    'kradene', 'stolen', 'fake', 'falesne', 'padělek',
-    'hacknute', 'cracked', 'warez',
+    'kraden', 'stolen', 'fake', 'falešn', 'falesn', 'padel',
+    'hacknut', 'cracked', 'warez',
   ];
 
   /// Ziska seznam zakazanych slov (s cache)
@@ -116,8 +127,12 @@ class ContentModerationService {
           .map((json) => BannedWord.fromJson(json as Map<String, dynamic>))
           .toList();
       _cacheTime = DateTime.now();
+      // ignore: avoid_print
+      print('[ContentModeration] Nacteno ${_cachedBannedWords!.length} zakazanych slov');
       return _cachedBannedWords!;
-    } catch (_) {
+    } catch (e) {
+      // ignore: avoid_print
+      print('[ContentModeration] Chyba pri nacitani banned_words: $e');
       return [];
     }
   }
@@ -134,21 +149,25 @@ class ContentModerationService {
     final violations = <String>[];
 
     // Najdi vsechna prodejni slova v textu
-    final foundSellingWords = <String>[];
+    bool hasSellingWord = false;
     for (final word in _sellingWords) {
       if (lowerText.contains(word)) {
-        foundSellingWords.add(word);
+        hasSellingWord = true;
+        // ignore: avoid_print
+        print('[ContentModeration] Nalezeno prodejni slovo: $word');
+        break;
       }
     }
 
     // Pokud nejsou zadna prodejni slova, neni co resit
-    if (foundSellingWords.isEmpty) return [];
+    if (!hasSellingWord) return [];
 
-    // Najdi zakazane polozky
+    // Najdi zakazane polozky (pouzijeme contains misto regex pro koreny slov)
     for (final item in _prohibitedItems) {
-      final pattern = RegExp(r'\b' + RegExp.escape(item) + r'\b', caseSensitive: false);
-      if (pattern.hasMatch(lowerText)) {
+      if (lowerText.contains(item)) {
         violations.add(item);
+        // ignore: avoid_print
+        print('[ContentModeration] Nalezena zakazana polozka: $item');
       }
     }
 
@@ -162,10 +181,16 @@ class ContentModerationService {
   Future<ModerationResult> checkContent(String text) async {
     if (text.isEmpty) return ModerationResult.allowed();
 
+    // ignore: avoid_print
+    print('[ContentModeration] Kontroluji text: "${text.substring(0, text.length > 50 ? 50 : text.length)}..."');
+
     final lowerText = text.toLowerCase();
 
     // 1. Kontrola prodeje zakazanych polozek (kontextova)
     final prohibitedSales = _checkProhibitedSales(text);
+    // ignore: avoid_print
+    print('[ContentModeration] Nalezene prodejni poruseni: $prohibitedSales');
+
     if (prohibitedSales.isNotEmpty) {
       return ModerationResult.blocked(
         reason: 'Prodej nebo nabidka zakazanych polozek neni povolena. '
@@ -227,7 +252,13 @@ class ContentModerationService {
   /// Pouziti: await moderationService.validateContent(text);
   /// Vyhodi ContentBlockedException pokud je obsah nevhodny.
   Future<void> validateContent(String text) async {
+    // ignore: avoid_print
+    print('[ContentModeration] validateContent volano s textem delky ${text.length}');
+
     final result = await checkContent(text);
+
+    // ignore: avoid_print
+    print('[ContentModeration] Vysledek: isAllowed=${result.isAllowed}, action=${result.recommendedAction}');
 
     if (!result.isAllowed && (result.recommendedAction == 'delete' || result.recommendedAction == 'block')) {
       // Spojit zakazana slova a kontextova poruseni
@@ -235,6 +266,8 @@ class ContentModerationService {
         ...result.foundWords.map((w) => w.word),
         ...result.contextViolations,
       ];
+      // ignore: avoid_print
+      print('[ContentModeration] BLOKUJI! Slova: $allBlockedWords');
       throw ContentBlockedException(
         message: result.reason ?? 'Obsah obsahuje zakazana slova',
         blockedWords: allBlockedWords,

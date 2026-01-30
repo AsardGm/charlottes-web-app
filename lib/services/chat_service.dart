@@ -139,10 +139,10 @@ class ChatService {
       }
 
       return conversations;
-    } catch (e) {
-      // Vrať prázdný seznam pokud dojde k chybě
+    } catch (e, st) {
       debugPrint('getConversations ERROR: $e');
-      return [];
+      debugPrint('Stack: $st');
+      rethrow;
     }
   }
 
