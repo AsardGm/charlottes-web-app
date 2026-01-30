@@ -20,11 +20,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const FeedScreen(),
-    const NewsFeedScreen(),
-    const ConversationsScreen(),
-    const LabScreen(),
-    const ProfileScreen(),
+    const FeedScreen(key: ValueKey('feed')),
+    const NewsFeedScreen(key: ValueKey('news')),
+    const ConversationsScreen(key: ValueKey('conversations')),
+    const LabScreen(key: ValueKey('lab')),
+    const ProfileScreen(key: ValueKey('profile')),
   ];
 
   @override
@@ -32,9 +32,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          IndexedStack(
-            index: _currentIndex,
-            children: _screens,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeInOut,
+            switchOutCurve: Curves.easeInOut,
+            transitionBuilder: (child, animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.02, 0),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              );
+            },
+            child: _screens[_currentIndex],
           ),
           // Holotrop button visible on Hub and Chat tabs
           if (_currentIndex == 0 || _currentIndex == 2)

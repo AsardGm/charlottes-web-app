@@ -387,6 +387,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 context.go('/brain-map');
               },
             ),
+            _MenuTile(
+              icon: Icons.camera_alt,
+              label: 'AI Skener',
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/scanner');
+              },
+            ),
             Divider(height: 1, color: AppColors.functionalBorder),
             // Žádosti o sledování s badge
             Consumer(

@@ -12,6 +12,7 @@ import '../../widgets/feed/feed.dart';
 import '../../widgets/filter_sidebar.dart';
 import '../../widgets/common/skeleton_loading.dart';
 import '../../widgets/common/error_snackbar.dart';
+import '../../widgets/common/spider_web_refresh.dart';
 import '../../utils/haptic_utils.dart';
 
 class FeedScreen extends ConsumerStatefulWidget {
@@ -170,10 +171,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: RefreshIndicator(
+                    child: SpiderWebRefresh(
                       onRefresh: _onRefresh,
-                      color: AppColors.accent,
-                      backgroundColor: AppColors.functionalSurface,
                       child: postsState.when(
                         data: (posts) => PostsListView(
                           posts: posts.cast<PostModel>(),
