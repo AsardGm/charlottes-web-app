@@ -30,6 +30,7 @@ import '../screens/strains/strain_detail_screen.dart';
 import '../screens/strains/model_of_year_screen.dart';
 import '../screens/news/news_feed_screen.dart';
 import '../screens/news/article_detail_screen.dart';
+import '../screens/emergency/calm_mode_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/settings/privacy_security_screen.dart';
@@ -375,6 +376,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => ArticleDetailScreen(
           articleId: state.pathParameters['id']!,
         ),
+      ),
+      GoRoute(
+        path: '/calm',
+        builder: (context, state) => const CalmModeScreen(),
       ),
     ],
   );

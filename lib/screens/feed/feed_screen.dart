@@ -232,6 +232,26 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
             child: Row(
               children: [
+                // SOS Button
+                GestureDetector(
+                  onTap: () {
+                    HapticUtils.heavyImpact();
+                    context.push('/calm');
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    margin: const EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withAlpha(30),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.red.withAlpha(100)),
+                    ),
+                    child: const Center(
+                      child: Text('🆘', style: TextStyle(fontSize: 18)),
+                    ),
+                  ),
+                ),
                 Expanded(
                   child: Container(
                     height: 40,
