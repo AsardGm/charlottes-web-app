@@ -31,6 +31,12 @@ import '../screens/strains/model_of_year_screen.dart';
 import '../screens/news/news_feed_screen.dart';
 import '../screens/news/article_detail_screen.dart';
 import '../screens/emergency/calm_mode_screen.dart';
+import '../screens/cognitive/cognitive_test_screen.dart';
+import '../screens/cognitive/cognitive_results_screen.dart';
+import '../screens/cognitive/cognitive_history_screen.dart';
+import '../screens/consumption/log_consumption_screen.dart';
+import '../screens/consumption/post_check_screen.dart';
+import '../screens/consumption/insights_dashboard_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/settings/privacy_security_screen.dart';
@@ -380,6 +386,47 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/calm',
         builder: (context, state) => const CalmModeScreen(),
+      ),
+      GoRoute(
+        path: '/cognitive',
+        builder: (context, state) => const CognitiveTestScreen(),
+      ),
+      GoRoute(
+        path: '/cognitive/results',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return CognitiveResultsScreen(
+            reactionTime: extra['reactionTime'],
+            memoryFlash: extra['memoryFlash'],
+            patternRecognition: extra['patternRecognition'],
+            totalScore: extra['totalScore'],
+            status: extra['status'],
+            baselineScore: extra['baselineScore'],
+          );
+        },
+      ),
+      GoRoute(
+        path: '/cognitive/history',
+        builder: (context, state) => const CognitiveHistoryScreen(),
+      ),
+
+      // Consumption Tracking (Plant → Mind Feedback Loop)
+      GoRoute(
+        path: '/consumption/log',
+        builder: (context, state) {
+          final strainId = state.uri.queryParameters['strainId'];
+          return LogConsumptionScreen(strainId: strainId);
+        },
+      ),
+      GoRoute(
+        path: '/consumption/post-check/:logId',
+        builder: (context, state) => PostCheckScreen(
+          consumptionLogId: state.pathParameters['logId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/consumption/insights',
+        builder: (context, state) => const InsightsDashboardScreen(),
       ),
     ],
   );
