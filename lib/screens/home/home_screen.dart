@@ -1,49 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../feed/feed_screen.dart';
 import '../chat/conversations_screen.dart';
-import '../wiki/wiki_screen.dart';
 import '../lab/lab_screen.dart';
 import '../profile/profile_screen.dart';
-import '../../widgets/home/home_app_bar.dart';
-import '../../widgets/home/home_bottom_nav.dart';
+import '../news/news_feed_screen.dart';
 import '../../widgets/holotrop/holotrop_button.dart';
+import '../../theme/theme.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
 
-  final _screens = const [
-    FeedScreen(),
-    ConversationsScreen(),
-    WikiScreen(),
-    LabScreen(),
-    ProfileScreen(),
+  final List<Widget> _screens = [
+    const FeedScreen(),
+    const NewsFeedScreen(),
+    const ConversationsScreen(),
+    const LabScreen(),
+    const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
-    // Feed (0) a Profil (4) maji vlastni header/AppBar
-    // Wiki (2) a Lab (3) maji taky vlastni AppBar
-    final showAppBar = _currentIndex == 1; // Pouze pro Comms
-
     return Scaffold(
-      appBar: showAppBar
-          ? HomeAppBar(currentIndex: _currentIndex)
-          : null,
       body: Stack(
         children: [
           IndexedStack(
             index: _currentIndex,
             children: _screens,
           ),
-          if (_currentIndex == 0 || _currentIndex == 1) // Pouze Hub a Comms
+          // Holotrop button visible on Hub and Chat tabs
+          if (_currentIndex == 0 || _currentIndex == 2)
             Positioned(
               right: 20,
               bottom: 80,
@@ -54,11 +48,95 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
         ],
       ),
-      bottomNavigationBar: HomeBottomNav(
-        currentIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() => _currentIndex = index);
-        },
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppColors.functionalBg,
+          border: Border(
+            top: BorderSide(
+              color: AppColors.functionalBorder.withAlpha(100),
+              width: 1,
+            ),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(
+                  index: 0,
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home,
+                  label: 'Hub',
+                ),
+                _buildNavItem(
+                  index: 1,
+                  icon: Icons.article_outlined,
+                  activeIcon: Icons.article,
+                  label: 'News',
+                ),
+                _buildNavItem(
+                  index: 2,
+                  icon: Icons.chat_bubble_outline,
+                  activeIcon: Icons.chat_bubble,
+                  label: 'Chat',
+                ),
+                _buildNavItem(
+                  index: 3,
+                  icon: Icons.biotech_outlined,
+                  activeIcon: Icons.biotech,
+                  label: 'Lab',
+                ),
+                _buildNavItem(
+                  index: 4,
+                  icon: Icons.person_outline,
+                  activeIcon: Icons.person,
+                  label: 'Profil',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required int index,
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+  }) {
+    final isActive = _currentIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _currentIndex = index),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.accent.withAlpha(30) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isActive ? activeIcon : icon,
+              color: isActive ? AppColors.accent : AppColors.functionalMuted,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? AppColors.accent : AppColors.functionalMuted,
+                fontSize: 11,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

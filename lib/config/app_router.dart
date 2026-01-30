@@ -28,6 +28,8 @@ import '../screens/games/pass_timer_game.dart';
 import '../screens/strains/strain_database_screen.dart';
 import '../screens/strains/strain_detail_screen.dart';
 import '../screens/strains/model_of_year_screen.dart';
+import '../screens/news/news_feed_screen.dart';
+import '../screens/news/article_detail_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/settings/privacy_security_screen.dart';
@@ -363,6 +365,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/model-of-year',
         builder: (context, state) => const ModelOfYearScreen(),
+      ),
+      GoRoute(
+        path: '/news',
+        builder: (context, state) => const NewsFeedScreen(),
+      ),
+      GoRoute(
+        path: '/news/:id',
+        builder: (context, state) => ArticleDetailScreen(
+          articleId: state.pathParameters['id']!,
+        ),
       ),
     ],
   );
