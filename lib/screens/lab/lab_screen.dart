@@ -223,6 +223,18 @@ class LabScreen extends ConsumerWidget {
                   accentColor: const Color(0xFF66BB6A),
                   onTap: () => context.push('/consumption/insights'),
                 ),
+                _ModuleCard(
+                  title: 'MYTH BUSTER',
+                  subtitle: 'Edukační Quiz',
+                  icon: Icons.lightbulb_outline,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6E4A1A), Color(0xFF2A1D0D)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  accentColor: const Color(0xFFFFB74D),
+                  onTap: () => context.push('/myth-buster'),
+                ),
               ]),
             ),
           ),
