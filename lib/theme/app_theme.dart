@@ -25,6 +25,11 @@ class AppTheme {
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.functionalBg,
       fontFamily: GoogleFonts.rajdhani().fontFamily,
+      fontFamilyFallback: const [
+        'Roboto', // Fallback s plnou Czech support
+        'Arial',
+        'sans-serif',
+      ],
       colorScheme: ColorScheme.dark(
         primary: AppColors.primary,
         onPrimary: AppColors.textPrimary,
@@ -367,6 +372,11 @@ class AppTheme {
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: backgroundLight,
       fontFamily: GoogleFonts.rajdhani().fontFamily,
+      fontFamilyFallback: const [
+        'Roboto', // Fallback s plnou Czech support
+        'Arial',
+        'sans-serif',
+      ],
       colorScheme: ColorScheme.light(
         primary: AppColors.primary,
         onPrimary: Colors.white,
