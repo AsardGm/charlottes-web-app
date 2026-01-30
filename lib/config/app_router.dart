@@ -7,6 +7,7 @@ import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/auth/forgot_password_screen.dart';
 import '../screens/onboarding/onboarding_screen.dart';
+import '../screens/onboarding/smart_onboarding_flow.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/feed/create_post_screen.dart';
@@ -126,6 +127,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: '/smart-onboarding',
+        builder: (context, state) => const SmartOnboardingFlow(),
       ),
       GoRoute(
         path: '/login',

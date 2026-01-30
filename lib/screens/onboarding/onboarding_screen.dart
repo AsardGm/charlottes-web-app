@@ -75,7 +75,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     await prefs.setBool('onboarding_completed', true);
     resetOnboardingCache();
     if (mounted) {
-      context.go('/login');
+      // Po Buddy onboardingu jdi na Smart Onboarding (personalizace)
+      context.go('/smart-onboarding');
     }
   }
 
