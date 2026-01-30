@@ -34,7 +34,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       accentColor: AppColors.primary,
     ),
     OnboardingStep(
-      title: 'Bezpečný chat',
+      title: 'Safe Chat',
       message: 'Všechny zprávy jsou šifrované end-to-end. Tvoje soukromí je naší prioritou. Nikdo jiný je nemůže číst.',
       charlotteState: CharlotteState.success,
       accentColor: AppColors.accent,

@@ -31,6 +31,7 @@ import '../screens/strains/model_of_year_screen.dart';
 import '../screens/news/news_feed_screen.dart';
 import '../screens/news/article_detail_screen.dart';
 import '../screens/emergency/calm_mode_screen.dart';
+import '../screens/education/myth_buster_screen.dart';
 import '../screens/cognitive/cognitive_test_screen.dart';
 import '../screens/cognitive/cognitive_results_screen.dart';
 import '../screens/cognitive/cognitive_history_screen.dart';
@@ -354,6 +355,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/spider-focus',
         builder: (context, state) => const SpiderFocusGame(),
+      ),
+      GoRoute(
+        path: '/myth-buster',
+        builder: (context, state) => const MythBusterScreen(),
       ),
       GoRoute(
         path: '/pass-timer',
