@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/charlotte_message_model.dart';
 import '../models/user_preferences_model.dart';
+import '../models/consumption_insights_model.dart';
+import 'consumption_insights_service.dart';
 
 /// Service pro komunikaci s Charlotte AI (Claude API)
 class CharlotteAIService {
@@ -106,22 +108,31 @@ class CharlotteAIService {
   Future<CharlotteUserContext> buildUserContext({
     UserPreferences? preferences,
     String? userName,
-    // TODO: Přidat další zdroje dat když budou dostupné
-    // List<ConsumptionLog>? recentConsumption,
-    // List<CognitiveScore>? cognitiveScores,
-    // List<Grow>? activeGrows,
+    String? userId,
+    ConsumptionInsights? consumptionInsights,
   }) async {
+    // Fetch consumption insights if not provided and userId available
+    ConsumptionInsights? insights = consumptionInsights;
+    if (insights == null && userId != null) {
+      try {
+        final insightsService = ConsumptionInsightsService();
+        insights = await insightsService.generateInsights(userId);
+      } catch (e) {
+        // Ignore errors, continue without consumption data
+        insights = null;
+      }
+    }
+
     return CharlotteUserContext(
       userName: userName,
       userRole: preferences?.role?.displayName,
       experienceLevel: preferences?.experienceLevel?.displayName,
       interests: preferences?.interests.map((i) => i.displayName).toList() ?? [],
       goals: preferences?.goals.map((g) => g.displayName).toList() ?? [],
-      // TODO: Přidat další context data
-      // recentConsumptionCount: recentConsumption?.length,
-      // lastConsumptionStrain: recentConsumption?.firstOrNull?.strainName,
-      // averageCognitiveScore: _calculateAverageCognitiveScore(cognitiveScores),
-      // activeGrowsCount: activeGrows?.length,
+      recentConsumptionCount: insights?.last7DaysSessions,
+      lastConsumptionStrain: insights?.lastConsumptionStrain,
+      averageCognitiveScore: insights?.averageCognitiveScore,
+      activeGrowsCount: null, // TODO: Add when grow tracking is available
     );
   }
 

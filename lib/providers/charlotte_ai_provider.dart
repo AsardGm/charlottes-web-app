@@ -76,6 +76,7 @@ class CharlotteConversationNotifier extends Notifier<CharlotteConversation> {
     return await _service.buildUserContext(
       preferences: preferences,
       userName: user?.username ?? user?.email?.split('@').first,
+      userId: user?.id,
     );
   }
 }
@@ -94,6 +95,7 @@ final suggestedQuestionsProvider = FutureProvider<List<String>>((ref) async {
   final context = await service.buildUserContext(
     preferences: preferences,
     userName: user?.username ?? user?.email?.split('@').first,
+    userId: user?.id,
   );
 
   return service.getSuggestedQuestions(context);
