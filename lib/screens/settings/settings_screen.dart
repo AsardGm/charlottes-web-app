@@ -7,7 +7,10 @@ import '../../theme/theme.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart' as theme;
+import '../../providers/shadow_mode_provider.dart';
+import '../../models/shadow_mode_model.dart';
 import '../../services/web_push_service.dart';
+import '../../widgets/shadow_mode/shadow_mode_toggle_dialog.dart';
 import '../onboarding/onboarding_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -45,6 +48,16 @@ class SettingsScreen extends ConsumerWidget {
               _SettingsCard(
                 children: [
                   _ThemeTileNew(ref: ref),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Shadow Mode - Wellness
+              _SectionHeader(title: 'Pohoda'),
+              _SettingsCard(
+                children: [
+                  _ShadowModeTile(ref: ref),
                 ],
               ),
 
@@ -438,6 +451,39 @@ class _ThemeOption extends StatelessWidget {
           ? Icon(Icons.check, color: AppColors.primary)
           : null,
       onTap: onTap,
+    );
+  }
+}
+
+/// Widget pro Shadow Mode toggle
+class _ShadowModeTile extends ConsumerWidget {
+  final WidgetRef ref;
+
+  const _ShadowModeTile({required this.ref});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final shadowModeState = ref.watch(shadowModeStateProvider);
+    final isActive = shadowModeState.isActive;
+
+    return ListTile(
+      leading: const Text('🕶️', style: TextStyle(fontSize: 24)),
+      title: const Text('Shadow Mode™'),
+      subtitle: Text(
+        isActive
+            ? '${shadowModeState.reason?.emoji ?? ''} ${shadowModeState.reason?.displayName ?? 'Aktivní'}'
+            : 'Offline. Bez lidí. Bez tlaku.',
+      ),
+      trailing: Switch(
+        value: isActive,
+        onChanged: (value) async {
+          await ShadowModeToggleDialog.show(context, isActive: isActive);
+        },
+        activeThumbColor: AppColors.accent,
+      ),
+      onTap: () async {
+        await ShadowModeToggleDialog.show(context, isActive: isActive);
+      },
     );
   }
 }
