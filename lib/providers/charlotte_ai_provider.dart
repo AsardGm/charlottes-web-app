@@ -107,3 +107,47 @@ final isCharlotteTypingProvider = Provider<bool>((ref) {
   if (conversation.messages.isEmpty) return false;
   return conversation.messages.last.isTyping;
 });
+
+/// Provider pro Charlotte recommendations (z consumption + cognitive insights)
+final charlotteRecommendationsProvider = FutureProvider<List<String>>((ref) async {
+  final user = await ref.read(currentUserProvider.future);
+  if (user == null) return [];
+
+  try {
+    final service = ref.read(charlotteAIServiceProvider);
+
+    // Build user context (includes consumption and cognitive data)
+    final context = await service.buildUserContext(userId: user.id);
+
+    // Generate recommendations from both sources
+    final recommendations = <String>[];
+
+    // Add consumption recommendations if available
+    if (context.recentConsumptionCount != null && context.recentConsumptionCount! > 0) {
+      // TODO: Get consumption insights service recommendations
+      // For now, basic recommendation
+      if (context.recentConsumptionCount! > 20) {
+        recommendations.add('Konzumuješ často - zvažuješ tolerance break pro harm reduction?');
+      }
+    }
+
+    // Add cognitive recommendations if available
+    if (context.hasCognitiveDecline) {
+      recommendations.add('⚠️ Detekoval jsem pokles cognitive performance. Doporučuji tolerance break a konzultaci harm reduction strategií.');
+    }
+
+    if (context.cognitiveTrend != null && context.cognitiveTrend == 'Zlepšující se') {
+      recommendations.add('📈 Tvoje cognitive performance se zlepšuje! Pokračuj ve svých současných vzorcích.');
+    }
+
+    // Add personalized suggestions based on role/interests
+    if (recommendations.isEmpty) {
+      recommendations.add('Zkus si zalogovat další konzumaci pro lepší insights.');
+      recommendations.add('Charlotte AI ti může pomoct s harm reduction radami.');
+    }
+
+    return recommendations;
+  } catch (e) {
+    return [];
+  }
+});

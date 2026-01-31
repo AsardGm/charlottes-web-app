@@ -11,6 +11,8 @@ import '../../providers/follow_provider.dart';
 import '../../models/post_model.dart';
 import '../../models/badge_model.dart';
 import '../../widgets/profile/profile.dart';
+import '../../widgets/insights/insights_summary_card.dart';
+import '../../providers/charlotte_ai_provider.dart';
 
 /// Provider pro prispevky uzivatele
 final userPostsProvider = FutureProvider.family<List<PostModel>, String>((ref, oderId) async {
@@ -262,7 +264,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         ),
                       ),
 
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
+
+                      // Insights Summary Card
+                      InsightsSummaryCard(userId: user.id),
+
+                      const SizedBox(height: 16),
+
+                      // Charlotte Recommendations
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final recommendationsAsync = ref.watch(charlotteRecommendationsProvider);
+                          return recommendationsAsync.when(
+                            data: (recommendations) {
+                              if (recommendations.isEmpty) {
+                                return const SizedBox.shrink();
+                              }
+                              return Column(
+                                children: [
+                                  CharlotteRecommendationsCard(
+                                    recommendations: recommendations,
+                                  ),
+                                  const SizedBox(height: 16),
+                                ],
+                              );
+                            },
+                            loading: () => const SizedBox.shrink(),
+                            error: (_, _) => const SizedBox.shrink(),
+                          );
+                        },
+                      ),
 
                       // Featured badges
                       const _FeaturedBadgesRow(),
