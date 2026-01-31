@@ -184,6 +184,12 @@ class CharlotteUserContext {
   final double? averageCognitiveScore;
   final int? activeGrowsCount;
 
+  // Cognitive insights
+  final String? cognitiveTrend; // improving, stable, declining
+  final double? cognitiveTrendPercentage;
+  final List<String> cognitiveWarnings;
+  final bool hasCognitiveDecline;
+
   // User name
   final String? userName;
 
@@ -196,6 +202,10 @@ class CharlotteUserContext {
     this.lastConsumptionStrain,
     this.averageCognitiveScore,
     this.activeGrowsCount,
+    this.cognitiveTrend,
+    this.cognitiveTrendPercentage,
+    this.cognitiveWarnings = const [],
+    this.hasCognitiveDecline = false,
     this.userName,
   });
 
@@ -240,7 +250,26 @@ class CharlotteUserContext {
     }
 
     if (averageCognitiveScore != null) {
-      buffer.writeln('- Average cognitive score: ${averageCognitiveScore!.toStringAsFixed(1)}/10');
+      buffer.writeln('- Average cognitive score: ${averageCognitiveScore!.toStringAsFixed(1)}/100');
+    }
+
+    if (cognitiveTrend != null) {
+      buffer.writeln('- Cognitive trend: $cognitiveTrend');
+      if (cognitiveTrendPercentage != null) {
+        final sign = cognitiveTrendPercentage! >= 0 ? '+' : '';
+        buffer.writeln('  - Change: $sign${cognitiveTrendPercentage!.toStringAsFixed(1)}%');
+      }
+    }
+
+    if (hasCognitiveDecline) {
+      buffer.writeln('- ⚠️ COGNITIVE DECLINE DETECTED - Provide harm reduction advice');
+    }
+
+    if (cognitiveWarnings.isNotEmpty) {
+      buffer.writeln('- Cognitive warnings:');
+      for (final warning in cognitiveWarnings) {
+        buffer.writeln('  - $warning');
+      }
     }
 
     if (activeGrowsCount != null && activeGrowsCount! > 0) {

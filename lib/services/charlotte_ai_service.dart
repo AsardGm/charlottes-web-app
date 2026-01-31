@@ -3,7 +3,9 @@ import 'package:http/http.dart' as http;
 import '../models/charlotte_message_model.dart';
 import '../models/user_preferences_model.dart';
 import '../models/consumption_insights_model.dart';
+import '../models/cognitive_insights_model.dart';
 import 'consumption_insights_service.dart';
+import 'cognitive_insights_service.dart';
 
 /// Service pro komunikaci s Charlotte AI (Claude API)
 class CharlotteAIService {
@@ -110,16 +112,29 @@ class CharlotteAIService {
     String? userName,
     String? userId,
     ConsumptionInsights? consumptionInsights,
+    CognitiveInsights? cognitiveInsights,
   }) async {
     // Fetch consumption insights if not provided and userId available
-    ConsumptionInsights? insights = consumptionInsights;
-    if (insights == null && userId != null) {
+    ConsumptionInsights? consumptionData = consumptionInsights;
+    if (consumptionData == null && userId != null) {
       try {
         final insightsService = ConsumptionInsightsService();
-        insights = await insightsService.generateInsights(userId);
+        consumptionData = await insightsService.generateInsights(userId);
       } catch (e) {
         // Ignore errors, continue without consumption data
-        insights = null;
+        consumptionData = null;
+      }
+    }
+
+    // Fetch cognitive insights if not provided and userId available
+    CognitiveInsights? cognitiveData = cognitiveInsights;
+    if (cognitiveData == null && userId != null) {
+      try {
+        final cognitiveService = CognitiveInsightsService();
+        cognitiveData = await cognitiveService.generateInsights(userId);
+      } catch (e) {
+        // Ignore errors, continue without cognitive data
+        cognitiveData = null;
       }
     }
 
@@ -129,10 +144,14 @@ class CharlotteAIService {
       experienceLevel: preferences?.experienceLevel?.displayName,
       interests: preferences?.interests.map((i) => i.displayName).toList() ?? [],
       goals: preferences?.goals.map((g) => g.displayName).toList() ?? [],
-      recentConsumptionCount: insights?.last7DaysSessions,
-      lastConsumptionStrain: insights?.lastConsumptionStrain,
-      averageCognitiveScore: insights?.averageCognitiveScore,
+      recentConsumptionCount: consumptionData?.last7DaysSessions,
+      lastConsumptionStrain: consumptionData?.lastConsumptionStrain,
+      averageCognitiveScore: cognitiveData?.currentScore ?? cognitiveData?.averageScore,
       activeGrowsCount: null, // TODO: Add when grow tracking is available
+      cognitiveTrend: cognitiveData?.trend.displayName,
+      cognitiveTrendPercentage: cognitiveData?.trendPercentage,
+      cognitiveWarnings: cognitiveData?.warnings ?? [],
+      hasCognitiveDecline: cognitiveData?.isSignificantDecline ?? false,
     );
   }
 
