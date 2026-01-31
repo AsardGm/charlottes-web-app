@@ -68,6 +68,7 @@ import '../screens/lab/alchymista/alchymista_schedules_screen.dart';
 import '../screens/lab/oci_arasaky/oci_scanner_screen.dart';
 import '../screens/lab/oci_arasaky/oci_result_screen.dart';
 import '../screens/lab/ghost/ghost_protocol_screen.dart';
+import '../screens/charlotte/charlotte_chat_screen.dart';
 import '../screens/holotrop/holotrop_screen.dart';
 import '../screens/wiki/wiki_screen.dart';
 import '../screens/wiki/wiki_article_screen.dart';
@@ -330,6 +331,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/lab/ghost',
         builder: (context, state) => const GhostProtocolScreen(),
+      ),
+
+      // Charlotte AI
+      GoRoute(
+        path: '/charlotte',
+        builder: (context, state) => const CharlotteChatScreen(),
       ),
 
       // Holotrop

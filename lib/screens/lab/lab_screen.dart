@@ -81,6 +81,19 @@ class LabScreen extends ConsumerWidget {
                 childAspectRatio: 1.1,
               ),
               delegate: SliverChildListDelegate([
+                // Charlotte AI - First module
+                _ModuleCard(
+                  title: 'CHARLOTTE',
+                  subtitle: 'AI Asistentka',
+                  icon: Icons.chat_bubble,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1A1A4A), Color(0xFF0D0D2A)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  accentColor: AppColors.accent,
+                  onTap: () => context.push('/charlotte'),
+                ),
                 _ModuleCard(
                   title: 'CHRONOS',
                   subtitle: 'Timeline & Diary',
