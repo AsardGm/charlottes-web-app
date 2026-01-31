@@ -36,6 +36,7 @@ import '../screens/education/myth_buster_screen.dart';
 import '../screens/cognitive/cognitive_test_screen.dart';
 import '../screens/cognitive/cognitive_results_screen.dart';
 import '../screens/cognitive/cognitive_history_screen.dart';
+import '../screens/cognitive/cognitive_insights_dashboard.dart';
 import '../screens/consumption/log_consumption_screen.dart';
 import '../screens/consumption/post_check_screen.dart';
 import '../screens/consumption/insights_dashboard_screen.dart';
@@ -457,6 +458,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/cognitive/history',
         builder: (context, state) => const CognitiveHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/cognitive/insights',
+        builder: (context, state) => const CognitiveInsightsDashboard(),
       ),
 
       // Consumption Tracking (Plant → Mind Feedback Loop)

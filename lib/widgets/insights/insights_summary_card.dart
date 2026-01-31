@@ -123,7 +123,7 @@ class InsightsSummaryCard extends ConsumerWidget {
                     icon: Icons.psychology,
                     label: 'Cognitive',
                     color: const Color(0xFF00ACC1),
-                    onTap: () => context.push('/cognitive'),
+                    onTap: () => context.push('/cognitive/insights'),
                   ),
                 ),
                 const SizedBox(width: 8),
