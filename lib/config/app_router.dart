@@ -69,6 +69,10 @@ import '../screens/lab/oci_arasaky/oci_scanner_screen.dart';
 import '../screens/lab/oci_arasaky/oci_result_screen.dart';
 import '../screens/lab/ghost/ghost_protocol_screen.dart';
 import '../screens/charlotte/charlotte_chat_screen.dart';
+import '../screens/quantum/quantum_screen.dart';
+import '../screens/quantum/reaction_test_screen.dart';
+import '../screens/quantum/memory_test_screen.dart';
+import '../screens/quantum/focus_test_screen.dart';
 import '../screens/holotrop/holotrop_screen.dart';
 import '../screens/wiki/wiki_screen.dart';
 import '../screens/wiki/wiki_article_screen.dart';
@@ -337,6 +341,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/charlotte',
         builder: (context, state) => const CharlotteChatScreen(),
+      ),
+
+      // Quantum - Cognitive Testing
+      GoRoute(
+        path: '/quantum',
+        builder: (context, state) => const QuantumScreen(),
+      ),
+      GoRoute(
+        path: '/quantum/reaction-test',
+        builder: (context, state) => const ReactionTestScreen(),
+      ),
+      GoRoute(
+        path: '/quantum/memory-test',
+        builder: (context, state) => const MemoryTestScreen(),
+      ),
+      GoRoute(
+        path: '/quantum/focus-test',
+        builder: (context, state) => const FocusTestScreen(),
       ),
 
       // Holotrop

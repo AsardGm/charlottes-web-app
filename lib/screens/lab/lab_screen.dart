@@ -94,6 +94,19 @@ class LabScreen extends ConsumerWidget {
                   accentColor: AppColors.accent,
                   onTap: () => context.push('/charlotte'),
                 ),
+                // Quantum - Cognitive Testing
+                _ModuleCard(
+                  title: 'QUANTUM',
+                  subtitle: 'Cognitive Tests',
+                  icon: Icons.psychology,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0A1628), Color(0xFF1A2C4E)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  accentColor: const Color(0xFF00ACC1),
+                  onTap: () => context.push('/quantum'),
+                ),
                 _ModuleCard(
                   title: 'CHRONOS',
                   subtitle: 'Timeline & Diary',
