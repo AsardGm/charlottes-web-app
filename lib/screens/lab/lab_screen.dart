@@ -107,6 +107,19 @@ class LabScreen extends ConsumerWidget {
                   accentColor: const Color(0xFF00ACC1),
                   onTap: () => context.push('/quantum'),
                 ),
+                // T-Break Tracker
+                _ModuleCard(
+                  title: 'T-BREAK',
+                  subtitle: 'Harm Reduction',
+                  icon: Icons.spa,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1A4A1A), Color(0xFF0D2A0D)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  accentColor: const Color(0xFF66BB6A),
+                  onTap: () => context.push('/tbreak'),
+                ),
                 _ModuleCard(
                   title: 'CHRONOS',
                   subtitle: 'Timeline & Diary',

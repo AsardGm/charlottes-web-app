@@ -74,6 +74,7 @@ import '../screens/quantum/quantum_screen.dart';
 import '../screens/quantum/reaction_test_screen.dart';
 import '../screens/quantum/memory_test_screen.dart';
 import '../screens/quantum/focus_test_screen.dart';
+import '../screens/tbreak/tbreak_dashboard.dart';
 import '../screens/holotrop/holotrop_screen.dart';
 import '../screens/wiki/wiki_screen.dart';
 import '../screens/wiki/wiki_article_screen.dart';
@@ -360,6 +361,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/quantum/focus-test',
         builder: (context, state) => const FocusTestScreen(),
+      ),
+
+      // Tolerance Break Tracker
+      GoRoute(
+        path: '/tbreak',
+        builder: (context, state) => const TBreakDashboard(),
       ),
 
       // Holotrop
