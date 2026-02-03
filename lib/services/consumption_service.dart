@@ -328,6 +328,29 @@ class ConsumptionService {
           : null,
     );
   }
+
+  /// Získá dnešní statistiky pro dashboard
+  Future<Map<String, dynamic>> getTodayStats(String userId) async {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+
+    final response = await _supabase
+        .from('consumption_logs')
+        .select()
+        .eq('user_id', userId)
+        .gte('timestamp', startOfDay.toIso8601String())
+        .order('timestamp', ascending: false);
+
+    final todayLogs = (response as List)
+        .map((json) => ConsumptionLog.fromJson(json))
+        .toList();
+
+    return {
+      'sessions': todayLogs.length,
+      'last_session': todayLogs.isNotEmpty ? todayLogs.first.timestamp : null,
+      'has_logged': todayLogs.isNotEmpty,
+    };
+  }
 }
 
 /// Stats pro dashboard

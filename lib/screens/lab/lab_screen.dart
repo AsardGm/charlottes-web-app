@@ -984,6 +984,7 @@ class _ModuleCardState extends State<_ModuleCard>
             ),
           ),
         ],
+        ),
       ),
     );
   }

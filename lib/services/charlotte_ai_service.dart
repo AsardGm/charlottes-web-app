@@ -385,4 +385,106 @@ class CharlotteAIService {
 
     return message.toString();
   }
+
+  /// Get daily tip for user dashboard
+  Future<String> getDailyTip(String userId) async {
+    try {
+      // Check if there's already a tip for today in cache
+      final today = DateTime.now();
+      final dateKey = '${today.year}-${today.month}-${today.day}';
+
+      final prefs = await Supabase.instance.client
+          .from('user_preferences')
+          .select('daily_tip_cache')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (prefs != null && prefs['daily_tip_cache'] != null) {
+        final cache = prefs['daily_tip_cache'] as Map<String, dynamic>;
+        if (cache['date'] == dateKey) {
+          return cache['tip'] as String;
+        }
+      }
+
+      // Generate a new tip based on user context
+      final context = await buildUserContext(userId: userId);
+      final tip = _generateContextualTip(context);
+
+      // Cache the tip
+      await Supabase.instance.client
+          .from('user_preferences')
+          .update({
+            'daily_tip_cache': {
+              'date': dateKey,
+              'tip': tip,
+            }
+          })
+          .eq('user_id', userId);
+
+      return tip;
+    } catch (e) {
+      // Return a default tip if something fails
+      return 'Pamatuj: Start low, go slow. Vždy můžeš přidat, ale nelze vzít zpět.';
+    }
+  }
+
+  /// Generate contextual tip based on user data
+  String _generateContextualTip(CharlotteUserContext context) {
+    final tips = <String>[];
+
+    // Consumption-based tips
+    if (context.recentConsumptionCount != null && context.recentConsumptionCount! >= 6) {
+      tips.addAll([
+        'Denní konzumace zvyšuje toleranci rychleji. Zvažuj pár dní pauzu občas.',
+        'High-frequency use může vést k závislosti. Buď aware svých vzorců.',
+        'Čím častěji konzumuješ, tím víc platíš za menší efekt. T-break = úspora.',
+      ]);
+    } else if (context.recentConsumptionCount != null && context.recentConsumptionCount! > 0) {
+      tips.addAll([
+        'Trackování konzumace ti pomůže pochopit, co ti sedí a co ne.',
+        'Post-consumption check-ins jsou klíčové pro personalizované insights.',
+        'Různé terpeny = různé efekty. Zkoušej a trackuj!',
+      ]);
+    }
+
+    // Cognitive-based tips
+    if (context.hasCognitiveDecline) {
+      tips.addAll([
+        'Tvoje cognitive performance klesá. Zvažuj T-break nebo snížení frekvence.',
+        'Pravidelné cognitive testy ti ukážou skutečný vliv konopí na tvou mysl.',
+      ]);
+    } else if (context.averageCognitiveScore != null) {
+      tips.addAll([
+        'Udržuj svou cognitive performance sledováním. Pravidelné testy = data.',
+        'Cannabis ovlivňuje každého jinak. Tvoje data jsou tvá best guide.',
+      ]);
+    }
+
+    // General harm reduction tips
+    tips.addAll([
+      'Hydratace je key. Pij vodu před, během i po konzumaci.',
+      'Set a setting mají obrovský vliv na experience. Buď prepared.',
+      'Nikdy neřiď pod vlivem. Zero tolerance.',
+      'Edibles: Start low (2.5-5mg), go slow (počkej 2h). Nelze brát zpět.',
+      'Kouření škodí plícím. Vaping nebo edibles jsou lepší volba.',
+      'Mixing s alkoholem zvyšuje riziko bad experience. Not recommended.',
+      'Consent is everything. Nikdy nikomu nenabízej bez požádání.',
+      'Cannabis není pro každého. Respektuj zdravotní kontraindikace.',
+      'Kvalita matters. Nelegální sources = neznámý obsah = riziko.',
+      'Tolerance je real. Pravidelní uživatelé potřebují T-break občas.',
+    ]);
+
+    // Experience level tips
+    if (context.experienceLevel?.contains('Začátečník') ?? false) {
+      tips.addAll([
+        'Jako začátečník: Start with low THC strains (10-15%). High THC = risky.',
+        'První zkušenost? Buď s někým zkušeným, kdo tě podrží.',
+        'Anxiety po konzumaci? Čichni k černému pepři - terpeny tě uklidní.',
+      ]);
+    }
+
+    // Return random tip
+    tips.shuffle();
+    return tips.first;
+  }
 }

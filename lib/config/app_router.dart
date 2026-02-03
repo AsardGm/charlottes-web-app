@@ -79,6 +79,7 @@ import '../screens/harm_reduction/harm_reduction_screen.dart';
 import '../screens/holotrop/holotrop_screen.dart';
 import '../screens/wiki/wiki_screen.dart';
 import '../screens/wiki/wiki_article_screen.dart';
+import '../screens/dashboard/dashboard_screen.dart';
 
 class AuthChangeNotifier extends ChangeNotifier {
   AuthChangeNotifier() {
@@ -155,6 +156,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard',
+        builder: (context, state) => const DashboardScreen(),
       ),
       GoRoute(
         path: '/create-post',

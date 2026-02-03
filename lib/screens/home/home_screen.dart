@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../feed/feed_screen.dart';
+import '../dashboard/dashboard_screen.dart';
 import '../chat/conversations_screen.dart';
 import '../lab/lab_screen.dart';
 import '../profile/profile_screen.dart';
@@ -23,7 +23,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // All screens
   final List<Widget> _allScreens = [
-    const FeedScreen(key: ValueKey('feed')),
+    const DashboardScreen(key: ValueKey('dashboard')),
     const NewsFeedScreen(key: ValueKey('news')),
     const ConversationsScreen(key: ValueKey('conversations')),
     const LabScreen(key: ValueKey('lab')),
