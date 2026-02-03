@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../models/lab/lab_grow_model.dart';
 import '../../providers/lab_provider.dart';
 import '../../theme/theme.dart';
+import '../../widgets/common/shimmer_loading.dart';
+import '../../utils/page_transitions.dart';
 
 /// Hlavni Lab hub obrazovka - cyberpunkovy kokpit pestitele
 ///
@@ -836,22 +838,17 @@ class LabScreen extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       height: 120,
-      decoration: BoxDecoration(
-        color: AppColors.functionalSurface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Center(
-        child: CircularProgressIndicator(
-          color: AppColors.accent,
-          strokeWidth: 2,
-        ),
+      child: ShimmerBox(
+        width: double.infinity,
+        height: 120,
+        borderRadius: 16,
       ),
     );
   }
 }
 
 /// Karta modulu v gridu
-class _ModuleCard extends StatelessWidget {
+class _ModuleCard extends StatefulWidget {
   final String title;
   final String subtitle;
   final IconData icon;
@@ -869,25 +866,37 @@ class _ModuleCard extends StatelessWidget {
   });
 
   @override
+  State<_ModuleCard> createState() => _ModuleCardState();
+}
+
+class _ModuleCardState extends State<_ModuleCard>
+    with SingleTickerProviderStateMixin {
+  bool _isPressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: accentColor.withAlpha(50),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withAlpha(15),
-            blurRadius: 12,
-            spreadRadius: 0,
-            offset: const Offset(0, 4),
+    return AnimatedScale(
+      scale: _isPressed ? 0.95 : 1.0,
+      duration: const Duration(milliseconds: 100),
+      curve: Curves.easeInOut,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: widget.gradient,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: widget.accentColor.withAlpha(50),
+            width: 1,
           ),
-        ],
-      ),
-      child: Stack(
+          boxShadow: [
+            BoxShadow(
+              color: widget.accentColor.withAlpha(15),
+              blurRadius: 12,
+              spreadRadius: 0,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
         children: [
           // Decorative corner triangle
           Positioned(
@@ -903,15 +912,15 @@ class _ModuleCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      accentColor.withAlpha(40),
-                      accentColor.withAlpha(20),
+                      widget.accentColor.withAlpha(40),
+                      widget.accentColor.withAlpha(20),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                 ),
                 child: CustomPaint(
-                  painter: _CornerTrianglePainter(accentColor),
+                  painter: _CornerTrianglePainter(widget.accentColor),
                 ),
               ),
             ),
@@ -919,7 +928,10 @@ class _ModuleCard extends StatelessWidget {
           Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: onTap,
+              onTap: widget.onTap,
+              onTapDown: (_) => setState(() => _isPressed = true),
+              onTapUp: (_) => setState(() => _isPressed = false),
+              onTapCancel: () => setState(() => _isPressed = false),
               borderRadius: BorderRadius.circular(16),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -933,23 +945,23 @@ class _ModuleCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            accentColor.withAlpha(40),
-                            accentColor.withAlpha(25),
+                            widget.accentColor.withAlpha(40),
+                            widget.accentColor.withAlpha(25),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(11),
                         border: Border.all(
-                          color: accentColor.withAlpha(80),
+                          color: widget.accentColor.withAlpha(80),
                           width: 1.5,
                         ),
                       ),
-                      child: Icon(icon, color: accentColor, size: 24),
+                      child: Icon(widget.icon, color: widget.accentColor, size: 24),
                     ),
                     const Spacer(),
                     Text(
-                      title,
+                      widget.title,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -959,7 +971,7 @@ class _ModuleCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      subtitle,
+                      widget.subtitle,
                       style: TextStyle(
                         color: Colors.white.withAlpha(160),
                         fontSize: 11,
