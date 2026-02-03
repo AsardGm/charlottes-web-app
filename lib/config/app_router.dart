@@ -81,6 +81,7 @@ import '../screens/wiki/wiki_screen.dart';
 import '../screens/wiki/wiki_article_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/insights/weekly_report_screen.dart';
+import '../screens/personal_science/personal_science_dashboard.dart';
 
 class AuthChangeNotifier extends ChangeNotifier {
   AuthChangeNotifier() {
@@ -513,6 +514,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => WeeklyReportScreen(
           insightId: state.pathParameters['id'],
         ),
+      ),
+
+      // Personal Science
+      GoRoute(
+        path: '/personal-science',
+        builder: (context, state) => const PersonalScienceDashboard(),
       ),
     ],
   );
