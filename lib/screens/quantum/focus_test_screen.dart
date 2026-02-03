@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/theme.dart';
+import '../../services/quantum_test_service.dart';
+import '../../providers/auth_provider.dart';
 
 /// Focus/Sustained Attention Test - Tests ability to maintain focus over time
 class FocusTestScreen extends ConsumerStatefulWidget {
@@ -128,16 +130,35 @@ class _FocusTestScreenState extends ConsumerState<FocusTestScreen> {
     }
   }
 
-  void _finishTest() {
+  void _finishTest() async {
     _gameTimer?.cancel();
     _targetTimer?.cancel();
+
+    final accuracy = _targetsShown > 0 ? (_targetsHit / _targetsShown).toDouble() : 0.0;
+    final score = _calculateScore();
 
     setState(() {
       _testRunning = false;
       _testComplete = true;
     });
 
-    // TODO: Save to Supabase
+    // Save to Supabase
+    try {
+      final user = await ref.read(currentUserProvider.future);
+      if (user != null) {
+        final service = QuantumTestService();
+        await service.saveFocusTest(
+          userId: user.id,
+          targetsShown: _targetsShown,
+          targetsHit: _targetsHit,
+          falsePositives: _falsePositives,
+          accuracy: accuracy,
+          score: score,
+        );
+      }
+    } catch (e) {
+      debugPrint('Failed to save focus test: $e');
+    }
   }
 
   double _calculateScore() {

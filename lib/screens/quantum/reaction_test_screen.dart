@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/theme.dart';
+import '../../services/quantum_test_service.dart';
+import '../../providers/auth_provider.dart';
 
 /// Reaction Time Test - Measures response time to visual stimuli
 class ReactionTestScreen extends ConsumerStatefulWidget {
@@ -119,15 +121,34 @@ class _ReactionTestScreenState extends ConsumerState<ReactionTestScreen> {
     }
   }
 
-  void _finishTest() {
+  void _finishTest() async {
     final avgReactionTime = _reactionTimes.reduce((a, b) => a + b) / _reactionTimes.length;
+    final bestTime = _reactionTimes.reduce((a, b) => a < b ? a : b);
+    final worstTime = _reactionTimes.reduce((a, b) => a > b ? a : b);
+    final score = _calculateScore(avgReactionTime);
 
     setState(() {
       _testComplete = true;
     });
 
-    // TODO: Save results to Supabase
-    // final score = _calculateScore(avgReactionTime);
+    // Save results to Supabase
+    try {
+      final user = await ref.read(currentUserProvider.future);
+      if (user != null) {
+        final service = QuantumTestService();
+        await service.saveReactionTest(
+          userId: user.id,
+          reactionTimes: _reactionTimes,
+          averageMs: avgReactionTime,
+          bestMs: bestTime,
+          worstMs: worstTime,
+          score: score,
+        );
+      }
+    } catch (e) {
+      // Silently fail - test results are still displayed
+      debugPrint('Failed to save reaction test: $e');
+    }
   }
 
   double _calculateScore(double avgMs) {

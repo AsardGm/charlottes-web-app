@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/theme.dart';
+import '../../services/quantum_test_service.dart';
+import '../../providers/auth_provider.dart';
 
 /// Memory Sequence Test - Tests working memory and pattern recognition
 class MemoryTestScreen extends ConsumerStatefulWidget {
@@ -120,12 +122,29 @@ class _MemoryTestScreenState extends ConsumerState<MemoryTestScreen> {
     }
   }
 
-  void _finishTest() {
+  void _finishTest() async {
+    final score = _calculateScore();
+
     setState(() {
       _testComplete = true;
     });
 
-    // TODO: Save to Supabase
+    // Save to Supabase
+    try {
+      final user = await ref.read(currentUserProvider.future);
+      if (user != null) {
+        final service = QuantumTestService();
+        await service.saveMemoryTest(
+          userId: user.id,
+          maxLevel: _maxLevel,
+          correctRounds: _correctRounds,
+          sequenceLength: _currentSequence.length,
+          score: score,
+        );
+      }
+    } catch (e) {
+      debugPrint('Failed to save memory test: $e');
+    }
   }
 
   double _calculateScore() {
