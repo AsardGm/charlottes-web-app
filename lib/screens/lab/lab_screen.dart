@@ -110,7 +110,7 @@ class LabScreen extends ConsumerWidget {
                 // T-Break Tracker
                 _ModuleCard(
                   title: 'T-BREAK',
-                  subtitle: 'Harm Reduction',
+                  subtitle: 'Tolerance Tracker',
                   icon: Icons.spa,
                   gradient: const LinearGradient(
                     colors: [Color(0xFF1A4A1A), Color(0xFF0D2A0D)],
@@ -119,6 +119,19 @@ class LabScreen extends ConsumerWidget {
                   ),
                   accentColor: const Color(0xFF66BB6A),
                   onTap: () => context.push('/tbreak'),
+                ),
+                // Harm Reduction Education
+                _ModuleCard(
+                  title: 'BEZPEČNOST',
+                  subtitle: 'Harm Reduction',
+                  icon: Icons.local_hospital,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2D6A2D), Color(0xFF1A4A1A)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  accentColor: const Color(0xFF81C784),
+                  onTap: () => context.push('/harm-reduction'),
                 ),
                 _ModuleCard(
                   title: 'CHRONOS',

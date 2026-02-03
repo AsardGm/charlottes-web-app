@@ -75,6 +75,7 @@ import '../screens/quantum/reaction_test_screen.dart';
 import '../screens/quantum/memory_test_screen.dart';
 import '../screens/quantum/focus_test_screen.dart';
 import '../screens/tbreak/tbreak_dashboard.dart';
+import '../screens/harm_reduction/harm_reduction_screen.dart';
 import '../screens/holotrop/holotrop_screen.dart';
 import '../screens/wiki/wiki_screen.dart';
 import '../screens/wiki/wiki_article_screen.dart';
@@ -367,6 +368,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/tbreak',
         builder: (context, state) => const TBreakDashboard(),
+      ),
+
+      // Harm Reduction Education
+      GoRoute(
+        path: '/harm-reduction',
+        builder: (context, state) => const HarmReductionScreen(),
       ),
 
       // Holotrop
