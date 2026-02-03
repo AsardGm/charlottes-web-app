@@ -10,6 +10,7 @@ import '../../services/charlotte_ai_service.dart';
 import '../../services/weekly_insights_service.dart';
 import '../../models/tolerance_break_model.dart';
 import '../../models/weekly_insight_model.dart';
+import '../../providers/notification_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math' as math;
 
@@ -120,15 +121,66 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications_outlined),
-          onPressed: () => context.push('/notifications'),
-        ),
+        _buildNotificationButton(),
         IconButton(
           icon: const Icon(Icons.settings_outlined),
           onPressed: () => context.push('/settings'),
         ),
       ],
+    );
+  }
+
+  Widget _buildNotificationButton() {
+    final unreadCountAsync = ref.watch(unreadCountProvider);
+
+    return unreadCountAsync.when(
+      data: (count) {
+        return Stack(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              onPressed: () => context.push('/notifications'),
+            ),
+            if (count > 0)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.surface,
+                      width: 2,
+                    ),
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
+                  child: Text(
+                    count > 9 ? '9+' : count.toString(),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+      loading: () => IconButton(
+        icon: const Icon(Icons.notifications_outlined),
+        onPressed: () => context.push('/notifications'),
+      ),
+      error: (error, stack) => IconButton(
+        icon: const Icon(Icons.notifications_outlined),
+        onPressed: () => context.push('/notifications'),
+      ),
     );
   }
 

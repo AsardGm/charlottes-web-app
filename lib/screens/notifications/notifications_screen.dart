@@ -293,6 +293,13 @@ class NotificationsScreen extends ConsumerWidget {
       ref.read(notificationNotifierProvider.notifier).markAsRead(notification.id);
     }
 
+    // Check for actionRoute (system notifications)
+    if (notification.actionRoute != null) {
+      context.go(notification.actionRoute!);
+      return;
+    }
+
+    // Legacy social notification routing
     if (notification.postId != null) {
       context.go('/post/${notification.postId}');
     } else if (notification.type == 'follow' && notification.actorId != null) {
@@ -506,54 +513,108 @@ class _NotificationCard extends StatelessWidget {
 
   _NotificationTypeInfo _getTypeInfo() {
     switch (notification.type) {
+      // System notifications
+      case 'weekly_report_ready':
+        return _NotificationTypeInfo(
+          icon: Icons.assignment_rounded,
+          color: AppColors.info,
+          label: 'Týdenní report',
+        );
+      case 'tbreak_reminder':
+        return _NotificationTypeInfo(
+          icon: Icons.calendar_today_rounded,
+          color: AppColors.warning,
+          label: 'T-Break',
+        );
+      case 'tbreak_milestone':
+        return _NotificationTypeInfo(
+          icon: Icons.emoji_events_rounded,
+          color: AppColors.success,
+          label: 'Milestone',
+        );
+      case 'tbreak_completed':
+        return _NotificationTypeInfo(
+          icon: Icons.celebration_rounded,
+          color: AppColors.success,
+          label: 'T-Break dokončen',
+        );
+      case 'post_check_reminder':
+        return _NotificationTypeInfo(
+          icon: Icons.psychology_rounded,
+          color: const Color(0xFF9C27B0),
+          label: 'Post-check',
+        );
+      case 'harm_reduction_alert':
+        return _NotificationTypeInfo(
+          icon: Icons.warning_rounded,
+          color: AppColors.error,
+          label: 'Harm Reduction',
+        );
+      case 'achievement_unlocked':
+        return _NotificationTypeInfo(
+          icon: Icons.stars_rounded,
+          color: const Color(0xFFFFB300),
+          label: 'Úspěch',
+        );
+      case 'cognitive_decline':
+        return _NotificationTypeInfo(
+          icon: Icons.trending_down_rounded,
+          color: AppColors.error,
+          label: 'Kognitivní pokles',
+        );
+
+      // Social notifications
+      case 'social_like':
       case 'like':
         return _NotificationTypeInfo(
           icon: Icons.favorite_rounded,
           color: const Color(0xFFE91E63),
           label: 'Like',
         );
+      case 'social_comment':
       case 'comment':
         return _NotificationTypeInfo(
           icon: Icons.chat_bubble_rounded,
           color: AppColors.info,
-          label: 'Komentar',
+          label: 'Komentář',
         );
       case 'mention':
         return _NotificationTypeInfo(
           icon: Icons.alternate_email_rounded,
           color: AppColors.warning,
-          label: 'Zmineni',
+          label: 'Zmínění',
         );
+      case 'social_follow':
       case 'follow':
         return _NotificationTypeInfo(
           icon: Icons.person_add_rounded,
           color: AppColors.success,
-          label: 'Sledovani',
+          label: 'Sledování',
         );
       case 'reply':
         return _NotificationTypeInfo(
           icon: Icons.reply_rounded,
           color: AppColors.info,
-          label: 'Odpoved',
+          label: 'Odpověď',
         );
       case 'post':
         return _NotificationTypeInfo(
           icon: Icons.article_rounded,
           color: AppColors.primary,
-          label: 'Prispevek',
+          label: 'Příspěvek',
         );
       case 'chat':
         return _NotificationTypeInfo(
           icon: Icons.message_rounded,
           color: const Color(0xFF00BCD4),
-          label: 'Zprava',
+          label: 'Zpráva',
         );
       case 'system':
       default:
         return _NotificationTypeInfo(
           icon: Icons.notifications_rounded,
           color: AppColors.textMuted,
-          label: 'System',
+          label: 'Systém',
         );
     }
   }

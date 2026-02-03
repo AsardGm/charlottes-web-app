@@ -8,6 +8,7 @@ import '../../providers/bookmark_provider.dart';
 import '../../providers/posts_provider.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/follow_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../models/post_model.dart';
 import '../../models/badge_model.dart';
 import '../../widgets/profile/profile.dart';
@@ -108,6 +109,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     icon: Icon(Icons.add_box_outlined, color: AppColors.functionalMuted),
                     onPressed: () => context.go('/create-post'),
                   ),
+                  _buildNotificationButton(),
                   IconButton(
                     icon: Icon(Icons.menu, color: AppColors.functionalMuted),
                     onPressed: () => _showProfileMenu(context),
@@ -356,6 +358,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             style: TextStyle(color: AppColors.error),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationButton() {
+    final unreadCountAsync = ref.watch(unreadCountProvider);
+
+    return unreadCountAsync.when(
+      data: (count) {
+        return Stack(
+          children: [
+            IconButton(
+              icon: Icon(Icons.notifications_outlined, color: AppColors.functionalMuted),
+              onPressed: () => context.push('/notifications'),
+            ),
+            if (count > 0)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.functionalBg,
+                      width: 2,
+                    ),
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
+                  child: Text(
+                    count > 9 ? '9+' : count.toString(),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+      loading: () => IconButton(
+        icon: Icon(Icons.notifications_outlined, color: AppColors.functionalMuted),
+        onPressed: () => context.push('/notifications'),
+      ),
+      error: (error, stack) => IconButton(
+        icon: Icon(Icons.notifications_outlined, color: AppColors.functionalMuted),
+        onPressed: () => context.push('/notifications'),
       ),
     );
   }

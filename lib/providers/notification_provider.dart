@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
 
@@ -7,30 +8,44 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
 });
 
 final notificationsProvider = FutureProvider<List<NotificationModel>>((ref) async {
-  return ref.read(notificationServiceProvider).getNotifications();
+  final userId = Supabase.instance.client.auth.currentUser?.id;
+  if (userId == null) return [];
+  return ref.read(notificationServiceProvider).getNotifications(userId);
 });
 
 final unreadCountProvider = FutureProvider<int>((ref) async {
-  return ref.read(notificationServiceProvider).getUnreadCount();
+  final userId = Supabase.instance.client.auth.currentUser?.id;
+  if (userId == null) return 0;
+  return ref.read(notificationServiceProvider).getUnreadCount(userId);
 });
 
 class NotificationNotifier extends Notifier<AsyncValue<List<NotificationModel>>> {
   late NotificationService _service;
+  late String _userId;
 
   @override
   AsyncValue<List<NotificationModel>> build() {
     _service = ref.read(notificationServiceProvider);
+    _userId = Supabase.instance.client.auth.currentUser!.id;
     _loadNotifications();
+    _subscribeToRealtime();
     return const AsyncValue.loading();
   }
 
   Future<void> _loadNotifications() async {
     try {
-      final notifications = await _service.getNotifications();
+      final notifications = await _service.getNotifications(_userId);
       state = AsyncValue.data(notifications);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
+  }
+
+  void _subscribeToRealtime() {
+    _service.subscribeToNotifications(_userId);
+    _service.notificationsStream.listen((notifications) {
+      state = AsyncValue.data(notifications);
+    });
   }
 
   Future<void> refresh() async {
