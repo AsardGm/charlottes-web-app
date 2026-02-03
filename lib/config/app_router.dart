@@ -80,6 +80,7 @@ import '../screens/holotrop/holotrop_screen.dart';
 import '../screens/wiki/wiki_screen.dart';
 import '../screens/wiki/wiki_article_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
+import '../screens/insights/weekly_report_screen.dart';
 
 class AuthChangeNotifier extends ChangeNotifier {
   AuthChangeNotifier() {
@@ -500,6 +501,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/consumption/insights',
         builder: (context, state) => const InsightsDashboardScreen(),
+      ),
+
+      // Weekly Insights
+      GoRoute(
+        path: '/insights/weekly',
+        builder: (context, state) => const WeeklyReportScreen(),
+      ),
+      GoRoute(
+        path: '/insights/weekly/:id',
+        builder: (context, state) => WeeklyReportScreen(
+          insightId: state.pathParameters['id'],
+        ),
       ),
     ],
   );

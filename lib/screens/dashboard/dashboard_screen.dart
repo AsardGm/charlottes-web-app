@@ -7,7 +7,9 @@ import '../../widgets/common/shimmer_loading.dart';
 import '../../services/tbreak_service.dart';
 import '../../services/consumption_service.dart';
 import '../../services/charlotte_ai_service.dart';
+import '../../services/weekly_insights_service.dart';
 import '../../models/tolerance_break_model.dart';
+import '../../models/weekly_insight_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math' as math;
 
@@ -23,12 +25,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final _tbreakService = TBreakService();
   late final _consumptionService = ConsumptionService(Supabase.instance.client);
   final _charlotteService = CharlotteAIService();
+  final _weeklyInsightsService = WeeklyInsightsService();
 
   bool _isLoading = true;
   ToleranceBreak? _activeBreak;
   Map<String, dynamic>? _todayStats;
   String? _charlotteTip;
   Map<String, dynamic>? _harmReductionAlert;
+  WeeklyInsight? _latestWeeklyInsight;
 
   @override
   void initState() {
@@ -48,6 +52,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         _consumptionService.getTodayStats(userId),
         _charlotteService.getDailyTip(userId),
         _charlotteService.analyzeHarmReductionNeeds(userId),
+        _weeklyInsightsService.getLatestUnviewedInsight(userId),
       ]);
 
       setState(() {
@@ -55,6 +60,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         _todayStats = results[1] as Map<String, dynamic>;
         _charlotteTip = results[2] as String;
         _harmReductionAlert = results[3] as Map<String, dynamic>;
+        _latestWeeklyInsight = results[4] as WeeklyInsight?;
         _isLoading = false;
       });
     } catch (e) {
@@ -155,10 +161,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const SizedBox(height: 16),
         ],
 
+        // Weekly Insight Alert (if unviewed)
+        if (_latestWeeklyInsight != null) ...[
+          RevealAnimation(
+            delay: const Duration(milliseconds: 50),
+            child: _WeeklyInsightWidget(insight: _latestWeeklyInsight!),
+          ),
+          const SizedBox(height: 16),
+        ],
+
         // Active T-Break Widget
         if (_activeBreak != null) ...[
           RevealAnimation(
-            delay: const Duration(milliseconds: 50),
+            delay: Duration(milliseconds: _latestWeeklyInsight != null ? 100 : 50),
             child: _TBreakProgressWidget(tbreak: _activeBreak!),
           ),
           const SizedBox(height: 16),
@@ -598,6 +613,113 @@ class _CharlotteTipWidget extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Weekly Insight Widget
+class _WeeklyInsightWidget extends StatelessWidget {
+  final WeeklyInsight insight;
+
+  const _WeeklyInsightWidget({required this.insight});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Color(int.parse('0xFF${insight.statusColorHex}'));
+
+    return GlowingContainer(
+      glowColor: color,
+      glowRadius: 15,
+      duration: const Duration(milliseconds: 2000),
+      child: AnimatedCard(
+        onTap: () => context.push('/insights/weekly'),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                color.withValues(alpha: 0.3),
+                color.withValues(alpha: 0.15),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: color.withValues(alpha: 0.5),
+            ),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Text(
+                insight.statusEmoji,
+                style: const TextStyle(fontSize: 32),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          'Weekly Report',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'NOVÝ',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      insight.weekRangeString,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${insight.totalSessions} sessions • ${insight.uniqueStrains} strains',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: color,
+                size: 18,
+              ),
+            ],
+          ),
         ),
       ),
     );
