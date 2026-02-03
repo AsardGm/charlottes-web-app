@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/charlotte_message_model.dart';
 import '../models/user_preferences_model.dart';
 import '../models/consumption_insights_model.dart';
 import '../models/cognitive_insights_model.dart';
 import 'consumption_insights_service.dart';
 import 'cognitive_insights_service.dart';
+import 'tbreak_service.dart';
 
 /// Service pro komunikaci s Charlotte AI (Claude API)
 class CharlotteAIService {
@@ -204,5 +206,183 @@ class CharlotteAIService {
     }
 
     return suggestions.take(3).toList();
+  }
+
+  /// Harm Reduction: Analyze user patterns and suggest T-break if needed
+  Future<Map<String, dynamic>> analyzeHarmReductionNeeds(String userId) async {
+    final recommendations = <String>[];
+    var needsTBreak = false;
+    var reason = '';
+    var severity = 'low';
+
+    try {
+      // Check consumption frequency (last 30 days)
+      final consumptionService = ConsumptionInsightsService();
+      final insights = await consumptionService.generateInsights(userId);
+
+      if (insights == null) {
+        return {
+          'needsTBreak': needsTBreak,
+          'reason': reason,
+          'severity': severity,
+          'recommendations': recommendations,
+        };
+      }
+
+      // Check 1: Daily use for extended period
+      if (insights.last7DaysSessions >= 6) {
+        // User is consuming almost daily
+        final last30Days = await _getConsumptionCount(userId, 30);
+        if (last30Days >= 25) {
+          needsTBreak = true;
+          reason = 'Denní užívání po 30+ dní - tolerance pravděpodobně vysoká';
+          severity = 'high';
+          recommendations.addAll([
+            'Zvažuj T-break 2-4 týdny pro reset tolerance',
+            'Vysoká frekvence zvyšuje riziko závislosti',
+            'Tvoje tolerance je pravděpodobně velmi vysoká - platíš víc za menší efekt',
+          ]);
+        } else if (last30Days >= 15) {
+          needsTBreak = true;
+          reason = 'Častá konzumace - doporučuji preventivní T-break';
+          severity = 'medium';
+          recommendations.addAll([
+            'T-break 1-2 týdny pomůže udržet toleranci nízkou',
+            'Prevention is better than cure',
+            'Ušetříš peníze a užiješ si to víc',
+          ]);
+        }
+      }
+
+      // Check 2: Check for active T-break
+      final tbreakService = TBreakService();
+      final activeBreak = await tbreakService.getActiveToleranceBreak(userId);
+
+      if (activeBreak != null) {
+        needsTBreak = false;
+        reason = 'Již máš aktivní T-break - skvělá práce! 💪';
+        severity = 'low';
+        recommendations.clear();
+        recommendations.addAll([
+          'Pokračuj v T-breaku - den ${activeBreak.daysCompleted}/${activeBreak.targetDays}',
+          activeBreak.getEncouragementMessage(),
+        ]);
+      }
+
+      // Check 3: Cognitive decline correlation
+      final cognitiveService = CognitiveInsightsService();
+      final cognitiveInsights = await cognitiveService.generateInsights(userId);
+
+      if (cognitiveInsights != null && cognitiveInsights.isSignificantDecline) {
+        needsTBreak = true;
+        severity = 'high';
+        recommendations.add(
+          '⚠️ Cognitive performance klesá - T-break může pomoct',
+        );
+      }
+
+      // Check 4: Long time without T-break
+      final lastBreak = await _getLastCompletedTBreak(userId);
+      if (lastBreak != null) {
+        final daysSinceBreak = DateTime.now().difference(lastBreak).inDays;
+        if (daysSinceBreak > 90 && !needsTBreak) {
+          needsTBreak = true;
+          reason = '3+ měsíce bez T-breaku';
+          severity = 'medium';
+          recommendations.add(
+            'Poslední T-break byl před $daysSinceBreak dny - zvažuj další',
+          );
+        }
+      } else if (insights.last7DaysSessions > 0) {
+        // User consumes but never did T-break
+        recommendations.add(
+          'Nikdy jsi neudělal T-break - zkus to, uvidíš rozdíl!',
+        );
+      }
+    } catch (e) {
+      // Silent fail - harm reduction is advisory, not critical
+    }
+
+    return {
+      'needsTBreak': needsTBreak,
+      'reason': reason,
+      'severity': severity,
+      'recommendations': recommendations,
+    };
+  }
+
+  /// Get consumption count for last N days
+  Future<int> _getConsumptionCount(String userId, int days) async {
+    try {
+      final since = DateTime.now().subtract(Duration(days: days));
+      final response = await Supabase.instance.client
+          .from('consumption_logs')
+          .select('id')
+          .eq('user_id', userId)
+          .gte('timestamp', since.toIso8601String())
+          .count();
+
+      return response.count;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  /// Get date of last completed T-break
+  Future<DateTime?> _getLastCompletedTBreak(String userId) async {
+    try {
+      final tbreakService = TBreakService();
+      final breaks = await tbreakService.getToleranceBreakHistory(userId);
+
+      final completedBreaks = breaks
+          .where((b) => b.completedDate != null)
+          .toList()
+        ..sort((a, b) => b.completedDate!.compareTo(a.completedDate!));
+
+      return completedBreaks.isNotEmpty ? completedBreaks.first.completedDate : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Generate proactive harm reduction message for Charlotte
+  Future<String?> generateHarmReductionAlert(String userId) async {
+    final analysis = await analyzeHarmReductionNeeds(userId);
+
+    if (!analysis['needsTBreak']) return null;
+
+    final severity = analysis['severity'];
+    final reason = analysis['reason'];
+    final recommendations = analysis['recommendations'] as List<String>;
+
+    String emoji;
+    String urgency;
+
+    switch (severity) {
+      case 'high':
+        emoji = '🚨';
+        urgency = 'důležité';
+        break;
+      case 'medium':
+        emoji = '⚠️';
+        urgency = 'doporučení';
+        break;
+      default:
+        emoji = '💡';
+        urgency = 'tip';
+    }
+
+    final message = StringBuffer();
+    message.writeln('$emoji **Harm Reduction $urgency**\n');
+    message.writeln(reason);
+    message.writeln();
+
+    for (final rec in recommendations) {
+      message.writeln('• $rec');
+    }
+
+    message.writeln('\nChceš začít T-break? Najdeš ho v Lab → T-BREAK modulu.');
+
+    return message.toString();
   }
 }

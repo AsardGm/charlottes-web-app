@@ -12,6 +12,7 @@ import '../../models/post_model.dart';
 import '../../models/badge_model.dart';
 import '../../widgets/profile/profile.dart';
 import '../../widgets/insights/insights_summary_card.dart';
+import '../../widgets/harm_reduction/safety_tips_widget.dart';
 import '../../providers/charlotte_ai_provider.dart';
 
 /// Provider pro prispevky uzivatele
@@ -294,6 +295,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           );
                         },
                       ),
+
+                      // Harm Reduction Quick Access
+                      HarmReductionQuickCard(
+                        onTap: () => context.push('/harm-reduction'),
+                      ),
+
+                      const SizedBox(height: 16),
 
                       // Featured badges
                       const _FeaturedBadgesRow(),

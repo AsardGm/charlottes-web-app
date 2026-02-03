@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../theme/theme.dart';
 import '../../models/consumption_model.dart';
 import '../../providers/consumption_provider.dart';
+import '../../widgets/harm_reduction/safety_tips_widget.dart';
 
 /// Quick consumption log screen (5s entry)
 class LogConsumptionScreen extends ConsumerStatefulWidget {
@@ -336,6 +337,11 @@ class _LogConsumptionScreenState extends ConsumerState<LogConsumptionScreen> {
                 ],
               ),
             ),
+
+            const SizedBox(height: 24),
+
+            // Safety tips before consumption
+            const SafetyTipsWidget(context: 'before'),
 
             const SizedBox(height: 24),
 
