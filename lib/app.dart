@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'config/app_router.dart';
 import 'theme/theme.dart';
 import 'providers/theme_provider.dart';
+import 'widgets/common/notification_listener_wrapper.dart';
 
 /// Hlavní widget aplikace Buds and Buddies
 class CommunityApp extends ConsumerWidget {
@@ -30,13 +31,15 @@ class CommunityApp extends ConsumerWidget {
       ),
     );
 
-    return MaterialApp.router(
-      title: "Buds and Buddies",
-      debugShowCheckedModeBanner: false,
-      themeMode: themeMode,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      routerConfig: router,
+    return NotificationListenerWrapper(
+      child: MaterialApp.router(
+        title: "Buds and Buddies",
+        debugShowCheckedModeBanner: false,
+        themeMode: themeMode,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        routerConfig: router,
+      ),
     );
   }
 }
