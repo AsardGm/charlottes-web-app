@@ -293,7 +293,7 @@ class _StrainJournalScreenState extends ConsumerState<StrainJournalScreen> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            context.push('/strain-journal/${entry.id}');
+            context.push('/strain-journal/entry/${entry.id}');
           },
           borderRadius: BorderRadius.circular(12),
           child: Padding(

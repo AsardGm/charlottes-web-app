@@ -83,6 +83,8 @@ import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/insights/weekly_report_screen.dart';
 import '../screens/personal_science/personal_science_dashboard.dart';
 import '../screens/strain_journal/strain_journal_screen.dart';
+import '../screens/strain_journal/create_entry_screen.dart';
+import '../screens/strain_journal/entry_detail_screen.dart';
 import '../screens/challenges/challenges_screen.dart';
 
 class AuthChangeNotifier extends ChangeNotifier {
@@ -532,6 +534,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/strain-journal',
         builder: (context, state) => const StrainJournalScreen(),
+      ),
+      GoRoute(
+        path: '/strain-journal/create',
+        builder: (context, state) {
+          final strainId = state.uri.queryParameters['strainId'];
+          return CreateStrainJournalScreen(strainId: strainId);
+        },
+      ),
+      GoRoute(
+        path: '/strain-journal/entry/:id',
+        builder: (context, state) => EntryDetailScreen(
+          entryId: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
         path: '/strain-journal/:id',
