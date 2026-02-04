@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../theme/theme.dart';
 import '../../services/challenge_service.dart';
+import '../../services/haptic_service.dart';
 import '../../models/challenge_model.dart';
 
 /// Challenges & Achievements Overview Screen
@@ -539,6 +540,10 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
     try {
       final userId = Supabase.instance.client.auth.currentUser!.id;
       await _challengeService.startChallenge(userId, challengeId);
+
+      // Success feedback
+      HapticService.medium();
+
       await _loadData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -546,6 +551,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
         );
       }
     } catch (e) {
+      HapticService.error();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),

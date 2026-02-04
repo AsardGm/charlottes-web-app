@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../theme/theme.dart';
 import '../../services/strain_journal_service.dart';
+import '../../services/haptic_service.dart';
 import '../../models/strain_journal_model.dart';
+import '../../providers/notification_handler_provider.dart';
 
 /// Create new strain journal entry
 class CreateStrainJournalScreen extends ConsumerStatefulWidget {
@@ -211,6 +213,16 @@ class _CreateStrainJournalScreenState
         isFavorite: _isFavorite,
       );
 
+      // Success feedback
+      HapticService.success();
+
+      // Notify XP gain
+      final notificationHandler = ref.read(notificationHandlerProvider);
+      notificationHandler.notifyXPGain(
+        xp: 10,
+        source: 'Zápis do deníku',
+      );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Entry saved successfully!')),
@@ -218,6 +230,7 @@ class _CreateStrainJournalScreenState
         context.pop();
       }
     } catch (e) {
+      HapticService.error();
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
