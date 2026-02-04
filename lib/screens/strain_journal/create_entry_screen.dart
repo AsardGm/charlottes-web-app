@@ -460,7 +460,7 @@ class _CreateStrainJournalScreenState
                 });
               },
               backgroundColor: AppColors.surface,
-              selectedColor: AppColors.accent.withOpacity(0.3),
+              selectedColor: AppColors.accent.withValues(alpha:0.3),
               labelStyle: TextStyle(
                 color: isSelected ? AppColors.accent : Colors.white70,
               ),
@@ -490,7 +490,7 @@ class _CreateStrainJournalScreenState
                 });
               },
               backgroundColor: AppColors.surface,
-              selectedColor: AppColors.accent.withOpacity(0.3),
+              selectedColor: AppColors.accent.withValues(alpha:0.3),
               labelStyle: TextStyle(
                 color: isSelected ? AppColors.accent : Colors.white70,
               ),
@@ -769,7 +769,7 @@ class _CreateStrainJournalScreenState
                       style: const TextStyle(color: Colors.white),
                     ),
                     selected: _selectedStrainId == strain['id'],
-                    selectedTileColor: AppColors.accent.withOpacity(0.1),
+                    selectedTileColor: AppColors.accent.withValues(alpha:0.1),
                     onTap: () {
                       setState(() {
                         _selectedStrainId = strain['id'];

@@ -378,7 +378,7 @@ class _LoadingDotsState extends State<LoadingDots>
                 width: widget.size,
                 height: widget.size,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.5 + (scale * 0.5)),
+                  color: color.withValues(alpha:0.5 + (scale * 0.5)),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -414,7 +414,7 @@ class GlowingCircularProgress extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: indicatorColor.withOpacity(0.3),
+            color: indicatorColor.withValues(alpha:0.3),
             blurRadius: 12,
             spreadRadius: 2,
           ),

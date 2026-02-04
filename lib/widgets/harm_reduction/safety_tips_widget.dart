@@ -37,7 +37,7 @@ class SafetyTipsWidget extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF66BB6A).withOpacity(0.3),
+          color: const Color(0xFF66BB6A).withValues(alpha:0.3),
         ),
       ),
       padding: const EdgeInsets.all(16),
@@ -49,7 +49,7 @@ class SafetyTipsWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF66BB6A).withOpacity(0.2),
+                  color: const Color(0xFF66BB6A).withValues(alpha:0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -106,10 +106,10 @@ class SafetyTipsWidget extends StatelessWidget {
   Widget _buildCompactView(List<String> tips) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF66BB6A).withOpacity(0.1),
+        color: const Color(0xFF66BB6A).withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFF66BB6A).withOpacity(0.3),
+          color: const Color(0xFF66BB6A).withValues(alpha:0.3),
         ),
       ),
       padding: const EdgeInsets.all(12),
@@ -170,7 +170,7 @@ class HarmReductionQuickCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF81C784).withOpacity(0.3),
+          color: const Color(0xFF81C784).withValues(alpha:0.3),
         ),
       ),
       child: Material(
@@ -185,7 +185,7 @@ class HarmReductionQuickCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF81C784).withOpacity(0.2),
+                    color: const Color(0xFF81C784).withValues(alpha:0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -252,7 +252,7 @@ class DosageRecommendationWidget extends StatelessWidget {
         color: AppColors.functionalSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFF2196F3).withOpacity(0.3),
+          color: const Color(0xFF2196F3).withValues(alpha:0.3),
         ),
       ),
       padding: const EdgeInsets.all(16),
@@ -290,7 +290,7 @@ class DosageRecommendationWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFFF9800).withOpacity(0.1),
+              color: const Color(0xFFFF9800).withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(

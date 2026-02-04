@@ -152,15 +152,15 @@ class _PersonalScienceDashboardState
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppColors.accent.withOpacity(0.1),
-                AppColors.primary.withOpacity(0.05),
+                AppColors.accent.withValues(alpha:0.1),
+                AppColors.primary.withValues(alpha:0.05),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppColors.accent.withOpacity(0.2),
+              color: AppColors.accent.withValues(alpha:0.2),
               width: 1,
             ),
           ),
@@ -297,7 +297,7 @@ class _PersonalScienceDashboardState
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.1),
+                  color: AppColors.accent.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -332,7 +332,7 @@ class _PersonalScienceDashboardState
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.2),
+                  color: AppColors.success.withValues(alpha:0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -488,7 +488,7 @@ class _PersonalScienceDashboardState
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.warning.withOpacity(0.1),
+                        color: AppColors.warning.withValues(alpha:0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -578,7 +578,7 @@ class _PersonalScienceDashboardState
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: insight.isSignificant
-            ? Border.all(color: AppColors.accent.withOpacity(0.3), width: 1)
+            ? Border.all(color: AppColors.accent.withValues(alpha:0.3), width: 1)
             : null,
       ),
       child: Column(
@@ -609,7 +609,7 @@ class _PersonalScienceDashboardState
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -665,7 +665,7 @@ class _PersonalScienceDashboardState
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.1),
+                  color: AppColors.accent.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.grass, color: AppColors.accent, size: 20),
@@ -743,7 +743,7 @@ class _PersonalScienceDashboardState
               Icon(
                 Icons.science_outlined,
                 size: 64,
-                color: AppColors.textMuted.withOpacity(0.5),
+                color: AppColors.textMuted.withValues(alpha:0.5),
               ),
               const SizedBox(height: 16),
               const Text(

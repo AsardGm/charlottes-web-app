@@ -197,7 +197,7 @@ class _EntryDetailScreenState extends ConsumerState<EntryDetailScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.error_outline,
-                size: 64, color: AppColors.textMuted.withOpacity(0.5)),
+                size: 64, color: AppColors.textMuted.withValues(alpha:0.5)),
             const SizedBox(height: 16),
             const Text(
               'Entry Not Found',
@@ -233,7 +233,7 @@ class _EntryDetailScreenState extends ConsumerState<EntryDetailScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withOpacity(0.1),
+                    color: AppColors.accent.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -302,8 +302,8 @@ class _EntryDetailScreenState extends ConsumerState<EntryDetailScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: _entry!.wouldUseAgain!
-                            ? AppColors.success.withOpacity(0.2)
-                            : AppColors.error.withOpacity(0.2),
+                            ? AppColors.success.withValues(alpha:0.2)
+                            : AppColors.error.withValues(alpha:0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -503,7 +503,7 @@ class _EntryDetailScreenState extends ConsumerState<EntryDetailScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha:0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(

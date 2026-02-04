@@ -296,7 +296,7 @@ class _BrainHeatmapScreenState extends ConsumerState<BrainHeatmapScreen> {
             width: 70,
             height: 70,
             decoration: BoxDecoration(
-              color: data.heatmapColor.withOpacity(data.intensity),
+              color: data.heatmapColor.withValues(alpha:data.intensity),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: AppColors.functionalBorder,
@@ -510,7 +510,7 @@ class _BrainHeatmapScreenState extends ConsumerState<BrainHeatmapScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: data.heatmapColor.withOpacity(0.2),
+                    color: data.heatmapColor.withValues(alpha:0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(

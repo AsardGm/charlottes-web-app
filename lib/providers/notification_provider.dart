@@ -31,7 +31,6 @@ class NotificationNotifier extends Notifier<AsyncValue<List<NotificationModel>>>
     _subscribeToRealtime();
     return const AsyncValue.loading();
   }
-
   Future<void> _loadNotifications() async {
     try {
       final notifications = await _service.getNotifications(_userId);
@@ -86,7 +85,7 @@ class NotificationNotifier extends Notifier<AsyncValue<List<NotificationModel>>>
   }
 
   Future<void> markAllAsRead() async {
-    await _service.markAllAsRead();
+    await _service.markAllAsRead(_userId);
 
     // Aktualizuj lokální stav
     state.whenData((notifications) {
@@ -125,7 +124,7 @@ class NotificationNotifier extends Notifier<AsyncValue<List<NotificationModel>>>
   }
 
   Future<void> deleteReadNotifications() async {
-    await _service.deleteReadNotifications();
+    await _service.deleteAllRead(_userId);
 
     state.whenData((notifications) {
       final updated = notifications.where((n) => !n.isRead).toList();

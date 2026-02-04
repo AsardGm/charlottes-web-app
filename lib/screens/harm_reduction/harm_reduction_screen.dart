@@ -49,10 +49,10 @@ class _HarmReductionScreenState extends State<HarmReductionScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF66BB6A).withOpacity(0.2),
+                            color: const Color(0xFF66BB6A).withValues(alpha:0.2),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: const Color(0xFF66BB6A).withOpacity(0.3),
+                              color: const Color(0xFF66BB6A).withValues(alpha:0.3),
                             ),
                           ),
                           child: const Icon(
@@ -75,7 +75,7 @@ class _HarmReductionScreenState extends State<HarmReductionScreen> {
                         Text(
                           'Vzdělávací průvodce pro bezpečnější konzumaci',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha:0.7),
                             fontSize: 13,
                             letterSpacing: 0.5,
                           ),
@@ -160,7 +160,7 @@ class _HarmReductionScreenState extends State<HarmReductionScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha:0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -172,10 +172,10 @@ class _HarmReductionScreenState extends State<HarmReductionScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF66BB6A).withOpacity(0.2),
+                          color: const Color(0xFF66BB6A).withValues(alpha:0.2),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: const Color(0xFF66BB6A).withOpacity(0.3),
+                            color: const Color(0xFF66BB6A).withValues(alpha:0.3),
                           ),
                         ),
                         child: Text(
@@ -347,7 +347,7 @@ class _GuideCard extends StatelessWidget {
         color: AppColors.functionalSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF66BB6A).withOpacity(0.2),
+          color: const Color(0xFF66BB6A).withValues(alpha:0.2),
         ),
       ),
       child: Material(
@@ -363,10 +363,10 @@ class _GuideCard extends StatelessWidget {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF66BB6A).withOpacity(0.1),
+                    color: const Color(0xFF66BB6A).withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0xFF66BB6A).withOpacity(0.3),
+                      color: const Color(0xFF66BB6A).withValues(alpha:0.3),
                     ),
                   ),
                   child: Center(
@@ -404,7 +404,7 @@ class _GuideCard extends StatelessWidget {
                 ),
                 Icon(
                   Icons.arrow_forward_ios,
-                  color: const Color(0xFF66BB6A).withOpacity(0.5),
+                  color: const Color(0xFF66BB6A).withValues(alpha:0.5),
                   size: 18,
                 ),
               ],
@@ -429,7 +429,7 @@ class _QuickTipsCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF66BB6A).withOpacity(0.3),
+          color: const Color(0xFF66BB6A).withValues(alpha:0.3),
         ),
       ),
       padding: const EdgeInsets.all(20),
@@ -441,7 +441,7 @@ class _QuickTipsCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF66BB6A).withOpacity(0.2),
+                  color: const Color(0xFF66BB6A).withValues(alpha:0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -508,7 +508,7 @@ class _CategoryFilterDelegate extends SliverPersistentHeaderDelegate {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFF66BB6A).withOpacity(0.2)
+                    ? const Color(0xFF66BB6A).withValues(alpha:0.2)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(

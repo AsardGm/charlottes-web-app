@@ -290,7 +290,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _getDifficultyColor(challenge.difficulty).withOpacity(0.2),
+                  color: _getDifficultyColor(challenge.difficulty).withValues(alpha:0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -325,7 +325,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.2),
+                  color: AppColors.accent.withValues(alpha:0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -394,7 +394,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: isCompleted
-            ? Border.all(color: AppColors.success.withOpacity(0.5))
+            ? Border.all(color: AppColors.success.withValues(alpha:0.5))
             : null,
       ),
       child: Row(
@@ -402,7 +402,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _getDifficultyColor(challenge.difficulty).withOpacity(0.2),
+              color: _getDifficultyColor(challenge.difficulty).withValues(alpha:0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -483,7 +483,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _getRarityColor(achievement.rarity).withOpacity(0.5),
+          color: _getRarityColor(achievement.rarity).withValues(alpha:0.5),
           width: 2,
         ),
       ),
@@ -493,7 +493,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _getRarityColor(achievement.rarity).withOpacity(0.2),
+              color: _getRarityColor(achievement.rarity).withValues(alpha:0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(

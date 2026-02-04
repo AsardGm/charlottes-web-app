@@ -171,8 +171,8 @@ class _StrainJournalScreenState extends ConsumerState<StrainJournalScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppColors.accent.withOpacity(0.1),
-              AppColors.primary.withOpacity(0.05),
+              AppColors.accent.withValues(alpha:0.1),
+              AppColors.primary.withValues(alpha:0.05),
             ],
           ),
           borderRadius: BorderRadius.circular(12),
@@ -286,7 +286,7 @@ class _StrainJournalScreenState extends ConsumerState<StrainJournalScreen> {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: entry.isFavorite
-            ? Border.all(color: AppColors.accent.withOpacity(0.3), width: 2)
+            ? Border.all(color: AppColors.accent.withValues(alpha:0.3), width: 2)
             : null,
       ),
       child: Material(
@@ -307,7 +307,7 @@ class _StrainJournalScreenState extends ConsumerState<StrainJournalScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.accent.withOpacity(0.1),
+                        color: AppColors.accent.withValues(alpha:0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -369,7 +369,7 @@ class _StrainJournalScreenState extends ConsumerState<StrainJournalScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.success.withOpacity(0.2),
+                            color: AppColors.success.withValues(alpha:0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -492,7 +492,7 @@ class _StrainJournalScreenState extends ConsumerState<StrainJournalScreen> {
               Icon(
                 Icons.book_outlined,
                 size: 64,
-                color: AppColors.textMuted.withOpacity(0.5),
+                color: AppColors.textMuted.withValues(alpha:0.5),
               ),
               const SizedBox(height: 16),
               const Text(
