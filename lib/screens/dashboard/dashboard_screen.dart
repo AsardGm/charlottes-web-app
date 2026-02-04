@@ -8,8 +8,12 @@ import '../../services/tbreak_service.dart';
 import '../../services/consumption_service.dart';
 import '../../services/charlotte_ai_service.dart';
 import '../../services/weekly_insights_service.dart';
+import '../../services/challenge_service.dart';
+import '../../services/strain_journal_service.dart';
 import '../../models/tolerance_break_model.dart';
 import '../../models/weekly_insight_model.dart';
+import '../../models/challenge_model.dart';
+import '../../models/strain_journal_model.dart';
 import '../../providers/notification_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math' as math;
@@ -27,6 +31,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   late final _consumptionService = ConsumptionService(Supabase.instance.client);
   final _charlotteService = CharlotteAIService();
   final _weeklyInsightsService = WeeklyInsightsService();
+  final _challengeService = ChallengeService();
+  final _journalService = StrainJournalService();
 
   bool _isLoading = true;
   ToleranceBreak? _activeBreak;
@@ -34,6 +40,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   String? _charlotteTip;
   Map<String, dynamic>? _harmReductionAlert;
   WeeklyInsight? _latestWeeklyInsight;
+  List<UserChallenge>? _activeChallenges;
+  List<StrainJournalEntry>? _recentJournalEntries;
+  GamificationStats? _userStats;
 
   @override
   void initState() {
@@ -54,6 +63,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         _charlotteService.getDailyTip(userId),
         _charlotteService.analyzeHarmReductionNeeds(userId),
         _weeklyInsightsService.getLatestUnviewedInsight(userId),
+        _challengeService.getUserChallenges(userId),
+        _journalService.getJournalEntries(userId, limit: 5),
+        _challengeService.getUserStats(userId),
       ]);
 
       setState(() {
@@ -62,6 +74,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         _charlotteTip = results[2] as String;
         _harmReductionAlert = results[3] as Map<String, dynamic>;
         _latestWeeklyInsight = results[4] as WeeklyInsight?;
+        _activeChallenges = results[5] as List<UserChallenge>;
+        _recentJournalEntries = results[6] as List<StrainJournalEntry>;
+        _userStats = results[7] as GamificationStats;
         _isLoading = false;
       });
     } catch (e) {
@@ -247,9 +262,36 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const SizedBox(height: 16),
         ],
 
+        // XP & Level Progress
+        if (_userStats != null) ...[
+          RevealAnimation(
+            delay: Duration(milliseconds: _charlotteTip != null ? 200 : 150),
+            child: _XPProgressWidget(stats: _userStats!),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Active Challenges
+        if (_activeChallenges != null && _activeChallenges!.isNotEmpty) ...[
+          RevealAnimation(
+            delay: Duration(milliseconds: _userStats != null ? 250 : 200),
+            child: _ActiveChallengesWidget(challenges: _activeChallenges!),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Recent Journal Entries
+        if (_recentJournalEntries != null && _recentJournalEntries!.isNotEmpty) ...[
+          RevealAnimation(
+            delay: Duration(milliseconds: _activeChallenges != null && _activeChallenges!.isNotEmpty ? 300 : 250),
+            child: _RecentJournalWidget(entries: _recentJournalEntries!),
+          ),
+          const SizedBox(height: 16),
+        ],
+
         // Quick Actions
         RevealAnimation(
-          delay: Duration(milliseconds: _activeBreak != null ? 200 : 150),
+          delay: const Duration(milliseconds: 350),
           child: _QuickActionsWidget(),
         ),
         const SizedBox(height: 16),
@@ -305,7 +347,7 @@ class _TBreakProgressWidget extends StatelessWidget {
                         size: const Size(100, 100),
                         painter: _ProgressRingPainter(
                           progress: value,
-                          backgroundColor: Colors.white.withOpacity(0.1),
+                          backgroundColor: Colors.white.withValues(alpha:0.1),
                           progressColor: const Color(0xFF66BB6A),
                           strokeWidth: 8,
                         ),
@@ -324,7 +366,7 @@ class _TBreakProgressWidget extends StatelessWidget {
                           Text(
                             'dní',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
+                              color: Colors.white.withValues(alpha:0.7),
                               fontSize: 12,
                             ),
                           ),
@@ -369,7 +411,7 @@ class _TBreakProgressWidget extends StatelessWidget {
                   Text(
                     tbreak.getEncouragementMessage(),
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha:0.7),
                       fontSize: 12,
                     ),
                   ),
@@ -452,7 +494,7 @@ class _TodayStatsWidget extends StatelessWidget {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha:0.1),
           ),
         ),
         padding: const EdgeInsets.all(20),
@@ -464,7 +506,7 @@ class _TodayStatsWidget extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: AppColors.primary.withValues(alpha:0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -498,7 +540,7 @@ class _TodayStatsWidget extends StatelessWidget {
                 Container(
                   width: 1,
                   height: 40,
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withValues(alpha:0.1),
                 ),
                 Expanded(
                   child: _StatItem(
@@ -517,7 +559,7 @@ class _TodayStatsWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -589,7 +631,7 @@ class _StatItem extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.6),
+            color: Colors.white.withValues(alpha:0.6),
             fontSize: 12,
           ),
         ),
@@ -612,15 +654,15 @@ class _CharlotteTipWidget extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppColors.accent.withOpacity(0.2),
-              AppColors.accent.withOpacity(0.1),
+              AppColors.accent.withValues(alpha:0.2),
+              AppColors.accent.withValues(alpha:0.1),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.accent.withOpacity(0.3),
+            color: AppColors.accent.withValues(alpha:0.3),
           ),
         ),
         padding: const EdgeInsets.all(16),
@@ -630,7 +672,7 @@ class _CharlotteTipWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.2),
+                color: AppColors.accent.withValues(alpha:0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -801,7 +843,7 @@ class _HarmReductionAlertWidget extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: const Color(0xFFFF9800).withOpacity(0.5),
+              color: const Color(0xFFFF9800).withValues(alpha:0.5),
             ),
           ),
           padding: const EdgeInsets.all(16),
@@ -859,7 +901,7 @@ class _QuickActionsWidget extends StatelessWidget {
         Text(
           'Rychlé akce',
           style: TextStyle(
-            color: Colors.white.withOpacity(0.6),
+            color: Colors.white.withValues(alpha:0.6),
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -930,7 +972,7 @@ class _QuickActionCardState extends State<_QuickActionCard> {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: widget.color.withOpacity(0.3),
+            color: widget.color.withValues(alpha:0.3),
           ),
         ),
         child: Material(
@@ -954,7 +996,7 @@ class _QuickActionCardState extends State<_QuickActionCard> {
                   Text(
                     widget.label,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha:0.9),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -982,7 +1024,7 @@ class _RecentActivityWidget extends StatelessWidget {
             Text(
               'Poslední aktivita',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withValues(alpha:0.6),
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -1013,7 +1055,7 @@ class _RecentActivityWidget extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: AppColors.primary.withValues(alpha:0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -1039,7 +1081,7 @@ class _RecentActivityWidget extends StatelessWidget {
                       Text(
                         'Sleduj svůj pokrok a vzorce',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.6),
+                          color: Colors.white.withValues(alpha:0.6),
                           fontSize: 12,
                         ),
                       ),
@@ -1048,7 +1090,7 @@ class _RecentActivityWidget extends StatelessWidget {
                 ),
                 Icon(
                   Icons.arrow_forward_ios,
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha:0.3),
                   size: 16,
                 ),
               ],
@@ -1057,5 +1099,482 @@ class _RecentActivityWidget extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// XP & Level Progress Widget
+class _XPProgressWidget extends StatelessWidget {
+  final GamificationStats stats;
+
+  const _XPProgressWidget({required this.stats});
+
+  @override
+  Widget build(BuildContext context) {
+    final progressToNext = stats.levelProgress;
+
+    return AnimatedCard(
+      onTap: () => context.push('/profile/achievements'),
+      enableGlow: true,
+      glowColor: const Color(0xFFFFB74D),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF2C1F00), Color(0xFF1A1200)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFFFFB74D).withValues(alpha:0.3),
+          ),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFB74D).withValues(alpha:0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.stars,
+                        color: Color(0xFFFFB74D),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Level',
+                          style: TextStyle(
+                            color: Color(0xFFFFB74D),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '${stats.currentLevel}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${stats.pointsToNextLevel} bodů do dalšího levelu',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha:0.7),
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Celkem: ${stats.totalPoints} bodů',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha:0.5),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: progressToNext),
+              duration: const Duration(milliseconds: 1500),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) {
+                return AnimatedProgressBar(
+                  value: value,
+                  height: 8,
+                  color: const Color(0xFFFFB74D),
+                  backgroundColor: Colors.white.withValues(alpha:0.1),
+                  duration: const Duration(milliseconds: 1500),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${((progressToNext * 100).toInt())}% do dalšího levelu',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha:0.6),
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Active Challenges Widget
+class _ActiveChallengesWidget extends StatelessWidget {
+  final List<UserChallenge> challenges;
+
+  const _ActiveChallengesWidget({required this.challenges});
+
+  @override
+  Widget build(BuildContext context) {
+    final activeChallenges = challenges
+        .where((c) => c.status == 'in_progress')
+        .take(3)
+        .toList();
+
+    if (activeChallenges.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Aktivní výzvy',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha:0.6),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            TextButton(
+              onPressed: () => context.push('/challenges'),
+              child: Text(
+                'Zobrazit vše',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...activeChallenges.map((challenge) {
+          if (challenge.challenge == null) return const SizedBox.shrink();
+
+          final progress = challenge.currentProgress / challenge.targetProgress;
+          final color = _getChallengeColor(challenge.challenge!.category);
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: AnimatedCard(
+              onTap: () => context.push('/challenges'),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: color.withValues(alpha:0.3),
+                  ),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha:0.2),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Icon(
+                            _getChallengeIcon(challenge.challenge!.category),
+                            color: color,
+                            size: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                challenge.challenge!.title,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${challenge.currentProgress} / ${challenge.targetProgress}',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha:0.6),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha:0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '${challenge.challenge!.points} bodů',
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    AnimatedProgressBar(
+                      value: progress,
+                      height: 6,
+                      color: color,
+                      backgroundColor: Colors.white.withValues(alpha:0.1),
+                      duration: const Duration(milliseconds: 1000),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Color _getChallengeColor(String category) {
+    switch (category) {
+      case 'wellness':
+        return const Color(0xFF66BB6A);
+      case 'journal':
+        return const Color(0xFFAB47BC);
+      case 'tbreak':
+        return const Color(0xFF66BB6A);
+      case 'cognitive':
+        return const Color(0xFF2196F3);
+      default:
+        return AppColors.primary;
+    }
+  }
+
+  IconData _getChallengeIcon(String category) {
+    switch (category) {
+      case 'wellness':
+        return Icons.favorite;
+      case 'journal':
+        return Icons.book;
+      case 'tbreak':
+        return Icons.self_improvement;
+      case 'cognitive':
+        return Icons.psychology;
+      default:
+        return Icons.emoji_events;
+    }
+  }
+}
+
+/// Recent Journal Entries Widget
+class _RecentJournalWidget extends StatelessWidget {
+  final List<StrainJournalEntry> entries;
+
+  const _RecentJournalWidget({required this.entries});
+
+  @override
+  Widget build(BuildContext context) {
+    final displayEntries = entries.take(3).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Poslední záznamy',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha:0.6),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            TextButton(
+              onPressed: () => context.push('/journal'),
+              child: Text(
+                'Zobrazit vše',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...displayEntries.map((entry) {
+          final rating = entry.overallRating ?? 0;
+          final hasAI = entry.hasAIAnalysis;
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: AnimatedCard(
+              onTap: () => context.push('/journal/entry/${entry.id}'),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha:0.1),
+                  ),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (entry.title != null && entry.title!.isNotEmpty)
+                                Text(
+                                  entry.title!,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              const SizedBox(height: 2),
+                              Text(
+                                entry.strainName ?? 'Neznámá odrůda',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (rating > 0)
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.star,
+                                color: const Color(0xFFFFB74D),
+                                size: 14,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                rating.toStringAsFixed(1),
+                                style: const TextStyle(
+                                  color: Color(0xFFFFB74D),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 12,
+                          color: Colors.white.withValues(alpha:0.5),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatDate(entry.consumedAt),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha:0.5),
+                            fontSize: 11,
+                          ),
+                        ),
+                        if (hasAI) ...[
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.accent.withValues(alpha:0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.auto_awesome,
+                                  size: 10,
+                                  color: AppColors.accent,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'AI analýza',
+                                  style: TextStyle(
+                                    color: AppColors.accent,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inDays == 0) {
+      return 'Dnes ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    } else if (diff.inDays == 1) {
+      return 'Včera';
+    } else if (diff.inDays < 7) {
+      return 'Před ${diff.inDays} dny';
+    } else {
+      return '${date.day}.${date.month}.${date.year}';
+    }
   }
 }
