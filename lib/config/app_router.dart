@@ -83,6 +83,7 @@ import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/insights/weekly_report_screen.dart';
 import '../screens/personal_science/personal_science_dashboard.dart';
 import '../screens/strain_journal/strain_journal_screen.dart';
+import '../screens/challenges/challenges_screen.dart';
 
 class AuthChangeNotifier extends ChangeNotifier {
   AuthChangeNotifier() {
@@ -269,6 +270,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/badges',
         builder: (context, state) => const BadgesScreen(),
+      ),
+      GoRoute(
+        path: '/challenges',
+        builder: (context, state) => const ChallengesScreen(),
       ),
       GoRoute(
         path: '/scanner',
