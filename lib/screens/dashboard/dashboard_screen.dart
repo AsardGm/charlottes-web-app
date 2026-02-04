@@ -10,6 +10,7 @@ import '../../services/charlotte_ai_service.dart';
 import '../../services/weekly_insights_service.dart';
 import '../../services/challenge_service.dart';
 import '../../services/strain_journal_service.dart';
+import '../../services/haptic_service.dart';
 import '../../models/tolerance_break_model.dart';
 import '../../models/weekly_insight_model.dart';
 import '../../models/challenge_model.dart';
@@ -978,7 +979,10 @@ class _QuickActionCardState extends State<_QuickActionCard> {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: widget.onTap,
+            onTap: () {
+              HapticService.light();
+              widget.onTap();
+            },
             onTapDown: (_) => setState(() => _isPressed = true),
             onTapUp: (_) => setState(() => _isPressed = false),
             onTapCancel: () => setState(() => _isPressed = false),
