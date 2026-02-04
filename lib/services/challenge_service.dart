@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/challenge_model.dart';
 
@@ -68,6 +69,86 @@ class ChallengeService {
     await _supabase.rpc('complete_challenge', params: {
       'p_user_challenge_id': userChallengeId,
     });
+  }
+
+  /// Update challenge progress for a category
+  /// Automatically increments progress for active challenges in the given category
+  Future<void> updateChallengeProgress(
+    String userId,
+    String category, {
+    int increment = 1,
+  }) async {
+    try {
+      // Get user's active challenges in this category
+      final userChallenges = await _supabase
+          .from('user_challenges')
+          .select('*, challenges(*)')
+          .eq('user_id', userId)
+          .eq('status', 'in_progress')
+          .eq('challenges.category', category);
+
+      for (final challengeData in userChallenges) {
+        final userChallengeId = challengeData['id'] as String;
+        final currentProgress = challengeData['current_progress'] as int? ?? 0;
+        final targetProgress = challengeData['target_progress'] as int;
+
+        // Increment progress
+        final newProgress = currentProgress + increment;
+
+        // Update progress
+        await _supabase.from('user_challenges').update({
+          'current_progress': newProgress,
+          'updated_at': DateTime.now().toIso8601String(),
+        }).eq('id', userChallengeId);
+
+        // If completed, call complete function
+        if (newProgress >= targetProgress &&
+            challengeData['status'] == 'in_progress') {
+          await completeChallenge(userChallengeId);
+        }
+      }
+    } catch (e) {
+      // Silent fail - progress update is not critical
+      debugPrint('Error updating challenge progress: $e');
+    }
+  }
+
+  /// Increment streak-based challenges (for daily check-ins)
+  Future<void> updateStreakProgress(
+    String userId,
+    String category,
+    int currentStreak,
+  ) async {
+    try {
+      // Get user's active streak-based challenges in this category
+      final userChallenges = await _supabase
+          .from('user_challenges')
+          .select('*, challenges(*)')
+          .eq('user_id', userId)
+          .eq('status', 'in_progress')
+          .eq('challenges.category', category)
+          .eq('challenges.target_type', 'streak');
+
+      for (final challengeData in userChallenges) {
+        final userChallengeId = challengeData['id'] as String;
+        final targetProgress = challengeData['target_progress'] as int;
+
+        // Update streak (not increment, but set to current streak)
+        await _supabase.from('user_challenges').update({
+          'current_progress': currentStreak,
+          'current_streak': currentStreak,
+          'updated_at': DateTime.now().toIso8601String(),
+        }).eq('id', userChallengeId);
+
+        // If completed
+        if (currentStreak >= targetProgress &&
+            challengeData['status'] == 'in_progress') {
+          await completeChallenge(userChallengeId);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error updating streak progress: $e');
+    }
   }
 
   // ==================== ACHIEVEMENTS ====================

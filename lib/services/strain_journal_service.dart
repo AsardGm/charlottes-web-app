@@ -1,9 +1,11 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/strain_journal_model.dart';
+import 'challenge_service.dart';
 
 /// Service for managing strain journal entries with AI analysis
 class StrainJournalService {
   final SupabaseClient _supabase = Supabase.instance.client;
+  final ChallengeService _challengeService = ChallengeService();
 
   // ==================== JOURNAL ENTRIES ====================
 
@@ -145,6 +147,9 @@ class StrainJournalService {
 
     // Trigger AI analysis asynchronously
     _analyzeEntry(created.id);
+
+    // Update challenge progress for journal category
+    _challengeService.updateChallengeProgress(userId, 'journal');
 
     return created;
   }

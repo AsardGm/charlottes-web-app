@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/cognitive_test_model.dart';
 import '../models/brain_heatmap_model.dart';
+import 'challenge_service.dart';
 
 /// Service pro práci s cognitive testy v Supabase
 class CognitiveService {
   final SupabaseClient _supabase;
+  final ChallengeService _challengeService = ChallengeService();
 
   CognitiveService(this._supabase);
 
@@ -13,6 +15,9 @@ class CognitiveService {
   /// Automaticky se přepočítá baseline pomocí DB triggeru
   Future<void> saveTestResult(CognitiveTestResult result) async {
     await _supabase.from('cognitive_test_results').insert(result.toJson());
+
+    // Update challenge progress for cognitive tests
+    _challengeService.updateChallengeProgress(result.userId, 'cognitive');
   }
 
   /// Získá baseline uživatele

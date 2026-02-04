@@ -1,8 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/tolerance_break_model.dart';
+import 'challenge_service.dart';
 
 class TBreakService {
   final SupabaseClient _supabase = Supabase.instance.client;
+  final ChallengeService _challengeService = ChallengeService();
 
   // Start a new tolerance break
   Future<ToleranceBreak> startToleranceBreak({
@@ -97,6 +99,16 @@ class TBreakService {
         .insert(data)
         .select()
         .single();
+
+    // Update challenge progress for t-break streak
+    final tbreak = await _supabase
+        .from('tolerance_breaks')
+        .select('user_id')
+        .eq('id', tbreakId)
+        .single();
+
+    final userId = tbreak['user_id'] as String;
+    _challengeService.updateStreakProgress(userId, 'tbreak', dayNumber);
 
     return TBreakCheckIn.fromJson(response);
   }
