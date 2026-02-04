@@ -1,10 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/weekly_insight_model.dart';
 import 'tbreak_service.dart';
+import 'cache_service.dart';
 
 /// Service for generating and managing weekly AI insights
 class WeeklyInsightsService {
   final SupabaseClient _supabase = Supabase.instance.client;
+  final CacheService _cache = CacheService();
 
   /// Get all weekly insights for user (sorted by week_start desc)
   Future<List<WeeklyInsight>> getUserWeeklyInsights(String userId) async {
@@ -20,26 +22,39 @@ class WeeklyInsightsService {
   }
 
   /// Get latest unviewed insight
-  Future<WeeklyInsight?> getLatestUnviewedInsight(String userId) async {
-    final response = await _supabase
-        .from('weekly_insights')
-        .select()
-        .eq('user_id', userId)
-        .eq('is_viewed', false)
-        .order('week_start', ascending: false)
-        .limit(1)
-        .maybeSingle();
+  Future<WeeklyInsight?> getLatestUnviewedInsight(
+    String userId, {
+    bool forceRefresh = false,
+  }) async {
+    return await _cache.getOrFetch(
+      'weekly_insight_unviewed_$userId',
+      () async {
+        final response = await _supabase
+            .from('weekly_insights')
+            .select()
+            .eq('user_id', userId)
+            .eq('is_viewed', false)
+            .order('week_start', ascending: false)
+            .limit(1)
+            .maybeSingle();
 
-    if (response == null) return null;
-    return WeeklyInsight.fromJson(response);
+        if (response == null) return null;
+        return WeeklyInsight.fromJson(response);
+      },
+      expiry: const Duration(minutes: 15),
+      forceRefresh: forceRefresh,
+    );
   }
 
   /// Mark insight as viewed
-  Future<void> markAsViewed(String insightId) async {
+  Future<void> markAsViewed(String insightId, String userId) async {
     await _supabase.from('weekly_insights').update({
       'viewed_at': DateTime.now().toIso8601String(),
       'is_viewed': true,
     }).eq('id', insightId);
+
+    // Invalidate cache
+    _cache.clear('weekly_insight_unviewed_$userId');
   }
 
   /// Generate weekly insight for user
@@ -165,6 +180,9 @@ class WeeklyInsightsService {
         .insert(insight.toJson())
         .select()
         .single();
+
+    // Invalidate cache
+    _cache.clear('weekly_insight_unviewed_$userId');
 
     return WeeklyInsight.fromJson(response);
   }

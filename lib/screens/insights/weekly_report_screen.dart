@@ -53,7 +53,7 @@ class _WeeklyReportScreenState extends ConsumerState<WeeklyReportScreen> {
 
       // Mark as viewed
       if (!insight.isViewed) {
-        await _insightsService.markAsViewed(insight.id);
+        await _insightsService.markAsViewed(insight.id, userId);
       }
 
       setState(() {

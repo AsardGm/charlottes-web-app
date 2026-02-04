@@ -1,9 +1,11 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/consumption_model.dart';
+import 'cache_service.dart';
 
 /// Service pro tracking consumption a efektů
 class ConsumptionService {
   final SupabaseClient _supabase;
+  final CacheService _cache = CacheService();
 
   ConsumptionService(this._supabase);
 
@@ -16,6 +18,12 @@ class ConsumptionService {
         .insert(log.toJson())
         .select()
         .single();
+
+    // Invalidate today's stats cache
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final cacheKey = 'consumption_today_${log.userId}_${startOfDay.toIso8601String()}';
+    _cache.clear(cacheKey);
 
     return ConsumptionLog.fromJson(response);
   }
@@ -330,26 +338,37 @@ class ConsumptionService {
   }
 
   /// Získá dnešní statistiky pro dashboard
-  Future<Map<String, dynamic>> getTodayStats(String userId) async {
+  Future<Map<String, dynamic>> getTodayStats(
+    String userId, {
+    bool forceRefresh = false,
+  }) async {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
+    final cacheKey = 'consumption_today_${userId}_${startOfDay.toIso8601String()}';
 
-    final response = await _supabase
-        .from('consumption_logs')
-        .select()
-        .eq('user_id', userId)
-        .gte('timestamp', startOfDay.toIso8601String())
-        .order('timestamp', ascending: false);
+    return await _cache.getOrFetch(
+      cacheKey,
+      () async {
+        final response = await _supabase
+            .from('consumption_logs')
+            .select()
+            .eq('user_id', userId)
+            .gte('timestamp', startOfDay.toIso8601String())
+            .order('timestamp', ascending: false);
 
-    final todayLogs = (response as List)
-        .map((json) => ConsumptionLog.fromJson(json))
-        .toList();
+        final todayLogs = (response as List)
+            .map((json) => ConsumptionLog.fromJson(json))
+            .toList();
 
-    return {
-      'sessions': todayLogs.length,
-      'last_session': todayLogs.isNotEmpty ? todayLogs.first.timestamp : null,
-      'has_logged': todayLogs.isNotEmpty,
-    };
+        return {
+          'sessions': todayLogs.length,
+          'last_session': todayLogs.isNotEmpty ? todayLogs.first.timestamp : null,
+          'has_logged': todayLogs.isNotEmpty,
+        };
+      },
+      expiry: const Duration(minutes: 5),
+      forceRefresh: forceRefresh,
+    );
   }
 }
 
