@@ -220,15 +220,6 @@ class CharlotteAIService {
       final consumptionService = ConsumptionInsightsService();
       final insights = await consumptionService.generateInsights(userId);
 
-      if (insights == null) {
-        return {
-          'needsTBreak': needsTBreak,
-          'reason': reason,
-          'severity': severity,
-          'recommendations': recommendations,
-        };
-      }
-
       // Check 1: Daily use for extended period
       if (insights.last7DaysSessions >= 6) {
         // User is consuming almost daily
@@ -273,7 +264,7 @@ class CharlotteAIService {
       final cognitiveService = CognitiveInsightsService();
       final cognitiveInsights = await cognitiveService.generateInsights(userId);
 
-      if (cognitiveInsights != null && cognitiveInsights.isSignificantDecline) {
+      if (cognitiveInsights.isSignificantDecline) {
         needsTBreak = true;
         severity = 'high';
         recommendations.add(
