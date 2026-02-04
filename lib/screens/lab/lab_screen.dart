@@ -5,7 +5,6 @@ import '../../models/lab/lab_grow_model.dart';
 import '../../providers/lab_provider.dart';
 import '../../theme/theme.dart';
 import '../../widgets/common/shimmer_loading.dart';
-import '../../utils/page_transitions.dart';
 
 /// Hlavni Lab hub obrazovka - cyberpunkovy kokpit pestitele
 ///
