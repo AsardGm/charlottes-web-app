@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../../models/harm_reduction_guide.dart';
 import '../../theme/theme.dart';
 

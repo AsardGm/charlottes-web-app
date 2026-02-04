@@ -1,14 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/challenge_model.dart';
-import 'notification_handler_service.dart';
 import 'cache_service.dart';
 
 /// Service for challenges and achievements
 class ChallengeService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final CacheService _cache = CacheService();
-  NotificationHandlerService? _notificationHandler;
 
   // ==================== CHALLENGES ====================
 
