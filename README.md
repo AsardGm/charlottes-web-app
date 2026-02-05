@@ -386,3 +386,4 @@ Proprietarni - Rob a Patrik
 ---
 
 *Postaveno na Flutter + Supabase | Posledni aktualizace: 27. Leden 2026*
+ 
