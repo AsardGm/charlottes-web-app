@@ -7,6 +7,8 @@ import 'voice_message_inline.dart';
 import 'location_message_widget.dart';
 import 'file_message_widget.dart';
 import 'formatted_text_widget.dart';
+import '../../../widgets/common/ios_context_menu.dart';
+import '../../../widgets/common/context_menu_actions.dart';
 
 /// Widget pro zobrazeni zpravy v chatu
 class MessageBubble extends StatelessWidget {
@@ -112,12 +114,13 @@ class MessageBubble extends StatelessWidget {
           else if (!isMe)
             const SizedBox(width: 40),
           Flexible(
-            child: GestureDetector(
-              onLongPress: () => _showMessageOptions(context),
-              onTap: isImage && imageUrl != null
-                  ? () => _showFullImage(context, imageUrl!)
-                  : null,
-              child: Container(
+            child: IOSContextMenu(
+              actions: _buildContextMenuActions(context, content),
+              child: GestureDetector(
+                onTap: isImage && imageUrl != null
+                    ? () => _showFullImage(context, imageUrl!)
+                    : null,
+                child: Container(
                 padding: isSpecialType
                     ? const EdgeInsets.all(4)
                     : const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -175,6 +178,78 @@ class MessageBubble extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Build context menu actions based on message properties
+  List<ContextMenuAction> _buildContextMenuActions(BuildContext context, String content) {
+    final actions = <ContextMenuAction>[];
+
+    // Reply action (always available)
+    actions.add(ContextMenuActions.reply(onReply));
+
+    // Copy text action (for text messages)
+    if (message.messageType == 'text' && !message.isDeleted) {
+      actions.add(ContextMenuActions.copyText(content));
+    }
+
+    // Edit action (only for own messages, not deleted, text only)
+    if (isMe && !message.isDeleted && message.messageType == 'text') {
+      actions.add(ContextMenuActions.edit(() {
+        // TODO: Implement edit functionality
+      }));
+    }
+
+    // React action
+    actions.add(ContextMenuActions.react(() {
+      _showReactionPicker(context);
+    }));
+
+    // Forward action (if callback provided)
+    if (onForward != null) {
+      actions.add(ContextMenuActions.forward(onForward!));
+    }
+
+    // Delete action (only for own messages)
+    if (isMe && onDelete != null) {
+      actions.add(ContextMenuActions.delete(onDelete!));
+    }
+
+    return actions;
+  }
+
+  /// Show reaction picker (emoji row)
+  void _showReactionPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: ['❤️', '😂', '😮', '😢', '👍', '👎'].map((emoji) {
+              return GestureDetector(
+                onTap: () {
+                  onReaction(emoji);
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceLight,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(emoji, style: const TextStyle(fontSize: 32)),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
       ),
     );
   }
@@ -348,81 +423,4 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
-  void _showMessageOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Reakce
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: ['❤️', '😂', '😮', '😢', '👍', '👎'].map((emoji) {
-                  return GestureDetector(
-                    onTap: () {
-                      onReaction(emoji);
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceLight,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(emoji, style: const TextStyle(fontSize: 24)),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.copy),
-              title: const Text('Kopirovat'),
-              onTap: () {
-                Clipboard.setData(ClipboardData(text: message.decryptedContent ?? ''));
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Zkopirovano do schranky')),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.reply),
-              title: const Text('Odpovedet'),
-              onTap: () {
-                Navigator.pop(context);
-                onReply();
-              },
-            ),
-            if (onForward != null)
-              ListTile(
-                leading: const Icon(Icons.forward),
-                title: const Text('Preposlat'),
-                onTap: () {
-                  Navigator.pop(context);
-                  onForward!();
-                },
-              ),
-            if (onDelete != null)
-              ListTile(
-                leading: Icon(Icons.delete, color: AppColors.error),
-                title: Text('Smazat', style: TextStyle(color: AppColors.error)),
-                onTap: () {
-                  Navigator.pop(context);
-                  onDelete!();
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-  }
 }
