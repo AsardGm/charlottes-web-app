@@ -98,6 +98,11 @@ class _PostCardState extends ConsumerState<PostCard> {
     final isOwner = _post.authorId == userId;
     final canDelete = isAdmin || isOwner;
 
+    final surfaceColor = Theme.of(context).colorScheme.surface;
+    final borderColor = Theme.of(context).dividerColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return IOSContextMenu(
       actions: _buildContextMenuActions(
         context: context,
@@ -107,8 +112,15 @@ class _PostCardState extends ConsumerState<PostCard> {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: AppColors.functionalSurface,
+          color: surfaceColor,
           borderRadius: BorderRadius.circular(8),
+          boxShadow: !isDark ? [
+            BoxShadow(
+              color: Colors.black.withAlpha(10),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ] : null,
         ),
         child: Material(
         color: Colors.transparent,
@@ -128,10 +140,10 @@ class _PostCardState extends ConsumerState<PostCard> {
                 // Content
                 MentionText(
                   text: _post.content,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
-                    color: Colors.white,
+                    color: textColor,
                   ),
                   maxLines: 6,
                   overflow: TextOverflow.ellipsis,
@@ -150,20 +162,20 @@ class _PostCardState extends ConsumerState<PostCard> {
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         height: 180,
-                        color: AppColors.functionalBorder,
-                        child: const Center(
+                        color: borderColor,
+                        child: Center(
                           child: CircularProgressIndicator(
-                            color: AppColors.accent,
+                            color: Theme.of(context).colorScheme.primary,
                             strokeWidth: 2,
                           ),
                         ),
                       ),
                       errorWidget: (context, url, error) => Container(
                         height: 180,
-                        color: AppColors.functionalBorder,
+                        color: borderColor,
                         child: Icon(
                           Icons.broken_image_outlined,
-                          color: AppColors.functionalMuted,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                           size: 40,
                         ),
                       ),
@@ -175,7 +187,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                 Container(
                   margin: const EdgeInsets.only(top: 16),
                   height: 1,
-                  color: AppColors.functionalBorder,
+                  color: borderColor,
                 ),
 
                 // Actions
@@ -210,7 +222,7 @@ class _PostCardState extends ConsumerState<PostCard> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(wasBookmarked ? 'Přidáno do záložek' : 'Odebráno ze záložek'),
-                backgroundColor: AppColors.functionalSurface,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                 duration: const Duration(seconds: 2),
               ),
             );
@@ -220,7 +232,7 @@ class _PostCardState extends ConsumerState<PostCard> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Chyba: ${e.toString()}'),
-                backgroundColor: AppColors.functionalSurface,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
             );
           }
@@ -331,10 +343,9 @@ class _PostCardState extends ConsumerState<PostCard> {
         PopupMenuButton(
           icon: Icon(
             Icons.more_horiz,
-            color: AppColors.functionalMuted,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             size: 20,
           ),
-          color: AppColors.functionalSurface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -345,9 +356,9 @@ class _PostCardState extends ConsumerState<PostCard> {
                 value: 'report',
                 child: Row(
                   children: [
-                    Icon(Icons.flag_outlined, color: AppColors.functionalMuted, size: 18),
+                    Icon(Icons.flag_outlined, size: 18),
                     const SizedBox(width: 10),
-                    Text('Nahlasit', style: TextStyle(color: AppColors.textPrimary)),
+                    const Text('Nahlasit'),
                   ],
                 ),
               ),
@@ -357,9 +368,9 @@ class _PostCardState extends ConsumerState<PostCard> {
                 value: 'delete',
                 child: Row(
                   children: [
-                    Icon(Icons.delete_outline, color: AppColors.error, size: 18),
+                    Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error, size: 18),
                     const SizedBox(width: 10),
-                    Text('Smazat', style: TextStyle(color: AppColors.error)),
+                    Text('Smazat', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                   ],
                 ),
               ),
