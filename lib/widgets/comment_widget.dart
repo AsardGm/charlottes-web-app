@@ -5,6 +5,8 @@ import '../services/report_service.dart';
 import '../utils/helpers.dart';
 import 'user_avatar.dart';
 import 'report_dialog.dart';
+import 'common/ios_context_menu.dart';
+import 'common/context_menu_actions.dart';
 
 class CommentWidget extends StatelessWidget {
   final CommentModel comment;
@@ -38,10 +40,12 @@ class CommentWidget extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
+            child: IOSContextMenu(
+              actions: _buildContextMenuActions(context),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.grey.withAlpha(25),
@@ -136,9 +140,32 @@ class CommentWidget extends StatelessWidget {
               ],
             ),
           ),
+          ),
         ],
       ),
     );
+  }
+
+  /// Build context menu actions for comment
+  List<ContextMenuAction> _buildContextMenuActions(BuildContext context) {
+    final actions = <ContextMenuAction>[];
+
+    // Copy text action
+    actions.add(ContextMenuActions.copyText(comment.content));
+
+    // Report action (only for non-owners)
+    if (!isOwner) {
+      actions.add(ContextMenuActions.report(() {
+        _showReportDialog(context);
+      }));
+    }
+
+    // Delete action (only for owners/admins)
+    if (canDelete && onDelete != null) {
+      actions.add(ContextMenuActions.delete(onDelete!));
+    }
+
+    return actions;
   }
 
   void _showReportDialog(BuildContext context) {
