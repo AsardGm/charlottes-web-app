@@ -1,4 +1,5 @@
-﻿import 'package:supabase_flutter/supabase_flutter.dart';
+﻿import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/daily_checkin_model.dart';
 import 'challenge_service.dart';
 
@@ -24,7 +25,7 @@ class CheckinService {
 
       return DailyCheckin.fromJson(response);
     } catch (e) {
-      print('Error saving checkin: $e');
+      debugPrint('Error saving checkin: $e');
       return null;
     }
   }
@@ -74,7 +75,7 @@ class CheckinService {
       if (response == null) return null;
       return DailyCheckin.fromJson(response);
     } catch (e) {
-      print('Error getting today checkin: $e');
+      debugPrint('Error getting today checkin: $e');
       return null;
     }
   }
@@ -89,7 +90,7 @@ class CheckinService {
           .limit(limit);
       return (response as List).map((json) => DailyCheckin.fromJson(json)).toList();
     } catch (e) {
-      print('Error getting checkin history: $e');
+      debugPrint('Error getting checkin history: $e');
       return [];
     }
   }

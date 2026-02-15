@@ -20,7 +20,6 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
   BodyState _bodyState = BodyState.ok;
   bool? _plantContact;
   bool _isLoading = false;
-  String? _insight;
 
   Future<void> _submitCheckin() async {
     setState(() => _isLoading = true);
@@ -44,7 +43,6 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
 
     setState(() {
       _isLoading = false;
-      _insight = insight;
     });
 
     if (savedCheckin != null && mounted) {

@@ -508,30 +508,32 @@ class _TBreakDashboardState extends ConsumerState<TBreakDashboard> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Ukončit T-Break?'),
         content: const Text(
           'Opravdu chceš ukončit svůj T-Break? Tato akce nejde vrátit.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Zrušit'),
           ),
           TextButton(
             onPressed: () async {
+              final navigator = Navigator.of(dialogContext);
+              final messenger = ScaffoldMessenger.of(context);
               try {
                 await TBreakService().markAsFailed(_activeBreak!.id);
                 if (mounted) {
-                  Navigator.pop(context);
+                  navigator.pop();
                   _loadData();
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     const SnackBar(content: Text('T-Break ukončen. Neboj, příště to zvládneš!')),
                   );
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     SnackBar(content: Text('Chyba: $e')),
                   );
                 }

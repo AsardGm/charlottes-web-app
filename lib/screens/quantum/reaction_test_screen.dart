@@ -433,7 +433,7 @@ class _ReactionTestScreenState extends ConsumerState<ReactionTestScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      '${score.toStringAsFixed(0)}',
+                      score.toStringAsFixed(0),
                       style: const TextStyle(
                         fontSize: 64,
                         fontWeight: FontWeight.bold,

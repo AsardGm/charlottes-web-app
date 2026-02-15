@@ -357,12 +357,12 @@ class _CreateStrainJournalScreenState
               firstDate: DateTime(2020),
               lastDate: DateTime.now(),
             );
-            if (date != null) {
+            if (date != null && mounted) {
               final time = await showTimePicker(
                 context: context,
                 initialTime: TimeOfDay.fromDateTime(_consumedAt),
               );
-              if (time != null) {
+              if (time != null && mounted) {
                 setState(() {
                   _consumedAt = DateTime(
                     date.year,
@@ -633,7 +633,7 @@ class _CreateStrainJournalScreenState
           title: const Text('Would Use Again',
               style: TextStyle(color: Colors.white)),
           value: _wouldUseAgain,
-          activeColor: AppColors.accent,
+          activeTrackColor: AppColors.accent,
           onChanged: (value) => setState(() => _wouldUseAgain = value),
           contentPadding: EdgeInsets.zero,
         ),

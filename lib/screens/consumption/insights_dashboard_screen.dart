@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../theme/theme.dart';
 import '../../models/consumption_model.dart';
 import '../../providers/consumption_provider.dart';
-import '../../services/consumption_service.dart';
+import '../../services/consumption_service.dart'; // StrainUserCorrelation via consumption_model
 
 /// Personal science dashboard - insights o tvých strain preferences
 class InsightsDashboardScreen extends ConsumerWidget {
@@ -26,9 +26,7 @@ class InsightsDashboardScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
-            onPressed: () {
-              // TODO: Navigate to consumption history
-            },
+            onPressed: () => context.push('/consumption/history'),
           ),
         ],
       ),
@@ -79,32 +77,30 @@ class InsightsDashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
 
-            // TODO: Replace with real data
-            _buildInsightCard(
-              type: InsightType.bestMatch,
-              title: 'Nejlepší strain pro tebe',
-              description: 'Na základě 5× užití má Blue Dream u tebe rating 8.5/10',
-              icon: Icons.star,
-              color: const Color(0xFF4CAF50),
-              confidence: 0.9,
-            ),
-            const SizedBox(height: 12),
-            _buildInsightCard(
-              type: InsightType.terpeneSensitivity,
-              title: 'Pozor na anxiety',
-              description: '2 strainy u tebe zvyšují anxiety (průměr 7.2/10)',
-              icon: Icons.warning,
-              color: const Color(0xFFFFA726),
-              confidence: 0.85,
-            ),
-            const SizedBox(height: 12),
-            _buildInsightCard(
-              type: InsightType.toleranceWarning,
-              title: 'Tolerance build-up',
-              description: 'Efekty Blue Dream klesají při denním užívání',
-              icon: Icons.trending_down,
-              color: const Color(0xFF00ACC1),
-              confidence: 0.75,
+            insightsAsync.when(
+              data: (insights) => insights.isEmpty
+                  ? Text('Zatím nemáš dostatek dat pro insights',
+                      style: TextStyle(color: AppColors.textMuted, fontSize: 13))
+                  : Column(
+                      children: insights.map((insight) {
+                        final color = _getInsightColor(insight.insightType);
+                        final icon = _getInsightIcon(insight.insightType);
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _buildInsightCard(
+                            type: insight.insightType,
+                            title: insight.title,
+                            description: insight.description,
+                            icon: icon,
+                            color: color,
+                            confidence: insight.confidenceScore ?? 0.5,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, _) => Text('Nepodařilo se načíst insights',
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
             ),
 
             const SizedBox(height: 24),
@@ -121,29 +117,28 @@ class InsightsDashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
 
-            // TODO: Replace with real data
-            _buildStrainRankCard(
-              rank: 1,
-              strainName: 'Blue Dream',
-              rating: 8.5,
-              consumptions: 5,
-              effects: 'High focus, calm mood, zero anxiety',
-            ),
-            const SizedBox(height: 8),
-            _buildStrainRankCard(
-              rank: 2,
-              strainName: 'Green Crack',
-              rating: 8.2,
-              consumptions: 3,
-              effects: 'Energy boost, creativity, mild anxiety',
-            ),
-            const SizedBox(height: 8),
-            _buildStrainRankCard(
-              rank: 3,
-              strainName: 'Northern Lights',
-              rating: 7.8,
-              consumptions: 4,
-              effects: 'Relaxed, sleepy, good mood',
+            topStrainsAsync.when(
+              data: (strains) => strains.isEmpty
+                  ? Text('Zatím nemáš dostatek dat',
+                      style: TextStyle(color: AppColors.textMuted, fontSize: 13))
+                  : Column(
+                      children: strains.asMap().entries.map((entry) {
+                        final rank = entry.key + 1;
+                        final strain = entry.value;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _buildStrainRankCard(
+                            rank: rank,
+                            strainName: strain.strainId,
+                            rating: strain.personalRating ?? 0,
+                            consumptions: strain.totalConsumptions,
+                            effects: _buildEffectsSummary(strain),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, _) => const SizedBox.shrink(),
             ),
 
             const SizedBox(height: 24),
@@ -160,12 +155,25 @@ class InsightsDashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
 
-            // TODO: Replace with real data
-            _buildAvoidStrainCard(
-              strainName: 'Durban Poison',
-              rating: 4.2,
-              consumptions: 2,
-              reason: 'High anxiety (8/10), racing thoughts',
+            worstStrainsAsync.when(
+              data: (strains) => strains.isEmpty
+                  ? Text('Žádné strainy k vyhnutí',
+                      style: TextStyle(color: AppColors.textMuted, fontSize: 13))
+                  : Column(
+                      children: strains.map((strain) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _buildAvoidStrainCard(
+                            strainName: strain.strainId,
+                            rating: strain.personalRating ?? 0,
+                            consumptions: strain.totalConsumptions,
+                            reason: _buildEffectsSummary(strain),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, _) => const SizedBox.shrink(),
             ),
 
             const SizedBox(height: 24),
@@ -617,5 +625,50 @@ class InsightsDashboardScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Color _getInsightColor(InsightType type) {
+    switch (type) {
+      case InsightType.bestMatch:
+      case InsightType.strainRecommendation:
+        return const Color(0xFF4CAF50);
+      case InsightType.terpeneSensitivity:
+      case InsightType.worstMatch:
+        return const Color(0xFFFFA726);
+      case InsightType.toleranceWarning:
+        return const Color(0xFF00ACC1);
+      case InsightType.cognitiveImpact:
+        return const Color(0xFF9C27B0);
+      case InsightType.timingPattern:
+        return const Color(0xFF42A5F5);
+    }
+  }
+
+  IconData _getInsightIcon(InsightType type) {
+    switch (type) {
+      case InsightType.bestMatch:
+      case InsightType.strainRecommendation:
+        return Icons.star;
+      case InsightType.terpeneSensitivity:
+        return Icons.warning;
+      case InsightType.toleranceWarning:
+        return Icons.trending_down;
+      case InsightType.cognitiveImpact:
+        return Icons.psychology;
+      case InsightType.timingPattern:
+        return Icons.schedule;
+      case InsightType.worstMatch:
+        return Icons.dangerous;
+    }
+  }
+
+  String _buildEffectsSummary(StrainUserCorrelation strain) {
+    final parts = <String>[];
+    if (strain.avgFocusScore != null) parts.add('Focus ${strain.avgFocusScore!.toStringAsFixed(1)}');
+    if (strain.avgMoodScore != null) parts.add('Mood ${strain.avgMoodScore!.toStringAsFixed(1)}');
+    if (strain.avgEnergyScore != null) parts.add('Energy ${strain.avgEnergyScore!.toStringAsFixed(1)}');
+    if (strain.avgAnxietyLevel != null) parts.add('Anxiety ${strain.avgAnxietyLevel!.toStringAsFixed(1)}');
+    if (parts.isEmpty && strain.mostCommonBodyState != null) parts.add(strain.mostCommonBodyState!);
+    return parts.isEmpty ? 'Nedostatek dat' : parts.join(', ');
   }
 }

@@ -138,11 +138,12 @@ class _ShadowModeToggleDialogState
                   child: PrimaryButton(
                     text: 'Deaktivovat',
                     onPressed: () async {
+                      final navigator = Navigator.of(context);
                       await ref
                           .read(shadowModeStateProvider.notifier)
                           .deactivate();
                       if (context.mounted) {
-                        Navigator.pop(context);
+                        navigator.pop();
                       }
                     },
                   ),
@@ -312,11 +313,12 @@ class _ShadowModeToggleDialogState
                   child: PrimaryButton(
                     text: 'Aktivovat',
                     onPressed: () async {
+                      final navigator = Navigator.of(context);
                       await ref.read(shadowModeStateProvider.notifier).activate(
                             reason: _selectedReason,
                           );
                       if (context.mounted) {
-                        Navigator.pop(context);
+                        navigator.pop();
                       }
                     },
                   ),

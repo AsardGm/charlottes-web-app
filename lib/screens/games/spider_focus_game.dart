@@ -20,7 +20,6 @@ class _SpiderFocusGameState extends State<SpiderFocusGame> with TickerProviderSt
   // Level & scoring
   int _currentLevel = 1;
   int _score = 0;
-  int _webProgress = 0; // 0-10 progress na pavučině
   int _totalXP = 0;
   int _targetHits = 0;
   int _targetMisses = 0;
@@ -73,7 +72,6 @@ class _SpiderFocusGameState extends State<SpiderFocusGame> with TickerProviderSt
       _timeLeft = _levelTime;
       _targetHits = 0;
       _targetMisses = 0;
-      _webProgress = 0;
       _targetPosition = _random.nextInt(9);
     });
 
@@ -119,7 +117,6 @@ class _SpiderFocusGameState extends State<SpiderFocusGame> with TickerProviderSt
       setState(() {
         _score += 10 * _currentLevel;
         _targetHits++;
-        _webProgress = ((_targetHits / _hitsNeeded) * 10).clamp(0, 10).toInt();
         _targetPosition = -1; // Skryj target
       });
 
@@ -576,8 +573,6 @@ class _SpiderFocusGameState extends State<SpiderFocusGame> with TickerProviderSt
   }
 
   Widget _buildGameCompleteScreen() {
-    final accuracy = ((_targetHits / max(1, _targetHits + _targetMisses)) * 100).toInt();
-    
     return Scaffold(
       backgroundColor: const Color(0xFF0D1B2A),
       body: SafeArea(

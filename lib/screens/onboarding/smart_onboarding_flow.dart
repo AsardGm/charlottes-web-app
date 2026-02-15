@@ -24,7 +24,6 @@ class _SmartOnboardingFlowState extends ConsumerState<SmartOnboardingFlow> {
   UserRole? _selectedRole;
   ExperienceLevel? _selectedLevel;
   List<UserInterest>? _selectedInterests;
-  List<UserGoal>? _selectedGoals;
   bool _isSaving = false;
 
   @override
@@ -109,7 +108,6 @@ class _SmartOnboardingFlowState extends ConsumerState<SmartOnboardingFlow> {
 
   Future<void> _handleGoalsSelected(List<UserGoal> goals) async {
     setState(() {
-      _selectedGoals = goals;
       _isSaving = true;
     });
 

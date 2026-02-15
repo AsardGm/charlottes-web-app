@@ -137,7 +137,7 @@ class _CharlotteChatScreenState extends ConsumerState<CharlotteChatScreen> {
                 onTap: _sendSuggestedQuestion,
               ),
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             ),
 
           // Input area

@@ -86,7 +86,7 @@ class _LogConsumptionScreenState extends ConsumerState<LogConsumptionScreen> {
       );
 
       // Save via provider
-      final savedLog = await ref
+      await ref
           .read(consumptionNotifierProvider.notifier)
           .saveConsumptionLog(log);
 

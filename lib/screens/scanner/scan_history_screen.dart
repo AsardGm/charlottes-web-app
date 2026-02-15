@@ -230,13 +230,13 @@ class _ScanCard extends StatelessWidget {
                   CachedNetworkImage(
                     imageUrl: scan.imageUrl,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(
+                    placeholder: (_, _) => Container(
                       color: AppColors.functionalBorder,
                       child: const Center(
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
-                    errorWidget: (_, __, ___) => Container(
+                    errorWidget: (_, _, _) => Container(
                       color: AppColors.functionalBorder,
                       child: const Icon(Icons.broken_image),
                     ),

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/shadow_mode_model.dart';
 
@@ -33,7 +34,7 @@ class ShadowModeService {
       _currentState = ShadowModeState.fromJson(json);
       return _currentState;
     } catch (e) {
-      print('Error loading Shadow Mode state: $e');
+      debugPrint('Error loading Shadow Mode state: $e');
       _currentState = ShadowModeState.empty;
       return _currentState;
     }
@@ -83,7 +84,7 @@ class ShadowModeService {
       final json = jsonEncode(_currentState.toJson());
       await prefs.setString(_cacheKey, json);
     } catch (e) {
-      print('Error saving Shadow Mode state: $e');
+      debugPrint('Error saving Shadow Mode state: $e');
     }
   }
 

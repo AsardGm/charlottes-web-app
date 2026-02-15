@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_preferences_model.dart';
@@ -42,7 +43,7 @@ class PersonalizationService {
 
       return preferences;
     } catch (e) {
-      print('Error loading user preferences: $e');
+      debugPrint('Error loading user preferences: $e');
       // Zkus cache jako fallback
       final cached = await _loadFromCache();
       return cached ?? UserPreferences.empty;
@@ -69,7 +70,7 @@ class PersonalizationService {
       // Ulož do cache
       await _saveToCache(preferences);
     } catch (e) {
-      print('Error saving user preferences: $e');
+      debugPrint('Error saving user preferences: $e');
       // I když selže Supabase, ulož alespoň do cache
       await _saveToCache(preferences);
       rethrow;
@@ -136,7 +137,7 @@ class PersonalizationService {
       final json = jsonDecode(cached) as Map<String, dynamic>;
       return UserPreferences.fromJson(json);
     } catch (e) {
-      print('Error loading preferences from cache: $e');
+      debugPrint('Error loading preferences from cache: $e');
       return null;
     }
   }
@@ -147,7 +148,7 @@ class PersonalizationService {
       final json = jsonEncode(preferences.toJson());
       await prefs.setString(_cacheKey, json);
     } catch (e) {
-      print('Error saving preferences to cache: $e');
+      debugPrint('Error saving preferences to cache: $e');
     }
   }
 
@@ -156,7 +157,7 @@ class PersonalizationService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_cacheKey);
     } catch (e) {
-      print('Error clearing preferences cache: $e');
+      debugPrint('Error clearing preferences cache: $e');
     }
   }
 

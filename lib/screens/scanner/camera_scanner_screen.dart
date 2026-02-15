@@ -197,19 +197,6 @@ class _CameraScannerScreenState extends ConsumerState<CameraScannerScreen>
     }
   }
 
-  String _getFlashLabel() {
-    switch (_flashMode) {
-      case FlashMode.off:
-        return 'Vyp';
-      case FlashMode.auto:
-        return 'Auto';
-      case FlashMode.always:
-        return 'Zap';
-      case FlashMode.torch:
-        return 'Svítilna';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

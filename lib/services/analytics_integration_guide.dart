@@ -1,7 +1,7 @@
-/// Analytics Integration Guide
-///
-/// This guide shows how to integrate analytics tracking throughout the app
-/// for better insights into user behavior and app performance.
+// Analytics Integration Guide
+//
+// This guide shows how to integrate analytics tracking throughout the app
+// for better insights into user behavior and app performance.
 
 /*
 // ==================== SETUP ====================

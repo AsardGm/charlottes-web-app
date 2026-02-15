@@ -105,11 +105,11 @@ class _ScanResultContentState extends ConsumerState<_ScanResultContent> {
                 CachedNetworkImage(
                   imageUrl: scan.imageUrl,
                   fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(
+                  placeholder: (_, _) => Container(
                     color: AppColors.functionalSurface,
                     child: const Center(child: CircularProgressIndicator()),
                   ),
-                  errorWidget: (_, __, ___) => Container(
+                  errorWidget: (_, _, _) => Container(
                     color: AppColors.functionalSurface,
                     child: const Icon(Icons.broken_image, size: 64),
                   ),

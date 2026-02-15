@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../theme/theme.dart';
 import '../../../models/conversation_model.dart';

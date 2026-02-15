@@ -43,7 +43,7 @@ class CognitiveHistoryScreen extends ConsumerWidget {
                     ? _buildBaselineCard(baseline)
                     : _buildNoBaselineCard(),
                 loading: () => _buildLoadingCard(),
-                error: (_, __) => _buildErrorCard('Chyba při načítání baseline'),
+                error: (_, _) => _buildErrorCard('Chyba při načítání baseline'),
               ),
 
               const SizedBox(height: 16),
@@ -52,7 +52,7 @@ class CognitiveHistoryScreen extends ConsumerWidget {
               streakAsync.when(
                 data: (stats) => _buildStreakCard(stats),
                 loading: () => _buildLoadingCard(),
-                error: (_, __) => _buildErrorCard('Chyba při načítání streaku'),
+                error: (_, _) => _buildErrorCard('Chyba při načítání streaku'),
               ),
 
               const SizedBox(height: 24),
@@ -74,7 +74,7 @@ class CognitiveHistoryScreen extends ConsumerWidget {
                     ? _buildTrendGraph(scores, baselineAsync.value?.averageScore)
                     : _buildNoDataCard('Zatím nemáš dostatek dat pro graf'),
                 loading: () => _buildLoadingCard(),
-                error: (_, __) => _buildErrorCard('Chyba při načítání trendu'),
+                error: (_, _) => _buildErrorCard('Chyba při načítání trendu'),
               ),
 
               const SizedBox(height: 24),
@@ -96,7 +96,7 @@ class CognitiveHistoryScreen extends ConsumerWidget {
                     ? _buildHistoryList(tests, baselineAsync.value?.averageScore)
                     : _buildNoDataCard('Zatím nemáš žádné testy'),
                 loading: () => _buildLoadingCard(),
-                error: (_, __) => _buildErrorCard('Chyba při načítání historie'),
+                error: (_, _) => _buildErrorCard('Chyba při načítání historie'),
               ),
             ],
           ),

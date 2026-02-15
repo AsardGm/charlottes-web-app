@@ -423,7 +423,7 @@ class _MemoryTestScreenState extends ConsumerState<MemoryTestScreen> {
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
-                        children: _userSequence.map((num) {
+                        children: _userSequence.map((n) {
                           return Container(
                             width: 36,
                             height: 36,
@@ -433,7 +433,7 @@ class _MemoryTestScreenState extends ConsumerState<MemoryTestScreen> {
                             ),
                             child: Center(
                               child: Text(
-                                '$num',
+                                '$n',
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -510,7 +510,7 @@ class _MemoryTestScreenState extends ConsumerState<MemoryTestScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      '${score.toStringAsFixed(0)}',
+                      score.toStringAsFixed(0),
                       style: const TextStyle(
                         fontSize: 64,
                         fontWeight: FontWeight.bold,

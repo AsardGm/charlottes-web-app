@@ -1,7 +1,7 @@
-/// Example usage of skeleton loading states
-///
-/// This file demonstrates how to use the skeleton widgets and LoadingStateBuilder
-/// for consistent and beautiful loading states throughout the app.
+// Example usage of skeleton loading states
+//
+// This file demonstrates how to use the skeleton widgets and LoadingStateBuilder
+// for consistent and beautiful loading states throughout the app.
 
 /*
 // ==================== EXAMPLE 1: Simple List with Skeleton ====================

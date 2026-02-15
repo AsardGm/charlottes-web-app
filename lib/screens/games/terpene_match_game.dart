@@ -24,7 +24,6 @@ class _TerpeneMatchGameState extends State<TerpeneMatchGame> {
 
   int _currentLevel = 1;
   int _score = 0;
-  int _correctInLevel = 0;
   int _totalXP = 0;
   String? _selectedTerpene;
   String? _feedback;
@@ -33,7 +32,7 @@ class _TerpeneMatchGameState extends State<TerpeneMatchGame> {
   bool _gameCompleted = false;
   
   List<Map<String, String>> _currentTerpenes = [];
-  Set<String> _matchedTerpenes = {};
+  final Set<String> _matchedTerpenes = {};
 
   @override
   void initState() {
@@ -50,7 +49,6 @@ class _TerpeneMatchGameState extends State<TerpeneMatchGame> {
       _selectedTerpene = null;
       _feedback = null;
       _isAnswered = false;
-      _correctInLevel = 0;
     });
   }
 
@@ -63,7 +61,6 @@ class _TerpeneMatchGameState extends State<TerpeneMatchGame> {
       _isAnswered = true;
       if (correct) {
         _score += 10 * _currentLevel;
-        _correctInLevel++;
         _matchedTerpenes.add(terpene);
         _feedback = 'Správně! +${10 * _currentLevel} bodů';
         
