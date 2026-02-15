@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +20,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   late TabController _tabController;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -30,10 +32,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
   void dispose() {
     _searchController.dispose();
     _tabController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
-  void _onSearch(String query) {
+  void _onSearchChanged(String query) {
+    // Cancel previous timer
+    _debounceTimer?.cancel();
+
+    // Start new timer - search after 300ms of inactivity
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      ref.read(searchNotifierProvider.notifier).search(query);
+    });
+  }
+
+  void _onSearchSubmitted(String query) {
+    // Immediate search when user presses enter
+    _debounceTimer?.cancel();
     ref.read(searchNotifierProvider.notifier).search(query);
   }
 
@@ -91,9 +106,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
             : null,
       ),
       style: const TextStyle(fontSize: 18),
-      onChanged: _onSearch,
+      onChanged: _onSearchChanged,
       textInputAction: TextInputAction.search,
-      onSubmitted: _onSearch,
+      onSubmitted: _onSearchSubmitted,
     );
   }
 
