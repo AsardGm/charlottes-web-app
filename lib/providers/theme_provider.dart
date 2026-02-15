@@ -13,55 +13,68 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
 
   @override
   ThemeMode build() {
+    // Načteme téma asynchronně a nastavíme state
     _loadTheme();
-    return ThemeMode.dark; // default
+    // Mezitím vrátíme dark jako default
+    return ThemeMode.dark;
   }
 
   /// Načte uložené téma z preferences
   Future<void> _loadTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    final themeIndex = prefs.getInt(_themeKey) ?? 2; // default dark
-    state = ThemeMode.values[themeIndex];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final themeIndex = prefs.getInt(_themeKey) ?? 2; // default dark (index 2)
+      if (themeIndex >= 0 && themeIndex < ThemeMode.values.length) {
+        state = ThemeMode.values[themeIndex];
+      }
+    } catch (e) {
+      // Pokud selže načítání, ponecháme default dark
+      state = ThemeMode.dark;
+    }
   }
 
   /// Uloží téma do preferences
   Future<void> _saveTheme(ThemeMode mode) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_themeKey, mode.index);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_themeKey, mode.index);
+    } catch (e) {
+      // Ignorujeme chyby při ukládání
+    }
   }
 
   /// Nastaví světlé téma
-  void setLight() {
+  Future<void> setLight() async {
     state = ThemeMode.light;
-    _saveTheme(ThemeMode.light);
+    await _saveTheme(ThemeMode.light);
   }
 
   /// Nastaví tmavé téma
-  void setDark() {
+  Future<void> setDark() async {
     state = ThemeMode.dark;
-    _saveTheme(ThemeMode.dark);
+    await _saveTheme(ThemeMode.dark);
   }
 
   /// Nastaví systémové téma
-  void setSystem() {
+  Future<void> setSystem() async {
     state = ThemeMode.system;
-    _saveTheme(ThemeMode.system);
+    await _saveTheme(ThemeMode.system);
   }
 
   /// Přepne mezi světlým a tmavým
-  void toggle() {
+  Future<void> toggle() async {
     if (state == ThemeMode.dark) {
-      setLight();
+      await setLight();
     } else {
-      setDark();
+      await setDark();
     }
   }
 
   /// Nastaví téma podle indexu
-  void setByIndex(int index) {
+  Future<void> setByIndex(int index) async {
     if (index >= 0 && index < ThemeMode.values.length) {
       state = ThemeMode.values[index];
-      _saveTheme(state);
+      await _saveTheme(state);
     }
   }
 }
