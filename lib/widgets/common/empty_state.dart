@@ -24,6 +24,10 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = iconColor ?? Theme.of(context).colorScheme.primary;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final mutedColor = Theme.of(context).textTheme.bodySmall?.color ?? textColor.withValues(alpha: 0.6);
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -34,13 +38,13 @@ class EmptyState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: (iconColor ?? AppColors.primary).withValues(alpha: 0.1),
+                color: primaryColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: iconSize,
-                color: iconColor ?? AppColors.primary,
+                color: primaryColor,
               ),
             ),
             const SizedBox(height: 24),
@@ -48,10 +52,10 @@ class EmptyState extends StatelessWidget {
             // Title
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: textColor,
               ),
               textAlign: TextAlign.center,
             ),
@@ -62,7 +66,7 @@ class EmptyState extends StatelessWidget {
               subtitle,
               style: TextStyle(
                 fontSize: 15,
-                color: AppColors.textMuted,
+                color: mutedColor,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -76,8 +80,8 @@ class EmptyState extends StatelessWidget {
                 icon: const Icon(Icons.add_rounded),
                 label: Text(actionLabel!),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
                     vertical: 14,
@@ -116,7 +120,6 @@ class EmptyStates {
       icon: Icons.search_off_rounded,
       title: 'Nic nenalezeno',
       subtitle: 'Pro "$query" jsme nic nenašli.\nZkus jiné klíčové slovo.',
-      iconColor: AppColors.textMuted,
     );
   }
 
@@ -185,34 +188,37 @@ class EmptyStates {
       subtitle: type == 'followers'
           ? 'Až tě někdo začne sledovat,\nzobrazí se tady.'
           : 'Začni sledovat zajímavé lidi\nz komunity!',
-      iconColor: AppColors.textMuted,
     );
   }
 
-  /// Error state
+  /// Error state - iconColor will be set from context in builder
   static Widget error({
     required String message,
     VoidCallback? onRetry,
   }) {
-    return EmptyState(
-      icon: Icons.error_outline_rounded,
-      title: 'Něco se pokazilo',
-      subtitle: message,
-      actionLabel: onRetry != null ? 'Zkusit znovu' : null,
-      onAction: onRetry,
-      iconColor: AppColors.error,
+    return Builder(
+      builder: (context) => EmptyState(
+        icon: Icons.error_outline_rounded,
+        title: 'Něco se pokazilo',
+        subtitle: message,
+        actionLabel: onRetry != null ? 'Zkusit znovu' : null,
+        onAction: onRetry,
+        iconColor: Theme.of(context).colorScheme.error,
+      ),
     );
   }
 
-  /// Network error
+  /// Network error - iconColor will be set from context in builder
   static Widget networkError({VoidCallback? onRetry}) {
-    return EmptyState(
-      icon: Icons.wifi_off_rounded,
-      title: 'Žádné připojení',
-      subtitle: 'Zkontroluj připojení k internetu\na zkus to znovu.',
-      actionLabel: onRetry != null ? 'Zkusit znovu' : null,
-      onAction: onRetry,
-      iconColor: AppColors.error,
+    return Builder(
+      builder: (context) => EmptyState(
+        icon: Icons.wifi_off_rounded,
+        title: 'Žádné připojení',
+        subtitle: 'Zkontroluj připojení k internetu\na zkus to znovu.',
+        actionLabel: onRetry != null ? 'Zkusit znovu' : null,
+        onAction: onRetry,
+        iconColor: Theme.of(context).colorScheme.error,
+      ),
     );
   }
 }

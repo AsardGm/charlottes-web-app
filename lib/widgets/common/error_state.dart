@@ -21,7 +21,7 @@ class ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final errorInfo = _parseError(error);
+    final errorInfo = _parseError(error, context);
 
     return EmptyState(
       icon: errorInfo.icon,
@@ -33,8 +33,11 @@ class ErrorState extends StatelessWidget {
     );
   }
 
-  _ErrorInfo _parseError(Object error) {
+  _ErrorInfo _parseError(Object error, BuildContext context) {
     final errorString = error.toString().toLowerCase();
+    final errorColor = Theme.of(context).colorScheme.error;
+    final warningColor = AppColors.warning;
+    final mutedColor = Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6);
 
     // Network errors
     if (errorString.contains('socket') ||
@@ -45,7 +48,7 @@ class ErrorState extends StatelessWidget {
         icon: Icons.wifi_off_rounded,
         title: 'Žádné připojení',
         message: 'Zkontroluj připojení k internetu\na zkus to znovu.',
-        color: AppColors.error,
+        color: errorColor,
       );
     }
 
@@ -56,7 +59,7 @@ class ErrorState extends StatelessWidget {
         icon: Icons.access_time_rounded,
         title: 'Vypršel čas',
         message: 'Požadavek trval příliš dlouho.\nZkus to prosím znovu.',
-        color: AppColors.warning,
+        color: warningColor,
       );
     }
 
@@ -69,7 +72,7 @@ class ErrorState extends StatelessWidget {
         icon: Icons.lock_outline_rounded,
         title: 'Nepřihlášený',
         message: 'Přihlas se prosím\npro přístup k tomuto obsahu.',
-        color: AppColors.warning,
+        color: warningColor,
       );
     }
 
@@ -80,7 +83,7 @@ class ErrorState extends StatelessWidget {
         icon: Icons.block_rounded,
         title: 'Nedostatečná oprávnění',
         message: 'Nemáš oprávnění\nk této akci.',
-        color: AppColors.error,
+        color: errorColor,
       );
     }
 
@@ -91,7 +94,7 @@ class ErrorState extends StatelessWidget {
         icon: Icons.search_off_rounded,
         title: 'Nenalezeno',
         message: 'Požadovaný obsah\nneexistuje nebo byl smazán.',
-        color: AppColors.textMuted,
+        color: mutedColor,
       );
     }
 
@@ -104,7 +107,7 @@ class ErrorState extends StatelessWidget {
         icon: Icons.cloud_off_rounded,
         title: 'Chyba serveru',
         message: 'Server právě nereaguje.\nZkus to prosím později.',
-        color: AppColors.error,
+        color: errorColor,
       );
     }
 
@@ -116,7 +119,7 @@ class ErrorState extends StatelessWidget {
         icon: Icons.speed_rounded,
         title: 'Příliš mnoho požadavků',
         message: 'Zpomal prosím.\nZkus to za chvíli.',
-        color: AppColors.warning,
+        color: warningColor,
       );
     }
 
@@ -128,7 +131,7 @@ class ErrorState extends StatelessWidget {
         icon: Icons.storage_rounded,
         title: 'Chyba databáze',
         message: 'Problém s uložením dat.\nZkus to prosím znovu.',
-        color: AppColors.error,
+        color: errorColor,
       );
     }
 
@@ -137,7 +140,7 @@ class ErrorState extends StatelessWidget {
       icon: Icons.error_outline_rounded,
       title: 'Něco se pokazilo',
       message: 'Omlouváme se za nepříjemnosti.\nZkus to prosím znovu.',
-      color: AppColors.error,
+      color: errorColor,
     );
   }
 }
@@ -171,14 +174,17 @@ class InlineErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final errorColor = Theme.of(context).colorScheme.error;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+
     return Container(
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.1),
+        color: errorColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.error.withValues(alpha: 0.3),
+          color: errorColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -186,7 +192,7 @@ class InlineErrorState extends StatelessWidget {
         children: [
           Icon(
             icon ?? Icons.error_outline_rounded,
-            color: AppColors.error,
+            color: errorColor,
             size: 24,
           ),
           const SizedBox(width: 12),
@@ -195,7 +201,7 @@ class InlineErrorState extends StatelessWidget {
               message,
               style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textPrimary,
+                color: textColor,
               ),
             ),
           ),
@@ -204,7 +210,7 @@ class InlineErrorState extends StatelessWidget {
             TextButton(
               onPressed: onRetry,
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.error,
+                foregroundColor: errorColor,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 8,

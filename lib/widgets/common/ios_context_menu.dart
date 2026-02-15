@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../services/haptic_service.dart';
-import '../../theme/theme.dart';
 
 /// iOS-style context menu that appears on long press
 /// Similar to iMessage/Telegram context menus
@@ -174,13 +173,17 @@ class _ContextMenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surfaceColor = Theme.of(context).colorScheme.surface;
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final borderColor = Theme.of(context).dividerTheme.color ?? Theme.of(context).colorScheme.outline;
+
     return Container(
       width: 220,
       decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.95),
+        color: surfaceColor.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.2),
+          color: primaryColor.withValues(alpha: 0.2),
           width: 1,
         ),
         boxShadow: [
@@ -205,7 +208,7 @@ class _ContextMenuCard extends StatelessWidget {
                 Divider(
                   height: 1,
                   thickness: 1,
-                  color: AppColors.functionalBorder.withValues(alpha: 0.3),
+                  color: borderColor.withValues(alpha: 0.3),
                 ),
             ],
           ],
@@ -234,6 +237,10 @@ class _ContextMenuActionButtonState extends State<_ContextMenuActionButton> {
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final secondaryColor = Theme.of(context).textTheme.bodyMedium?.color ?? textColor.withValues(alpha: 0.7);
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) => setState(() => _isPressed = false),
@@ -245,7 +252,7 @@ class _ContextMenuActionButtonState extends State<_ContextMenuActionButton> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         color: _isPressed
-            ? AppColors.primary.withValues(alpha: 0.15)
+            ? primaryColor.withValues(alpha: 0.15)
             : Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
@@ -256,7 +263,7 @@ class _ContextMenuActionButtonState extends State<_ContextMenuActionButton> {
               size: 20,
               color: widget.action.isDestructive
                   ? Colors.red
-                  : widget.action.color ?? AppColors.textPrimary,
+                  : widget.action.color ?? textColor,
             ),
             const SizedBox(width: 12),
 
@@ -269,7 +276,7 @@ class _ContextMenuActionButtonState extends State<_ContextMenuActionButton> {
                   fontWeight: FontWeight.w500,
                   color: widget.action.isDestructive
                       ? Colors.red
-                      : widget.action.color ?? AppColors.textPrimary,
+                      : widget.action.color ?? textColor,
                 ),
               ),
             ),
@@ -280,7 +287,7 @@ class _ContextMenuActionButtonState extends State<_ContextMenuActionButton> {
               Icon(
                 widget.action.trailingIcon,
                 size: 16,
-                color: AppColors.textSecondary.withValues(alpha: 0.6),
+                color: secondaryColor.withValues(alpha: 0.6),
               ),
             ],
           ],

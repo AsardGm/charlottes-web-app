@@ -38,6 +38,9 @@ class ContextMenuActions {
   static GlobalKey<ScaffoldMessengerState>? scaffoldMessengerKey;
 
   static void _showCopySnackbar(String message) {
+    final context = scaffoldMessengerKey?.currentContext;
+    if (context == null) return;
+
     scaffoldMessengerKey?.currentState?.showSnackBar(
       SnackBar(
         content: Text(message),

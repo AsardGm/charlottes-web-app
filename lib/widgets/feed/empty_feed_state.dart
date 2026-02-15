@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../theme/theme.dart';
 
 /// Prázdný stav feedu
 ///
@@ -11,6 +10,10 @@ class EmptyFeedState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final mutedColor = Theme.of(context).textTheme.bodySmall?.color ?? textColor.withValues(alpha: 0.6);
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -22,22 +25,22 @@ class EmptyFeedState extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.primary.withAlpha(20),
-                  AppColors.primary.withAlpha(5),
+                  primaryColor.withAlpha(20),
+                  primaryColor.withAlpha(5),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.primary.withAlpha(30),
+                color: primaryColor.withAlpha(30),
                 width: 2,
               ),
             ),
             child: Icon(
               Icons.edit_note_rounded,
               size: 48,
-              color: AppColors.primary.withAlpha(180),
+              color: primaryColor.withAlpha(180),
             ),
           ),
 
@@ -49,7 +52,7 @@ class EmptyFeedState extends StatelessWidget {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: textColor,
             ),
           ),
 
@@ -60,7 +63,7 @@ class EmptyFeedState extends StatelessWidget {
             'Buď první, kdo něco napíše!',
             style: TextStyle(
               fontSize: 14,
-              color: AppColors.textMuted,
+              color: mutedColor,
             ),
           ),
 
