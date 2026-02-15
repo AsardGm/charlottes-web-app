@@ -7,11 +7,14 @@ import '../providers/auth_provider.dart';
 import '../providers/posts_provider.dart';
 import '../services/share_service.dart';
 import '../services/report_service.dart';
+import '../services/bookmark_service.dart';
 import '../utils/helpers.dart';
 import '../utils/haptic_utils.dart';
 import '../theme/theme.dart';
 import 'user_avatar.dart';
 import 'common/mention_text_field.dart';
+import 'common/ios_context_menu.dart';
+import 'common/context_menu_actions.dart';
 import 'report_dialog.dart';
 
 /// Post karta s Functional Dark designem
@@ -33,11 +36,21 @@ class PostCard extends ConsumerStatefulWidget {
 
 class _PostCardState extends ConsumerState<PostCard> {
   late PostModel _post;
+  bool _isBookmarked = false;
+  final _bookmarkService = BookmarkService();
 
   @override
   void initState() {
     super.initState();
     _post = widget.post;
+    _checkBookmarkStatus();
+  }
+
+  Future<void> _checkBookmarkStatus() async {
+    final isBookmarked = await _bookmarkService.isBookmarked(_post.id);
+    if (mounted) {
+      setState(() => _isBookmarked = isBookmarked);
+    }
   }
 
   @override
@@ -85,13 +98,19 @@ class _PostCardState extends ConsumerState<PostCard> {
     final isOwner = _post.authorId == userId;
     final canDelete = isAdmin || isOwner;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.functionalSurface,
-        borderRadius: BorderRadius.circular(8),
+    return IOSContextMenu(
+      actions: _buildContextMenuActions(
+        context: context,
+        isOwner: isOwner,
+        canDelete: canDelete,
       ),
-      child: Material(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: AppColors.functionalSurface,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: widget.onTap,
@@ -169,7 +188,68 @@ class _PostCardState extends ConsumerState<PostCard> {
           ),
         ),
       ),
+    ),
     );
+  }
+
+  /// Build context menu actions for post
+  List<ContextMenuAction> _buildContextMenuActions({
+    required BuildContext context,
+    required bool isOwner,
+    required bool canDelete,
+  }) {
+    final actions = <ContextMenuAction>[];
+
+    // Save/Bookmark action
+    actions.add(ContextMenuActions.save(
+      () async {
+        try {
+          final wasBookmarked = await _bookmarkService.toggleBookmark(_post.id);
+          if (mounted) {
+            setState(() => _isBookmarked = wasBookmarked);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(wasBookmarked ? 'Přidáno do záložek' : 'Odebráno ze záložek'),
+                backgroundColor: AppColors.functionalSurface,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Chyba: ${e.toString()}'),
+                backgroundColor: AppColors.functionalSurface,
+              ),
+            );
+          }
+        }
+      },
+      isSaved: _isBookmarked,
+    ));
+
+    // Share action
+    actions.add(ContextMenuActions.share(() {
+      HapticUtils.lightImpact();
+      ShareService.sharePost(_post);
+    }));
+
+    // Report action (only for non-owners)
+    if (!isOwner) {
+      actions.add(ContextMenuActions.report(() {
+        _showReportDialog();
+      }));
+    }
+
+    // Delete action (only for owners/admins)
+    if (canDelete) {
+      actions.add(ContextMenuActions.delete(() {
+        _showDeleteDialog();
+      }));
+    }
+
+    return actions;
   }
 
   /// Header s avatarem a info
