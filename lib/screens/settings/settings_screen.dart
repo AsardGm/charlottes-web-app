@@ -92,7 +92,6 @@ class SettingsScreen extends ConsumerWidget {
                       ref.read(settingsNotifierProvider.notifier)
                           .setNotificationsEnabled(value);
                     },
-                    activeThumbColor: AppColors.primary,
                   ),
                   const Divider(height: 1),
                   SwitchListTile(
@@ -103,7 +102,6 @@ class SettingsScreen extends ConsumerWidget {
                       ref.read(settingsNotifierProvider.notifier)
                           .updateSettings({'email_notifications': value});
                     },
-                    activeThumbColor: AppColors.primary,
                   ),
                 ],
               ),
@@ -115,7 +113,7 @@ class SettingsScreen extends ConsumerWidget {
               _SettingsCard(
                 children: [
                   ListTile(
-                    leading: Icon(Icons.security, color: AppColors.primary),
+                    leading: Icon(Icons.security, color: Theme.of(context).colorScheme.primary),
                     title: const Text('Soukromi a bezpecnost'),
                     subtitle: const Text('Soukromy ucet, heslo, prihlaseni'),
                     trailing: const Icon(Icons.chevron_right),
@@ -130,7 +128,6 @@ class SettingsScreen extends ConsumerWidget {
                       ref.read(settingsNotifierProvider.notifier)
                           .setShowOnlineStatus(value);
                     },
-                    activeThumbColor: AppColors.primary,
                   ),
                   const Divider(height: 1),
                   ListTile(
@@ -149,7 +146,7 @@ class SettingsScreen extends ConsumerWidget {
               _SettingsCard(
                 children: [
                   ListTile(
-                    leading: Icon(Icons.menu_book, color: AppColors.accent),
+                    leading: const Icon(Icons.menu_book),
                     title: const Text('Wiki / Encyklopedie'),
                     subtitle: const Text('Kanabinoidy, terpeny, harm reduction'),
                     trailing: const Icon(Icons.chevron_right),
@@ -157,7 +154,7 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   const Divider(height: 1),
                   ListTile(
-                    leading: Icon(Icons.auto_awesome, color: AppColors.accent),
+                    leading: const Icon(Icons.auto_awesome),
                     title: const Text('Spustit pruvodce'),
                     subtitle: const Text('Znovu zobrazit uvitani od Buddyho'),
                     trailing: const Icon(Icons.chevron_right),
@@ -178,10 +175,10 @@ class SettingsScreen extends ConsumerWidget {
               _SettingsCard(
                 children: [
                   ListTile(
-                    leading: Icon(Icons.logout, color: AppColors.error),
+                    leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
                     title: Text(
                       'Odhlasit se',
-                      style: TextStyle(color: AppColors.error),
+                      style: TextStyle(color: Theme.of(context).colorScheme.error),
                     ),
                     onTap: () => _showLogoutDialog(context, ref),
                   ),
@@ -208,7 +205,7 @@ class SettingsScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 48, color: AppColors.error),
+              Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
               const SizedBox(height: 16),
               Text('Chyba: ${error.toString()}'),
             ],
@@ -297,7 +294,7 @@ class SettingsScreen extends ConsumerWidget {
               Navigator.pop(context);
               await ref.read(authNotifierProvider.notifier).signOut();
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
             child: const Text('Odhlasit'),
           ),
         ],
@@ -313,6 +310,9 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mutedColor = Theme.of(context).textTheme.labelSmall?.color ??
+        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6);
+
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
@@ -320,7 +320,7 @@ class _SectionHeader extends StatelessWidget {
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: AppColors.textMuted,
+          color: mutedColor,
           letterSpacing: 0.5,
         ),
       ),
@@ -335,14 +335,26 @@ class _SettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surfaceColor = Theme.of(context).colorScheme.surface;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: surfaceColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withAlpha(8),
+          color: isDark
+              ? Colors.white.withAlpha(8)
+              : Theme.of(context).colorScheme.outline.withAlpha(30),
           width: 1,
         ),
+        boxShadow: !isDark ? [
+          BoxShadow(
+            color: Colors.black.withAlpha(5),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ] : null,
       ),
       child: Column(
         children: children,
@@ -445,10 +457,10 @@ class _ThemeOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: isSelected ? AppColors.primary : null),
+      leading: Icon(icon, color: isSelected ? Theme.of(context).colorScheme.primary : null),
       title: Text(title),
       trailing: isSelected
-          ? Icon(Icons.check, color: AppColors.primary)
+          ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
           : null,
       onTap: onTap,
     );
@@ -479,7 +491,6 @@ class _ShadowModeTile extends ConsumerWidget {
         onChanged: (value) async {
           await ShadowModeToggleDialog.show(context, isActive: isActive);
         },
-        activeThumbColor: AppColors.accent,
       ),
       onTap: () async {
         await ShadowModeToggleDialog.show(context, isActive: isActive);
@@ -512,9 +523,8 @@ class _WebPushTileState extends State<_WebPushTile> {
       return ListTile(
         title: const Text('Push notifikace'),
         subtitle: const Text('Nainstaluj aplikaci pro push notifikace'),
-        trailing: Icon(
+        trailing: const Icon(
           Icons.info_outline,
-          color: AppColors.textMuted,
           size: 20,
         ),
         onTap: () => _showIOSInstallDialog(context),
@@ -526,9 +536,9 @@ class _WebPushTileState extends State<_WebPushTile> {
       return ListTile(
         title: const Text('Push notifikace'),
         subtitle: const Text('Tvuj prohlizec nepodporuje push notifikace'),
-        trailing: Icon(
+        trailing: const Icon(
           Icons.warning_amber,
-          color: AppColors.warning,
+          color: Colors.orange,
           size: 20,
         ),
       );
@@ -549,7 +559,7 @@ class _WebPushTileState extends State<_WebPushTile> {
             )
           : Icon(
               isEnabled ? Icons.notifications_active : Icons.notifications_off,
-              color: isEnabled ? AppColors.success : AppColors.textMuted,
+              color: isEnabled ? Colors.green : null,
             ),
       onTap: isEnabled ? null : _requestPermission,
     );
@@ -575,7 +585,7 @@ class _WebPushTileState extends State<_WebPushTile> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Push notifikace byly zamitnuty'),
-              backgroundColor: AppColors.error,
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
         }
@@ -586,7 +596,7 @@ class _WebPushTileState extends State<_WebPushTile> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Chyba: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -611,7 +621,7 @@ class _WebPushTileState extends State<_WebPushTile> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(Icons.ios_share, size: 24),
@@ -628,7 +638,7 @@ class _WebPushTileState extends State<_WebPushTile> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(Icons.add_box_outlined, size: 24),
@@ -645,7 +655,7 @@ class _WebPushTileState extends State<_WebPushTile> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(Icons.check_circle_outline, size: 24),
