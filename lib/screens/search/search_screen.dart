@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/post_card.dart';
 import '../../widgets/profile/follow_button.dart';
+import '../../widgets/common/empty_state.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -113,58 +114,17 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
   }
 
   Widget _buildInitialState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.search,
-            size: 64,
-            color: AppColors.textMuted,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Zadej hledany vyraz',
-            style: TextStyle(
-              fontSize: 16,
-              color: AppColors.textMuted,
-            ),
-          ),
-        ],
-      ),
+    return EmptyState(
+      icon: Icons.search_rounded,
+      title: 'Začni hledat',
+      subtitle: 'Zadej hledaný výraz\na prohlédni příspěvky a uživatele.',
+      iconColor: AppColors.accent,
     );
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.search_off,
-            size: 64,
-            color: AppColors.textMuted,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Zadne vysledky',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Zkus jiny hledany vyraz',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textMuted,
-            ),
-          ),
-        ],
-      ),
-    );
+    final query = ref.read(searchNotifierProvider).query;
+    return EmptyStates.noSearchResults(query);
   }
 
   Widget _buildPostsTab(SearchState searchState) {
