@@ -34,6 +34,20 @@ class ContextMenuActions {
     );
   }
 
+  /// Global key for showing snackbars without context
+  static GlobalKey<ScaffoldMessengerState>? scaffoldMessengerKey;
+
+  static void _showCopySnackbar(String message) {
+    scaffoldMessengerKey?.currentState?.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 1),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   /// Copy link action
   static ContextMenuAction copyLink(String link) {
     return ContextMenuAction(
@@ -41,7 +55,7 @@ class ContextMenuActions {
       icon: Icons.link_rounded,
       onTap: () {
         Clipboard.setData(ClipboardData(text: link));
-        // TODO: Show snackbar "Odkaz zkopírován"
+        _showCopySnackbar('Odkaz zkopirovan');
       },
     );
   }
@@ -53,7 +67,7 @@ class ContextMenuActions {
       icon: Icons.copy_rounded,
       onTap: () {
         Clipboard.setData(ClipboardData(text: text));
-        // TODO: Show snackbar "Text zkopírován"
+        _showCopySnackbar('Text zkopirovan');
       },
     );
   }

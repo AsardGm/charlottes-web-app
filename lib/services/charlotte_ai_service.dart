@@ -12,10 +12,27 @@ import 'tbreak_service.dart';
 /// Service pro komunikaci s Charlotte AI (Claude API)
 class CharlotteAIService {
   static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
+  static const String _model = 'claude-sonnet-4-5-20250929';
 
-  // TODO: Přesunout do ENV nebo Supabase secrets
-  static const String _apiKey = 'YOUR_ANTHROPIC_API_KEY_HERE';
-  static const String _model = 'claude-3-5-sonnet-20241022';
+  /// Get API key from Supabase app_config table
+  static String? _cachedApiKey;
+
+  Future<String> _getApiKey() async {
+    if (_cachedApiKey != null) return _cachedApiKey!;
+
+    try {
+      final response = await Supabase.instance.client
+          .from('app_config')
+          .select('value')
+          .eq('key', 'anthropic_api_key')
+          .single();
+
+      _cachedApiKey = response['value'] as String;
+      return _cachedApiKey!;
+    } catch (e) {
+      throw Exception('Charlotte AI API key not configured. Add it to app_config table.');
+    }
+  }
 
   /// Odeslat zprávu Charlotte a získat odpověď
   Future<String> sendMessage({
@@ -30,12 +47,15 @@ class CharlotteAIService {
       // Build system prompt s user contextem
       final systemPrompt = context.buildSystemPrompt();
 
+      // Get API key from config
+      final apiKey = await _getApiKey();
+
       // API request
       final response = await http.post(
         Uri.parse(_apiUrl),
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': _apiKey,
+          'x-api-key': apiKey,
           'anthropic-version': '2023-06-01',
         },
         body: jsonEncode({
@@ -58,29 +78,71 @@ class CharlotteAIService {
     }
   }
 
-  /// Streamovaná odpověď (pro typing effect)
+  /// Streamovaná odpověď přes Server-Sent Events
   Stream<String> sendMessageStreamed({
     required String userMessage,
     required CharlotteUserContext context,
     List<CharlotteMessage>? conversationHistory,
   }) async* {
-    // Pro zjednodušení zatím vrátíme celou odpověď najednou
-    // TODO: Implementovat streaming s Server-Sent Events
-    final response = await sendMessage(
-      userMessage: userMessage,
-      context: context,
-      conversationHistory: conversationHistory,
-    );
+    try {
+      final apiKey = await _getApiKey();
+      final messages = _buildMessagesArray(userMessage, conversationHistory);
+      final systemPrompt = context.buildSystemPrompt();
 
-    // Simulace typing efektu - po slovech
-    final words = response.split(' ');
-    for (int i = 0; i < words.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 50));
-      if (i == 0) {
-        yield words[i];
-      } else {
-        yield ' ${words[i]}';
+      final request = http.Request('POST', Uri.parse(_apiUrl));
+      request.headers.addAll({
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      });
+      request.body = jsonEncode({
+        'model': _model,
+        'max_tokens': 1024,
+        'stream': true,
+        'system': systemPrompt,
+        'messages': messages,
+      });
+
+      final client = http.Client();
+      try {
+        final streamedResponse = await client.send(request);
+
+        if (streamedResponse.statusCode != 200) {
+          final body = await streamedResponse.stream.bytesToString();
+          throw Exception('Charlotte AI error: ${streamedResponse.statusCode} - $body');
+        }
+
+        // Parse SSE stream
+        String buffer = '';
+        await for (final chunk in streamedResponse.stream.transform(utf8.decoder)) {
+          buffer += chunk;
+          final lines = buffer.split('\n');
+          buffer = lines.removeLast(); // Keep incomplete line in buffer
+
+          for (final line in lines) {
+            if (!line.startsWith('data: ')) continue;
+            final data = line.substring(6).trim();
+            if (data == '[DONE]') return;
+
+            try {
+              final json = jsonDecode(data);
+              final type = json['type'] as String?;
+              if (type == 'content_block_delta') {
+                final delta = json['delta']?['text'] as String?;
+                if (delta != null) {
+                  yield delta;
+                }
+              }
+            } catch (_) {
+              // Skip malformed JSON lines
+            }
+          }
+        }
+      } finally {
+        client.close();
       }
+    } catch (e) {
+      throw Exception('Failed to stream Charlotte response: $e');
     }
   }
 

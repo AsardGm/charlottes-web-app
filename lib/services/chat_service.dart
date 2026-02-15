@@ -820,6 +820,15 @@ class ChatService {
     }
   }
 
+  /// Edit a message (text only)
+  Future<void> editMessage(String messageId, String newContent) async {
+    await _supabase.from('messages').update({
+      'content': newContent,
+      'is_edited': true,
+      'edited_at': DateTime.now().toIso8601String(),
+    }).eq('id', messageId);
+  }
+
   /// Smaže zprávu (soft delete)
   Future<void> deleteMessage(String messageId) async {
     await _supabase.from('messages').update({

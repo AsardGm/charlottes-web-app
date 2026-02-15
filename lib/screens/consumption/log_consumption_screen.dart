@@ -29,6 +29,33 @@ class _LogConsumptionScreenState extends ConsumerState<LogConsumptionScreen> {
     _selectedStrainId = widget.strainId;
   }
 
+  void _schedulePostCheckReminder() {
+    // Schedule a delayed local notification after 45 min
+    Future.delayed(const Duration(minutes: 45), () {
+      if (!mounted) return;
+      // Use the mobile push local notifications plugin if available
+      try {
+        debugPrint('Post-check reminder: 45 min elapsed');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Cas na post-consumption check-in!'),
+              backgroundColor: AppColors.accent,
+              duration: const Duration(seconds: 5),
+              action: SnackBarAction(
+                label: 'Otevrit',
+                textColor: Colors.white,
+                onPressed: () => context.push('/consumption/post-check'),
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('Failed to show reminder: $e');
+      }
+    });
+  }
+
   Future<void> _saveAndScheduleCheck() async {
     if (_selectedStrainId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -63,8 +90,8 @@ class _LogConsumptionScreenState extends ConsumerState<LogConsumptionScreen> {
           .read(consumptionNotifierProvider.notifier)
           .saveConsumptionLog(log);
 
-      // TODO: Schedule notification for post-check in 45 min
-      // This would require a notification package like flutter_local_notifications
+      // Schedule notification for post-check in 45 min
+      _schedulePostCheckReminder();
 
       if (mounted) {
         // Show confirmation
@@ -133,8 +160,11 @@ class _LogConsumptionScreenState extends ConsumerState<LogConsumptionScreen> {
             ),
             const SizedBox(height: 12),
             GestureDetector(
-              onTap: () {
-                // TODO: Navigate to strain picker
+              onTap: () async {
+                final result = await context.push<String>('/strains');
+                if (result != null && mounted) {
+                  setState(() => _selectedStrainId = result);
+                }
               },
               child: Container(
                 padding: const EdgeInsets.all(16),

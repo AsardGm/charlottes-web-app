@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/theme.dart';
+import '../../services/consumption_insights_service.dart';
+import '../../services/cognitive_insights_service.dart';
+import '../../models/consumption_insights_model.dart';
+import '../../models/cognitive_insights_model.dart';
 
 /// Card zobrazující souhrnné insights z consumption a cognitive dat
 class InsightsSummaryCard extends ConsumerWidget {
@@ -144,6 +148,68 @@ class InsightsSummaryCard extends ConsumerWidget {
   }
 }
 
+Widget _buildInsightRow({
+  required IconData icon,
+  required Color iconColor,
+  required String title,
+  required String subtitle,
+}) {
+  return Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: AppColors.functionalSurface,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(
+        color: AppColors.functionalBorder.withValues(alpha: 0.3),
+      ),
+    ),
+    child: Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+        Icon(
+          Icons.chevron_right,
+          color: AppColors.textMuted,
+          size: 18,
+        ),
+      ],
+    ),
+  );
+}
+
 /// Row zobrazující consumption insight
 class _ConsumptionInsightRow extends StatelessWidget {
   final String userId;
@@ -152,62 +218,31 @@ class _ConsumptionInsightRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Load real data using FutureBuilder
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.functionalSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.functionalBorder.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.accent.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.local_florist,
-              color: AppColors.accent,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Konzumace',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Loading...',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right,
-            color: AppColors.textMuted,
-            size: 18,
-          ),
-        ],
-      ),
+    return FutureBuilder<ConsumptionInsights>(
+      future: ConsumptionInsightsService().generateInsights(userId),
+      builder: (context, snapshot) {
+        String subtitle;
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          subtitle = 'Nacitam...';
+        } else if (snapshot.hasError || !snapshot.hasData) {
+          subtitle = 'Zadna data';
+        } else {
+          final data = snapshot.data!;
+          if (data.totalSessions == 0) {
+            subtitle = 'Zadne zaznamy';
+          } else {
+            subtitle = '${data.last7DaysSessions}x za 7 dni'
+                '${data.mostCommonStrain != null ? ' · ${data.mostCommonStrain}' : ''}';
+          }
+        }
+
+        return _buildInsightRow(
+          icon: Icons.local_florist,
+          iconColor: AppColors.accent,
+          title: 'Konzumace',
+          subtitle: subtitle,
+        );
+      },
     );
   }
 }
@@ -220,62 +255,31 @@ class _CognitiveInsightRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Load real data using FutureBuilder
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.functionalSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.functionalBorder.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFF00ACC1).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.psychology,
-              color: Color(0xFF00ACC1),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Cognitive Performance',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Loading...',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right,
-            color: AppColors.textMuted,
-            size: 18,
-          ),
-        ],
-      ),
+    return FutureBuilder<CognitiveInsights>(
+      future: CognitiveInsightsService().generateInsights(userId),
+      builder: (context, snapshot) {
+        String subtitle;
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          subtitle = 'Nacitam...';
+        } else if (snapshot.hasError || !snapshot.hasData) {
+          subtitle = 'Zadna data';
+        } else {
+          final data = snapshot.data!;
+          if (data.totalTests == 0) {
+            subtitle = 'Zadne testy';
+          } else {
+            subtitle = 'Skore: ${data.currentScore?.toStringAsFixed(0) ?? data.averageScore?.toStringAsFixed(0) ?? '-'}'
+                ' · ${data.trend.displayName}';
+          }
+        }
+
+        return _buildInsightRow(
+          icon: Icons.psychology,
+          iconColor: const Color(0xFF00ACC1),
+          title: 'Cognitive Performance',
+          subtitle: subtitle,
+        );
+      },
     );
   }
 }

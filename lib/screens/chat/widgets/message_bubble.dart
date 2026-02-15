@@ -19,6 +19,7 @@ class MessageBubble extends StatelessWidget {
   final VoidCallback onReply;
   final VoidCallback? onDelete;
   final VoidCallback? onForward;
+  final Function(String)? onEdit;
 
   const MessageBubble({
     super.key,
@@ -29,6 +30,7 @@ class MessageBubble extends StatelessWidget {
     required this.onReply,
     this.onDelete,
     this.onForward,
+    this.onEdit,
   });
 
   /// Zjistí, zda byla zpráva přečtena příjemcem
@@ -177,6 +179,7 @@ class MessageBubble extends StatelessWidget {
               ),
             ),
           ),
+          ),
         ],
       ),
     );
@@ -195,9 +198,9 @@ class MessageBubble extends StatelessWidget {
     }
 
     // Edit action (only for own messages, not deleted, text only)
-    if (isMe && !message.isDeleted && message.messageType == 'text') {
+    if (isMe && !message.isDeleted && message.messageType == 'text' && onEdit != null) {
       actions.add(ContextMenuActions.edit(() {
-        // TODO: Implement edit functionality
+        _showEditDialog(context, content);
       }));
     }
 
@@ -380,6 +383,56 @@ class MessageBubble extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  void _showEditDialog(BuildContext context, String currentContent) {
+    final controller = TextEditingController(text: currentContent);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Upravit zpravu', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 5,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: 'Zprava...',
+            hintStyle: TextStyle(color: AppColors.textMuted),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.surfaceLight),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.accent),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Zrusit', style: TextStyle(color: AppColors.textMuted)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final newText = controller.text.trim();
+              if (newText.isNotEmpty && newText != currentContent) {
+                onEdit?.call(newText);
+              }
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Ulozit'),
+          ),
         ],
       ),
     );

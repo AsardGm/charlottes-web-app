@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../theme/theme.dart';
 
 /// Ghost Protocol - bezpecnostni nastaveni Lab sekce
@@ -481,15 +482,37 @@ class _GhostProtocolScreenState extends ConsumerState<GhostProtocolScreen> {
             child: Text('Zrusit', style: TextStyle(color: AppColors.textMuted)),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              // TODO: Implement burner delete via lab_security_service
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Vsechna Lab data byla smazana'),
-                  backgroundColor: AppColors.error,
-                ),
-              );
+              try {
+                final userId = Supabase.instance.client.auth.currentUser?.id;
+                if (userId == null) return;
+                // Delete all lab-related data for user
+                final supabase = Supabase.instance.client;
+                await Future.wait([
+                  supabase.from('lab_grows').delete().eq('user_id', userId),
+                  supabase.from('lab_timeline').delete().eq('user_id', userId),
+                  supabase.from('lab_nutrients').delete().eq('user_id', userId),
+                  supabase.from('lab_diagnostics').delete().eq('user_id', userId),
+                ]);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Vsechna Lab data byla smazana'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Chyba: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,

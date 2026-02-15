@@ -162,7 +162,7 @@ class ConsumptionInsightsService {
         consumptionByTimeOfDay: consumptionByTimeOfDay,
         consumptionByDayOfWeek: consumptionByDayOfWeek,
         methodsUsed: methodsUsed,
-        preferredTerpenes: {}, // TODO: Add terpene analysis
+        preferredTerpenes: _analyzeTerpenes(logs),
         isIncreasing: isIncreasing,
         isDecreasing: isDecreasing,
         isStable: isStable,
@@ -173,6 +173,31 @@ class ConsumptionInsightsService {
     } catch (e) {
       throw Exception('Failed to generate consumption insights: $e');
     }
+  }
+
+  /// Analyze terpene preferences from consumption logs
+  Map<String, int> _analyzeTerpenes(List<dynamic> logs) {
+    final terpeneCounts = <String, int>{};
+    for (final log in logs) {
+      final terpenes = log['terpenes'] as List<dynamic>?;
+      if (terpenes != null) {
+        for (final terpene in terpenes) {
+          final name = terpene.toString();
+          terpeneCounts[name] = (terpeneCounts[name] ?? 0) + 1;
+        }
+      }
+      // Also check strain_terpenes if available
+      final strainTerpenes = log['strain_terpenes'] as String?;
+      if (strainTerpenes != null && strainTerpenes.isNotEmpty) {
+        for (final t in strainTerpenes.split(',')) {
+          final name = t.trim();
+          if (name.isNotEmpty) {
+            terpeneCounts[name] = (terpeneCounts[name] ?? 0) + 1;
+          }
+        }
+      }
+    }
+    return terpeneCounts;
   }
 
   /// Rychlý summary pro Charlotte AI context

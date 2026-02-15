@@ -68,6 +68,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  void _scrollToMessage(String messageId) {
+    // Messages are loaded in the list - find the index and scroll
+    final messagesAsync = ref.read(messagesProvider(widget.conversationId));
+    messagesAsync.whenData((messages) {
+      final index = messages.indexWhere((m) => m.id == messageId);
+      if (index != -1 && _scrollController.hasClients) {
+        // ListView is reversed, so index maps directly
+        _scrollController.animateTo(
+          index * 80.0, // Approximate message height
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
   void _onEmojiSelected(String emoji) {
     _messageController.text += emoji;
     _messageController.selection = TextSelection.fromPosition(
@@ -517,7 +533,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           PinnedMessagesBar(
             conversationId: widget.conversationId,
             onTap: (message) {
-              // TODO: Scroll to message
+              _scrollToMessage(message.id);
             },
           ),
 
@@ -721,6 +737,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               },
               onReply: () => _setReplyTo(message),
               onForward: () => _showForwardDialog(message.id),
+              onEdit: isMe && message.messageType == 'text' && !message.isDeleted
+                  ? (newContent) {
+                      ref.read(chatServiceProvider).editMessage(
+                            message.id,
+                            newContent,
+                          );
+                      ref.invalidate(messagesProvider(widget.conversationId));
+                    }
+                  : null,
               onDelete: isMe
                   ? () {
                       ref.read(chatProvider.notifier).deleteMessage(

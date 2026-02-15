@@ -122,12 +122,14 @@ final charlotteRecommendationsProvider = FutureProvider<List<String>>((ref) asyn
     // Generate recommendations from both sources
     final recommendations = <String>[];
 
-    // Add consumption recommendations if available
+    // Add consumption recommendations from insights service
     if (context.recentConsumptionCount != null && context.recentConsumptionCount! > 0) {
-      // TODO: Get consumption insights service recommendations
-      // For now, basic recommendation
-      if (context.recentConsumptionCount! > 20) {
-        recommendations.add('Konzumuješ často - zvažuješ tolerance break pro harm reduction?');
+      final harmReduction = await service.analyzeHarmReductionNeeds(user.id);
+      final hrRecs = harmReduction['recommendations'] as List<String>? ?? [];
+      recommendations.addAll(hrRecs.take(2));
+
+      if (recommendations.isEmpty && context.recentConsumptionCount! > 20) {
+        recommendations.add('Konzumujes casto - zvazujes tolerance break pro harm reduction?');
       }
     }
 

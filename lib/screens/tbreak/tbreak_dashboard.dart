@@ -68,7 +68,9 @@ class _TBreakDashboardState extends ConsumerState<TBreakDashboard> {
             IconButton(
               icon: const Icon(Icons.history),
               onPressed: () {
-                // Navigate to history screen (to be implemented)
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Historie T-breaku bude brzy dostupna')),
+                );
               },
             ),
         ],

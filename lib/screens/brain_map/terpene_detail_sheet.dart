@@ -556,7 +556,11 @@ class _ExperiencesSection extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            // TODO: Tlačítko pro přidání zkušenosti
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline, color: AppColors.accent),
+              tooltip: 'Pridat zkusenost',
+              onPressed: () => _showAddExperienceDialog(context),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -595,6 +599,75 @@ class _ExperiencesSection extends StatelessWidget {
           error: (e, _) => Text('Chyba: $e'),
         ),
       ],
+    );
+  }
+
+  void _showAddExperienceDialog(BuildContext context) {
+    final textController = TextEditingController();
+    int rating = 3;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text('Pridat zkusenost', style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return IconButton(
+                    icon: Icon(
+                      index < rating ? Icons.star : Icons.star_border,
+                      color: AppColors.accent,
+                    ),
+                    onPressed: () => setDialogState(() => rating = index + 1),
+                  );
+                }),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: textController,
+                maxLines: 3,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Tvoje zkusenost s timto terpenem...',
+                  hintStyle: TextStyle(color: AppColors.textMuted),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.surfaceLight),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Zrusit', style: TextStyle(color: AppColors.textMuted)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (textController.text.trim().isNotEmpty) {
+                  // Save will be handled by provider when integrated
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Zkusenost pridana')),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Pridat'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

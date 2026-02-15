@@ -342,7 +342,8 @@ class CognitiveResultsScreen extends StatelessWidget {
   }
 
   Widget _buildXPReward() {
-    const xpReward = 50; // TODO: Calculate based on performance
+    // Calculate XP based on performance: base 25 + up to 75 bonus
+    final xpReward = 25 + ((totalScore / 100.0) * 75).round();
 
     return Container(
       padding: const EdgeInsets.all(20),

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,8 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:google_fonts/google_fonts.dart';
 import 'config/supabase_config.dart';
 import 'services/web_push_service.dart';
+import 'services/mobile_push_service.dart';
+import 'services/app_initializer.dart';
 import 'app.dart';
 
 Future<void> main() async {
@@ -27,10 +30,15 @@ Future<void> main() async {
     anonKey: SupabaseConfig.supabaseAnonKey,
   );
 
-  // Initialize Web Push Notifications (pouze pro web)
+  // Initialize push notifications based on platform
   if (kIsWeb) {
     await WebPushService.instance.initialize();
+  } else if (Platform.isIOS || Platform.isAndroid) {
+    await MobilePushService.instance.initialize();
   }
+
+  // Initialize app services (analytics, cache, etc.)
+  await AppInitializer().initialize();
 
   // Set Czech locale for timeago
   timeago.setLocaleMessages('cs', timeago.CsMessages());

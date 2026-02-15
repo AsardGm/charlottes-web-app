@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 import 'web_push_service.dart';
+import 'mobile_push_service.dart';
 
 /// Služba pro autentizaci uživatelů
 ///
@@ -71,9 +73,13 @@ class AuthService {
       password: password,
     );
 
-    // Registruj push token po přihlášení (web)
-    if (kIsWeb && response.user != null) {
-      WebPushService.instance.onUserLoggedIn();
+    // Registruj push token po přihlášení
+    if (response.user != null) {
+      if (kIsWeb) {
+        WebPushService.instance.onUserLoggedIn();
+      } else if (Platform.isIOS || Platform.isAndroid) {
+        MobilePushService.instance.onUserLoggedIn(response.user!.id);
+      }
     }
 
     return response;
@@ -81,9 +87,12 @@ class AuthService {
 
   /// Odhlášení uživatele
   Future<void> signOut() async {
-    // Odregistruj push token před odhlášením (web)
+    // Odregistruj push token před odhlášením
+    final userId = currentUser?.id;
     if (kIsWeb) {
       await WebPushService.instance.onUserLoggedOut();
+    } else if (!kIsWeb && (Platform.isIOS || Platform.isAndroid) && userId != null) {
+      await MobilePushService.instance.onUserLoggedOut(userId);
     }
 
     await _supabase.auth.signOut();
