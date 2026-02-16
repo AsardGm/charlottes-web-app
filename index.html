@@ -1,0 +1,2489 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buds & Buddies — Tvoje komunita. Tvůj prostor. Tvá věda.</title>
+<meta name="description" content="Sociální platforma pro zodpovědnou komunitu s E2E šifrováním, AI asistentem Charlotte a osobní vědou. Stáhni si Buds & Buddies.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ========================================
+   CSS VARIABLES / TOKENS
+   ======================================== */
+:root {
+  --primary: #C41E24;
+  --primary-light: #E62429;
+  --primary-dark: #8B1419;
+  --secondary: #1A4B6E;
+  --secondary-light: #2D6A8F;
+  --accent: #00D4FF;
+  --accent-glow: rgba(0, 212, 255, 0.35);
+  --bg: #0D1B2A;
+  --bg-deep: #080F1A;
+  --surface: #132238;
+  --surface-light: #1C3148;
+  --surface-elevated: #254158;
+  --text: #F5F0E6;
+  --text-secondary: #B8C4D0;
+  --text-muted: #8A9AAA;
+  --gold: #C4A35A;
+  --gold-light: #D4B86A;
+  --success: #22C55E;
+  --exotic: #8B5CF6;
+  --web-color: rgba(245, 240, 230, 0.08);
+  --web-glow: rgba(245, 240, 230, 0.15);
+
+  --font-display: 'Chakra Petch', sans-serif;
+  --font-body: 'Outfit', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ========================================
+   RESET & BASE
+   ======================================== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--bg);
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary-light); }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--text);
+}
+
+a { color: var(--accent); text-decoration: none; transition: color 0.3s; }
+a:hover { color: var(--text); }
+
+img { max-width: 100%; display: block; }
+
+/* ========================================
+   ANIMATED BACKGROUND — SPIDER WEB CANVAS
+   ======================================== */
+.web-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.web-bg canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* Scanline overlay */
+.scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+}
+
+/* Noise grain */
+.grain {
+  position: fixed;
+  inset: -50%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.04;
+  animation: grain 0.5s steps(4) infinite;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+}
+
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -10%); }
+  30% { transform: translate(3%, -15%); }
+  50% { transform: translate(12%, 9%); }
+  70% { transform: translate(9%, 4%); }
+  90% { transform: translate(-1%, 7%); }
+}
+
+/* ========================================
+   NAVIGATION
+   ======================================== */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.4s var(--ease-out-expo);
+}
+
+.nav.scrolled {
+  background: rgba(13, 27, 42, 0.85);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+  padding: 0.6rem 2rem;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.nav-logo .spider-icon {
+  width: 36px;
+  height: 36px;
+  position: relative;
+}
+
+.nav-logo .spider-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.nav-logo span.red { color: var(--primary-light); }
+.nav-logo span.cyan { color: var(--accent); }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  list-style: none;
+}
+
+.nav-links a {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  position: relative;
+  padding: 0.25rem 0;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+  transition: width 0.3s var(--ease-out-expo);
+}
+
+.nav-links a:hover { color: var(--text); }
+.nav-links a:hover::after { width: 100%; }
+
+.nav-cta {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.55rem 1.5rem;
+  background: var(--primary);
+  color: var(--text);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.nav-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.nav-cta:hover {
+  box-shadow: 0 0 20px rgba(196, 30, 36, 0.5);
+  transform: translateY(-1px);
+}
+
+.nav-cta:hover::before { opacity: 1; }
+.nav-cta span { position: relative; z-index: 1; }
+
+/* Mobile hamburger */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.nav-toggle span {
+  width: 24px;
+  height: 2px;
+  background: var(--text);
+  transition: all 0.3s;
+  border-radius: 1px;
+}
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-cta { display: none; }
+  .nav-toggle { display: flex; }
+
+  .nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(13, 27, 42, 0.95);
+    backdrop-filter: blur(20px);
+    padding: 1.5rem 2rem;
+    gap: 1.2rem;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+  }
+}
+
+/* ========================================
+   HERO SECTION
+   ======================================== */
+.hero {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rem 2rem 4rem;
+  overflow: hidden;
+}
+
+.hero-glow {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+.hero-glow.red {
+  top: 10%;
+  left: 15%;
+  background: var(--primary);
+  animation: pulse-glow 6s ease-in-out infinite;
+}
+
+.hero-glow.cyan {
+  bottom: 20%;
+  right: 10%;
+  background: var(--accent);
+  animation: pulse-glow 6s ease-in-out infinite 3s;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.1; transform: scale(1); }
+  50% { opacity: 0.2; transform: scale(1.15); }
+}
+
+.hero-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.hero-text {
+  opacity: 0;
+  animation: hero-in 1s var(--ease-out-expo) 0.3s forwards;
+}
+
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(0, 212, 255, 0.08);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  padding: 0.4rem 1rem;
+  border-radius: 2px;
+  margin-bottom: 1.5rem;
+}
+
+.hero-badge .dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: blink 2s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.hero h1 .glitch {
+  position: relative;
+  display: inline-block;
+}
+
+.hero h1 .glitch::before,
+.hero h1 .glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.hero h1 .glitch::before {
+  color: var(--accent);
+  animation: glitch-1 3s infinite linear;
+  clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+}
+
+.hero h1 .glitch::after {
+  color: var(--primary-light);
+  animation: glitch-2 3s infinite linear 0.1s;
+  clip-path: polygon(0 66%, 100% 66%, 100% 100%, 0 100%);
+}
+
+@keyframes glitch-1 {
+  0%, 93%, 100% { transform: translate(0); }
+  94% { transform: translate(-3px, 1px); }
+  95% { transform: translate(2px, -1px); }
+  96% { transform: translate(-1px, 2px); }
+}
+
+@keyframes glitch-2 {
+  0%, 93%, 100% { transform: translate(0); }
+  94% { transform: translate(3px, -1px); }
+  95% { transform: translate(-2px, 1px); }
+  96% { transform: translate(1px, -2px); }
+}
+
+.hero-tagline {
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  font-weight: 300;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  margin-bottom: 1.5rem;
+}
+
+.hero-tagline em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.hero-desc {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  max-width: 500px;
+  margin-bottom: 2.5rem;
+  line-height: 1.7;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.85rem 2rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-out-expo);
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--text);
+}
+
+.btn-primary:hover {
+  background: var(--primary-light);
+  box-shadow: 0 0 30px rgba(196, 30, 36, 0.4);
+  transform: translateY(-2px);
+  color: var(--text);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid rgba(245, 240, 230, 0.2);
+}
+
+.btn-outline:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.btn svg { width: 20px; height: 20px; }
+
+/* Phone Mockup */
+.hero-phone {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  opacity: 0;
+  animation: phone-in 1.2s var(--ease-out-expo) 0.6s forwards;
+}
+
+@keyframes phone-in {
+  from { opacity: 0; transform: translateY(60px) rotateX(10deg); }
+  to { opacity: 1; transform: translateY(0) rotateX(0); }
+}
+
+.phone-frame {
+  width: 280px;
+  height: 580px;
+  background: var(--surface);
+  border-radius: 36px;
+  border: 2px solid var(--surface-light);
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(0, 212, 255, 0.05),
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 80px rgba(0, 212, 255, 0.05);
+}
+
+.phone-frame::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 28px;
+  background: var(--bg);
+  border-radius: 0 0 16px 16px;
+  z-index: 5;
+}
+
+.phone-screen {
+  position: absolute;
+  inset: 8px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Simulated app UI inside phone */
+.phone-ui {
+  padding: 40px 16px 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.phone-header-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.phone-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+}
+
+.phone-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.phone-tab {
+  padding: 5px 12px;
+  font-size: 0.6rem;
+  font-family: var(--font-display);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.phone-tab.active {
+  background: var(--primary);
+  color: var(--text);
+}
+
+.phone-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.phone-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.phone-card-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.phone-card-name {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.phone-card-time {
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.phone-card-text {
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.phone-card-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.phone-card-action {
+  font-size: 0.5rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.phone-card-action .web-icon {
+  font-size: 0.65rem;
+}
+
+.phone-bottom-bar {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0 4px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.phone-bottom-item {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: var(--surface-light);
+}
+
+.phone-bottom-item.active {
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(196, 30, 36, 0.4);
+}
+
+/* Floating web threads around phone */
+.phone-thread {
+  position: absolute;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--web-glow), transparent);
+  pointer-events: none;
+  animation: thread-sway 4s ease-in-out infinite;
+}
+
+.phone-thread:nth-child(1) { left: -30px; top: 10%; height: 120px; animation-delay: 0s; }
+.phone-thread:nth-child(2) { right: -40px; top: 30%; height: 80px; animation-delay: 1.5s; }
+.phone-thread:nth-child(3) { left: -20px; bottom: 15%; height: 100px; animation-delay: 0.8s; }
+
+@keyframes thread-sway {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  50% { transform: translateX(5px) rotate(2deg); }
+}
+
+/* ========================================
+   SECTION COMMON
+   ======================================== */
+section {
+  position: relative;
+  z-index: 2;
+}
+
+.section-pad {
+  padding: 7rem 2rem;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-label::before {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.section-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+  line-height: 1.7;
+}
+
+/* Reveal on scroll */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s var(--ease-out-expo);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+.reveal-delay-5 { transition-delay: 0.5s; }
+.reveal-delay-6 { transition-delay: 0.6s; }
+
+/* ========================================
+   FEATURES GRID
+   ======================================== */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.5rem;
+  margin-top: 3.5rem;
+}
+
+.feature-card {
+  background: rgba(19, 34, 56, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s var(--ease-out-expo);
+  backdrop-filter: blur(10px);
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  padding: 1px;
+  background: linear-gradient(135deg, transparent 40%, rgba(0, 212, 255, 0.15), transparent 60%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.feature-card:hover::before { opacity: 1; }
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 212, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.feature-card .shimmer {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
+  transition: left 0.6s;
+  pointer-events: none;
+}
+
+.feature-card:hover .shimmer { left: 150%; }
+
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  font-size: 1.4rem;
+  position: relative;
+}
+
+.feature-icon::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 14px;
+  opacity: 0.15;
+  filter: blur(8px);
+}
+
+.feature-icon.red { background: rgba(196, 30, 36, 0.15); color: var(--primary-light); }
+.feature-icon.red::after { background: var(--primary); }
+.feature-icon.cyan { background: rgba(0, 212, 255, 0.1); color: var(--accent); }
+.feature-icon.cyan::after { background: var(--accent); }
+.feature-icon.gold { background: rgba(196, 163, 90, 0.12); color: var(--gold-light); }
+.feature-icon.gold::after { background: var(--gold); }
+.feature-icon.green { background: rgba(34, 197, 94, 0.1); color: var(--success); }
+.feature-icon.green::after { background: var(--success); }
+.feature-icon.purple { background: rgba(139, 92, 246, 0.1); color: var(--exotic); }
+.feature-icon.purple::after { background: var(--exotic); }
+
+.feature-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  letter-spacing: 0.01em;
+}
+
+.feature-card p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.feature-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1rem;
+}
+
+.feature-tag {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.04);
+  color: var(--text-muted);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ========================================
+   E2EE SECTION — ENCRYPTION VISUAL
+   ======================================== */
+.encryption-section {
+  background: linear-gradient(180deg, var(--bg-deep), var(--bg), var(--bg-deep));
+  position: relative;
+  overflow: hidden;
+}
+
+.encryption-visual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  margin-top: 3rem;
+}
+
+.encryption-demo {
+  position: relative;
+  padding: 2rem;
+}
+
+.lock-container {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lock-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid;
+  animation: rotate-ring 20s linear infinite;
+}
+
+.lock-ring:nth-child(1) {
+  width: 100%;
+  height: 100%;
+  border-color: rgba(0, 212, 255, 0.15);
+}
+
+.lock-ring:nth-child(2) {
+  width: 75%;
+  height: 75%;
+  border-color: rgba(196, 30, 36, 0.15);
+  animation-direction: reverse;
+  animation-duration: 15s;
+}
+
+.lock-ring:nth-child(3) {
+  width: 50%;
+  height: 50%;
+  border-color: rgba(196, 163, 90, 0.15);
+  animation-duration: 10s;
+}
+
+@keyframes rotate-ring {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.lock-icon {
+  font-size: 2.5rem;
+  z-index: 2;
+  filter: drop-shadow(0 0 20px var(--accent-glow));
+}
+
+.encryption-points {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.enc-point {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.enc-point-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(0, 212, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.enc-point h4 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.enc-point p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ========================================
+   AI SECTION — CHARLOTTE
+   ======================================== */
+.ai-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  margin-top: 3rem;
+}
+
+.ai-chat-demo {
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.05);
+  padding: 1.5rem;
+  max-width: 380px;
+}
+
+.ai-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  margin-bottom: 1rem;
+}
+
+.ai-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.ai-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.ai-status {
+  font-size: 0.7rem;
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.ai-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.chat-msg {
+  max-width: 85%;
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  animation: msg-in 0.5s var(--ease-out-back) both;
+}
+
+.chat-msg.user {
+  align-self: flex-end;
+  background: var(--primary);
+  border-bottom-right-radius: 4px;
+  color: var(--text);
+}
+
+.chat-msg.ai {
+  align-self: flex-start;
+  background: var(--surface-light);
+  border-bottom-left-radius: 4px;
+  color: var(--text-secondary);
+}
+
+.chat-msg:nth-child(1) { animation-delay: 0.3s; }
+.chat-msg:nth-child(2) { animation-delay: 0.8s; }
+.chat-msg:nth-child(3) { animation-delay: 1.3s; }
+.chat-msg:nth-child(4) { animation-delay: 1.8s; }
+
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ai-features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ai-feature {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.ai-feature-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(0, 212, 255, 0.08);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--accent);
+}
+
+.ai-feature h4 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.ai-feature p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ========================================
+   STATS SECTION
+   ======================================== */
+.stats-section {
+  background: linear-gradient(180deg, transparent, rgba(196, 30, 36, 0.03), transparent);
+  border-top: 1px solid rgba(196, 30, 36, 0.08);
+  border-bottom: 1px solid rgba(196, 30, 36, 0.08);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--text), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+/* ========================================
+   GAMIFICATION SECTION
+   ======================================== */
+.gamification-section {
+  overflow: hidden;
+}
+
+.ranks-display {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 3rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+  scrollbar-width: none;
+}
+
+.ranks-display::-webkit-scrollbar { display: none; }
+
+.rank-card {
+  min-width: 160px;
+  padding: 1.5rem 1.25rem;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.04);
+  text-align: center;
+  transition: all 0.3s var(--ease-out-expo);
+  flex-shrink: 0;
+}
+
+.rank-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+}
+
+.rank-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.rank-name {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.rank-xp {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.rank-card.egg { border-color: rgba(107, 123, 138, 0.3); }
+.rank-card.egg .rank-name { color: #6B7B8A; }
+.rank-card.hatchling { border-color: rgba(34, 197, 94, 0.3); }
+.rank-card.hatchling .rank-name { color: var(--success); }
+.rank-card.hunter { border-color: rgba(26, 75, 110, 0.3); }
+.rank-card.hunter .rank-name { color: var(--secondary-light); }
+.rank-card.weaver { border-color: rgba(0, 212, 255, 0.3); }
+.rank-card.weaver .rank-name { color: var(--accent); }
+.rank-card.widow { border-color: rgba(196, 30, 36, 0.3); }
+.rank-card.widow .rank-name { color: var(--primary-light); }
+.rank-card.master {
+  border-color: rgba(196, 163, 90, 0.3);
+  background: linear-gradient(135deg, rgba(196, 163, 90, 0.08), var(--surface));
+}
+.rank-card.master .rank-name { color: var(--gold-light); }
+
+/* Rarity cards */
+.rarity-showcase {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+
+.rarity-card {
+  aspect-ratio: 2.5/3.5;
+  border-radius: 10px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s var(--ease-out-expo);
+}
+
+.rarity-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  background: radial-gradient(circle at 30% 30%, white, transparent 70%);
+}
+
+.rarity-card:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.rarity-card.common {
+  background: linear-gradient(160deg, #3a444e, #252b33);
+  border: 1px solid rgba(107, 123, 138, 0.3);
+}
+.rarity-card.rare {
+  background: linear-gradient(160deg, #1A4B6E, #0D1B2A);
+  border: 1px solid rgba(45, 106, 143, 0.4);
+}
+.rarity-card.exotic {
+  background: linear-gradient(160deg, #5B3FA6, #2a1a5e);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+}
+.rarity-card.legend {
+  background: linear-gradient(160deg, #C4A35A, #5a4520);
+  border: 1px solid rgba(212, 184, 106, 0.4);
+  box-shadow: 0 0 20px rgba(196, 163, 90, 0.15);
+}
+
+.rarity-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.rarity-name {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+/* ========================================
+   HOLOTROP SECTION
+   ======================================== */
+.holotrop-section {
+  background: linear-gradient(180deg, var(--bg-deep), #0a1520, var(--bg-deep));
+  overflow: hidden;
+}
+
+.holotrop-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  margin-top: 3rem;
+}
+
+.breathing-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+}
+
+.breath-circle {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.15), transparent 70%);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: breathe 8s ease-in-out infinite;
+  position: relative;
+}
+
+.breath-circle::before {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 212, 255, 0.08);
+  animation: breathe 8s ease-in-out infinite 0.5s;
+}
+
+.breath-circle::after {
+  content: '';
+  position: absolute;
+  inset: -40px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 212, 255, 0.04);
+  animation: breathe 8s ease-in-out infinite 1s;
+}
+
+.breath-text {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  25% { transform: scale(1.2); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 1; }
+  75% { transform: scale(1); opacity: 0.6; }
+}
+
+.holotrop-features {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.holotrop-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.03);
+  transition: all 0.3s;
+}
+
+.holotrop-item:hover {
+  background: rgba(0, 212, 255, 0.03);
+  border-color: rgba(0, 212, 255, 0.08);
+}
+
+.holotrop-item-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  width: 40px;
+  text-align: center;
+}
+
+.holotrop-item h4 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.holotrop-item p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ========================================
+   GAMES SECTION
+   ======================================== */
+.games-section {
+  overflow: hidden;
+}
+
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+.game-card {
+  background: var(--surface);
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: all 0.4s var(--ease-out-expo);
+}
+
+.game-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+}
+
+.game-preview {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.game-preview::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 50%, var(--surface));
+}
+
+.game-card:nth-child(1) .game-preview {
+  background: linear-gradient(135deg, rgba(196, 30, 36, 0.15), rgba(0, 212, 255, 0.08));
+}
+.game-card:nth-child(2) .game-preview {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(139, 92, 246, 0.08));
+}
+.game-card:nth-child(3) .game-preview {
+  background: linear-gradient(135deg, rgba(196, 163, 90, 0.15), rgba(196, 30, 36, 0.08));
+}
+
+.game-info {
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.game-info h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.game-info p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ========================================
+   TECH STACK
+   ======================================== */
+.tech-section {
+  border-top: 1px solid rgba(255,255,255,0.03);
+}
+
+.tech-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2.5rem;
+  justify-content: center;
+}
+
+.tech-pill {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 1.25rem;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--text-secondary);
+  transition: all 0.3s;
+}
+
+.tech-pill:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.1);
+}
+
+/* ========================================
+   DOWNLOAD CTA
+   ======================================== */
+.cta-section {
+  text-align: center;
+  padding: 8rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 800px;
+  height: 800px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(196, 30, 36, 0.08), transparent 60%);
+  pointer-events: none;
+}
+
+.cta-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.cta-subtitle {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  max-width: 500px;
+  margin: 0 auto 2.5rem;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.store-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 2rem;
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: var(--font-body);
+  text-decoration: none;
+  transition: all 0.3s var(--ease-out-expo);
+}
+
+.store-btn:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 25px rgba(0, 212, 255, 0.12);
+  transform: translateY(-2px);
+  color: var(--text);
+}
+
+.store-btn svg { width: 28px; height: 28px; flex-shrink: 0; }
+
+.store-btn-text {
+  text-align: left;
+}
+
+.store-btn-text .small {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+.store-btn-text .big {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* ========================================
+   FOOTER
+   ======================================== */
+.footer {
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  padding: 3rem 2rem;
+}
+
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.footer-brand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.footer-brand span { color: var(--primary-light); }
+
+.footer-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+}
+
+.footer-links a {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  transition: color 0.3s;
+}
+
+.footer-links a:hover { color: var(--text); }
+
+.footer-copy {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  width: 100%;
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255,255,255,0.03);
+}
+
+/* ========================================
+   FLOATING DOWNLOAD BUTTON
+   ======================================== */
+.floating-cta {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 90;
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+  transition: all 0.4s var(--ease-out-expo);
+}
+
+.floating-cta.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+.floating-cta a {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--primary);
+  color: var(--text);
+  border-radius: 50px;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 4px 20px rgba(196, 30, 36, 0.4);
+  transition: all 0.3s;
+  text-decoration: none;
+}
+
+.floating-cta a:hover {
+  background: var(--primary-light);
+  box-shadow: 0 6px 30px rgba(196, 30, 36, 0.5);
+  transform: translateY(-2px);
+  color: var(--text);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 1024px) {
+  .hero-content { grid-template-columns: 1fr; text-align: center; }
+  .hero-text { order: 1; }
+  .hero-phone { order: 0; margin-bottom: 2rem; }
+  .hero-desc { margin-left: auto; margin-right: auto; }
+  .hero-actions { justify-content: center; }
+  .encryption-visual { grid-template-columns: 1fr; }
+  .encryption-demo { order: -1; }
+  .ai-grid { grid-template-columns: 1fr; }
+  .ai-chat-demo { margin: 0 auto; }
+  .holotrop-content { grid-template-columns: 1fr; }
+  .breathing-visual { order: -1; }
+}
+
+@media (max-width: 768px) {
+  .features-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .games-grid { grid-template-columns: 1fr; }
+  .rarity-showcase { grid-template-columns: repeat(2, 1fr); }
+  .section-pad { padding: 4rem 1.25rem; }
+  .phone-frame { width: 240px; height: 500px; }
+}
+
+@media (max-width: 480px) {
+  .hero { padding: 6rem 1rem 3rem; }
+  .hero-actions { flex-direction: column; align-items: center; }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .cta-buttons { flex-direction: column; align-items: center; }
+  .footer-inner { flex-direction: column; text-align: center; }
+  .footer-links { flex-direction: column; gap: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Background layers -->
+<div class="web-bg"><canvas id="webCanvas"></canvas></div>
+<div class="scanlines"></div>
+<div class="grain"></div>
+
+<!-- Navigation -->
+<nav class="nav" id="nav">
+  <div class="nav-logo">
+    <div class="spider-icon">
+      <svg viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="8" fill="none" stroke="rgba(196,30,36,0.6)" stroke-width="1"/>
+        <circle cx="20" cy="20" r="3" fill="#C41E24"/>
+        <line x1="20" y1="12" x2="20" y2="2" stroke="rgba(245,240,230,0.15)" stroke-width="0.5"/>
+        <line x1="20" y1="28" x2="20" y2="38" stroke="rgba(245,240,230,0.15)" stroke-width="0.5"/>
+        <line x1="12" y1="20" x2="2" y2="20" stroke="rgba(245,240,230,0.15)" stroke-width="0.5"/>
+        <line x1="28" y1="20" x2="38" y2="20" stroke="rgba(245,240,230,0.15)" stroke-width="0.5"/>
+        <line x1="14.3" y1="14.3" x2="6" y2="6" stroke="rgba(245,240,230,0.15)" stroke-width="0.5"/>
+        <line x1="25.7" y1="14.3" x2="34" y2="6" stroke="rgba(245,240,230,0.15)" stroke-width="0.5"/>
+        <line x1="14.3" y1="25.7" x2="6" y2="34" stroke="rgba(245,240,230,0.15)" stroke-width="0.5"/>
+        <line x1="25.7" y1="25.7" x2="34" y2="34" stroke="rgba(245,240,230,0.15)" stroke-width="0.5"/>
+        <circle cx="17" cy="18" r="1.2" fill="#00D4FF" opacity="0.9"/>
+        <circle cx="23" cy="18" r="1.2" fill="#00D4FF" opacity="0.9"/>
+      </svg>
+    </div>
+    <span><span class="red">Buds</span> & <span class="cyan">Buddies</span></span>
+  </div>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#features">Funkce</a></li>
+    <li><a href="#security">Bezpečnost</a></li>
+    <li><a href="#ai">Charlotte AI</a></li>
+    <li><a href="#games">Hry</a></li>
+  </ul>
+  <button class="nav-cta" onclick="document.getElementById('download').scrollIntoView({behavior:'smooth'})">
+    <span>Stáhnout</span>
+  </button>
+  <div class="nav-toggle" id="navToggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-glow red"></div>
+  <div class="hero-glow cyan"></div>
+
+  <div class="hero-content">
+    <div class="hero-text">
+      <div class="hero-badge">
+        <span class="dot"></span>
+        Verze 1.0 — Právě vyšla
+      </div>
+      <h1>
+        <span class="glitch" data-text="Buds &">Buds &</span><br>
+        <span class="glitch" data-text="Buddies">Buddies</span>
+      </h1>
+      <p class="hero-tagline">Tvoje komunita. <em>Tvůj prostor.</em> Tvá věda.</p>
+      <p class="hero-desc">
+        Sociální platforma nové generace s end-to-end šifrováním, AI asistentkou Charlotte a nástroji pro osobní vědu. Vytvořeno pro zodpovědnou komunitu.
+      </p>
+      <div class="hero-actions">
+        <a href="#download" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Stáhnout zdarma
+        </a>
+        <a href="#features" class="btn btn-outline">
+          Prozkoumat funkce
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-phone">
+      <div class="phone-thread"></div>
+      <div class="phone-thread"></div>
+      <div class="phone-thread"></div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-ui">
+            <div class="phone-header">
+              <div class="phone-header-title">Feed</div>
+              <div class="phone-avatar"></div>
+            </div>
+            <div class="phone-tabs">
+              <div class="phone-tab active">Vše</div>
+              <div class="phone-tab">Diskuze</div>
+              <div class="phone-tab">Otázky</div>
+            </div>
+            <div class="phone-card">
+              <div class="phone-card-header">
+                <div class="phone-card-avatar" style="background: linear-gradient(135deg, #22C55E, #1A4B6E)"></div>
+                <div>
+                  <div class="phone-card-name">GreenThumb_CZ</div>
+                </div>
+                <div class="phone-card-time">2h</div>
+              </div>
+              <div class="phone-card-text">Právě jsem sklidil svou první Auto. Jaký je váš tip na sušení? 🌱</div>
+              <div class="phone-card-actions">
+                <div class="phone-card-action"><span class="web-icon">🕸️</span> 24</div>
+                <div class="phone-card-action">💬 12</div>
+              </div>
+            </div>
+            <div class="phone-card">
+              <div class="phone-card-header">
+                <div class="phone-card-avatar" style="background: linear-gradient(135deg, #C41E24, #C4A35A)"></div>
+                <div>
+                  <div class="phone-card-name">SpiderMaster</div>
+                </div>
+                <div class="phone-card-time">5h</div>
+              </div>
+              <div class="phone-card-text">Charlotte AI mi pomohla identifikovat neznámou odrůdu z fotky. Přesné!</div>
+              <div class="phone-card-actions">
+                <div class="phone-card-action"><span class="web-icon">🕸️</span> 67</div>
+                <div class="phone-card-action">💬 31</div>
+              </div>
+            </div>
+            <div class="phone-bottom-bar">
+              <div class="phone-bottom-item active"></div>
+              <div class="phone-bottom-item"></div>
+              <div class="phone-bottom-item"></div>
+              <div class="phone-bottom-item"></div>
+              <div class="phone-bottom-item"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="section-pad" id="features">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">Funkce</div>
+      <h2 class="section-title">Vše co potřebuješ.<br>Na jednom místě.</h2>
+      <p class="section-subtitle">Komunita, šifrovaný chat, AI asistentka, gamifikace, osobní věda a harm reduction — navrženo pro zodpovědné uživatele.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="shimmer"></div>
+        <div class="feature-icon red">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <h3>Komunita & Feed</h3>
+        <p>Reddit-style feed s nekonečným scrollováním, vlákny a reakcemi "Webs" 🕸️. Diskuze, otázky, oznámení — vše pod jednou střechou.</p>
+        <div class="feature-tags">
+          <span class="feature-tag">Příspěvky</span>
+          <span class="feature-tag">Komentáře</span>
+          <span class="feature-tag">Hashtagy</span>
+          <span class="feature-tag">Záložky</span>
+        </div>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="shimmer"></div>
+        <div class="feature-icon cyan">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        </div>
+        <h3>Šifrovaný Chat</h3>
+        <p>Vojenská úroveň E2E šifrování — X25519 key exchange + AES-256-GCM. Hlasové zprávy, GIFy, emoji, offline fronta.</p>
+        <div class="feature-tags">
+          <span class="feature-tag">E2EE</span>
+          <span class="feature-tag">Hlasovky</span>
+          <span class="feature-tag">GIF</span>
+          <span class="feature-tag">Offline</span>
+        </div>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="shimmer"></div>
+        <div class="feature-icon purple">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a7 7 0 017 7c0 5-7 13-7 13S5 14 5 9a7 7 0 017-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        </div>
+        <h3>Charlotte AI</h3>
+        <p>AI asistentka poháněná Claude. Skenování odrůd kamerou, personalizované insighty a doporučení na základě tvých dat.</p>
+        <div class="feature-tags">
+          <span class="feature-tag">Claude AI</span>
+          <span class="feature-tag">Skener</span>
+          <span class="feature-tag">Insighty</span>
+        </div>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-4">
+        <div class="shimmer"></div>
+        <div class="feature-icon gold">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <h3>Gamifikace</h3>
+        <p>XP systém s pavoučími ranky, sběratelské karty odrůd ve 4 stupních vzácnosti, denní úkoly, žebříčky a odznaky.</p>
+        <div class="feature-tags">
+          <span class="feature-tag">XP / Ranky</span>
+          <span class="feature-tag">Karty</span>
+          <span class="feature-tag">Questy</span>
+          <span class="feature-tag">Odznaky</span>
+        </div>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-5">
+        <div class="shimmer"></div>
+        <div class="feature-icon green">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <h3>Osobní Věda</h3>
+        <p>Deník odrůd s trackováním efektů — nálada, energie, fokus. Týdenní AI reporty, korelační analýzy a personalizovaná doporučení.</p>
+        <div class="feature-tags">
+          <span class="feature-tag">Deník</span>
+          <span class="feature-tag">Reporty</span>
+          <span class="feature-tag">Korelace</span>
+          <span class="feature-tag">Testy</span>
+        </div>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-6">
+        <div class="shimmer"></div>
+        <div class="feature-icon cyan">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        </div>
+        <h3>Holotrop Mode</h3>
+        <p>Dechová cvičení s vizuální animací, bio-hack protokol, 5-4-3-2-1 grounding technika a meditace s Charlotte AI.</p>
+        <div class="feature-tags">
+          <span class="feature-tag">Dýchání</span>
+          <span class="feature-tag">Grounding</span>
+          <span class="feature-tag">Bio-hack</span>
+          <span class="feature-tag">Meditace</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Encryption Section -->
+<section class="encryption-section section-pad" id="security">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">Bezpečnost</div>
+      <h2 class="section-title">Vojenská úroveň<br>šifrování.</h2>
+      <p class="section-subtitle">Každá zpráva je šifrována end-to-end. Ani my nemůžeme číst tvé konverzace.</p>
+    </div>
+
+    <div class="encryption-visual">
+      <div class="encryption-demo reveal">
+        <div class="lock-container">
+          <div class="lock-ring"></div>
+          <div class="lock-ring"></div>
+          <div class="lock-ring"></div>
+          <div class="lock-icon">🔐</div>
+        </div>
+      </div>
+
+      <div class="encryption-points reveal reveal-delay-2">
+        <div class="enc-point">
+          <div class="enc-point-icon">🔑</div>
+          <div>
+            <h4>X25519 Key Exchange</h4>
+            <p>Elliptic-curve Diffie-Hellman pro bezpečnou výměnu klíčů bez třetí strany.</p>
+          </div>
+        </div>
+        <div class="enc-point">
+          <div class="enc-point-icon">🛡️</div>
+          <div>
+            <h4>AES-256-GCM</h4>
+            <p>Authenticated encryption — stejný standard jako používá americká armáda pro tajné dokumenty.</p>
+          </div>
+        </div>
+        <div class="enc-point">
+          <div class="enc-point-icon">👻</div>
+          <div>
+            <h4>Ghost Mode</h4>
+            <p>Skryj svou polohu a staň se neviditelným. Anonymní režim pro maximální soukromí.</p>
+          </div>
+        </div>
+        <div class="enc-point">
+          <div class="enc-point-icon">🗑️</div>
+          <div>
+            <h4>Smazání účtu</h4>
+            <p>GDPR compliant. Kompletní smazání všech dat kdykoli — bez otázek.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Charlotte AI -->
+<section class="ai-section section-pad" id="ai">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">Umělá inteligence</div>
+      <h2 class="section-title">Seznamte se s<br>Charlotte AI.</h2>
+      <p class="section-subtitle">Vaše osobní AI asistentka, která zná váš deník, vaše preference a pomáhá vám dělat lepší rozhodnutí.</p>
+    </div>
+
+    <div class="ai-grid">
+      <div class="ai-chat-demo reveal">
+        <div class="ai-chat-header">
+          <div class="ai-avatar">🕷️</div>
+          <div>
+            <div class="ai-name">Charlotte AI</div>
+            <div class="ai-status">Online</div>
+          </div>
+        </div>
+        <div class="chat-messages">
+          <div class="chat-msg user">Jakou odrůdu mi doporučíš na večer pro relaxaci?</div>
+          <div class="chat-msg ai">Na základě tvého deníku vidím, že ti nejlépe sedí indika-dominantní odrůdy s myrcénem. Zkus Northern Lights — v minulosti ti dala +3 na relaxaci. 🌙</div>
+          <div class="chat-msg user">A co dávkování?</div>
+          <div class="chat-msg ai">Podle tvých dat optimální efekt nastupuje při 0.15g. Doporučuju začít pomalu a počkat 15 min. Chceš spustit trackování? 📊</div>
+        </div>
+      </div>
+
+      <div class="ai-features-list reveal reveal-delay-2">
+        <div class="ai-feature">
+          <div class="ai-feature-num">01</div>
+          <div>
+            <h4>Kontextové odpovědi</h4>
+            <p>Charlotte zná tvůj deník, historii a preference — odpovídá na míru.</p>
+          </div>
+        </div>
+        <div class="ai-feature">
+          <div class="ai-feature-num">02</div>
+          <div>
+            <h4>Skenování odrůd</h4>
+            <p>Vyfoť a Charlotte identifikuje odrůdu pomocí GPT-4o Vision.</p>
+          </div>
+        </div>
+        <div class="ai-feature">
+          <div class="ai-feature-num">03</div>
+          <div>
+            <h4>Týdenní reporty</h4>
+            <p>AI generuje personalizované týdenní reporty s korelacemi a insighty.</p>
+          </div>
+        </div>
+        <div class="ai-feature">
+          <div class="ai-feature-num">04</div>
+          <div>
+            <h4>Holotrop meditace</h4>
+            <p>Řízená meditace a dechová cvičení ve chvílích, kdy to potřebuješ.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="stats-section section-pad">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item reveal">
+        <div class="stat-value" data-count="45">0+</div>
+        <div class="stat-label">Obrazovek</div>
+      </div>
+      <div class="stat-item reveal reveal-delay-1">
+        <div class="stat-value" data-text="E2E">E2E</div>
+        <div class="stat-label">Šifrování</div>
+      </div>
+      <div class="stat-item reveal reveal-delay-2">
+        <div class="stat-value" data-count="3">0</div>
+        <div class="stat-label">Interaktivní hry</div>
+      </div>
+      <div class="stat-item reveal reveal-delay-3">
+        <div class="stat-value" data-text="AI">AI</div>
+        <div class="stat-label">Asistentka</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Gamification -->
+<section class="gamification-section section-pad" id="gamification">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">Gamifikace</div>
+      <h2 class="section-title">Sbírej XP.<br>Staň se Spider Masterem.</h2>
+      <p class="section-subtitle">Systém pavoučích ranků, sběratelské karty odrůd a denní úkoly tě budou motivovat každý den.</p>
+    </div>
+
+    <div class="ranks-display reveal">
+      <div class="rank-card egg">
+        <span class="rank-icon">🥚</span>
+        <div class="rank-name">Vajíčko</div>
+        <div class="rank-xp">0 — 100 XP</div>
+      </div>
+      <div class="rank-card hatchling">
+        <span class="rank-icon">🕷️</span>
+        <div class="rank-name">Malý Křižák</div>
+        <div class="rank-xp">100 — 500 XP</div>
+      </div>
+      <div class="rank-card hunter">
+        <span class="rank-icon">🎯</span>
+        <div class="rank-name">Lovec</div>
+        <div class="rank-xp">500 — 2K XP</div>
+      </div>
+      <div class="rank-card weaver">
+        <span class="rank-icon">🕸️</span>
+        <div class="rank-name">Tkadlec</div>
+        <div class="rank-xp">2K — 5K XP</div>
+      </div>
+      <div class="rank-card widow">
+        <span class="rank-icon">🔴</span>
+        <div class="rank-name">Vdova</div>
+        <div class="rank-xp">5K — 15K XP</div>
+      </div>
+      <div class="rank-card master">
+        <span class="rank-icon">👑</span>
+        <div class="rank-name">Spider Master</div>
+        <div class="rank-xp">15K+ XP</div>
+      </div>
+    </div>
+
+    <div class="rarity-showcase reveal">
+      <div class="rarity-card common">
+        <div class="rarity-label">Common</div>
+        <div class="rarity-name">Amnesia Haze</div>
+      </div>
+      <div class="rarity-card rare">
+        <div class="rarity-label">Rare</div>
+        <div class="rarity-name">Northern Lights</div>
+      </div>
+      <div class="rarity-card exotic">
+        <div class="rarity-label">Exotic</div>
+        <div class="rarity-name">Gelato #41</div>
+      </div>
+      <div class="rarity-card legend">
+        <div class="rarity-label">Legendary</div>
+        <div class="rarity-name">OG Kush</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Holotrop -->
+<section class="holotrop-section section-pad" id="holotrop">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">Harm Reduction</div>
+      <h2 class="section-title">Holotrop Mode.</h2>
+      <p class="section-subtitle">Pokud se necítíš dobře, Holotrop Mode ti pomůže. Dechová cvičení, grounding techniky a meditace.</p>
+    </div>
+
+    <div class="holotrop-content">
+      <div class="breathing-visual reveal">
+        <div class="breath-circle">
+          <span class="breath-text">Dýchej</span>
+        </div>
+      </div>
+
+      <div class="holotrop-features reveal reveal-delay-2">
+        <div class="holotrop-item">
+          <div class="holotrop-item-icon">🫁</div>
+          <div>
+            <h4>Řízené dýchání</h4>
+            <p>4-4-4 dechová technika s vizuální animací, která tě uklidní během minut.</p>
+          </div>
+        </div>
+        <div class="holotrop-item">
+          <div class="holotrop-item-icon">🧊</div>
+          <div>
+            <h4>Bio-hack protokol</h4>
+            <p>Studená voda, pepř, CBD, citrón — osvědčené techniky pro okamžité uzemnění.</p>
+          </div>
+        </div>
+        <div class="holotrop-item">
+          <div class="holotrop-item-icon">🖐️</div>
+          <div>
+            <h4>5-4-3-2-1 grounding</h4>
+            <p>Technika smyslového uvědomění s cyberpunk kartičkami krok po kroku.</p>
+          </div>
+        </div>
+        <div class="holotrop-item">
+          <div class="holotrop-item-icon">🧘</div>
+          <div>
+            <h4>Meditace s Charlotte</h4>
+            <p>AI řízená meditace přizpůsobená tvému aktuálnímu stavu.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Games -->
+<section class="games-section section-pad" id="games">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">Hry</div>
+      <h2 class="section-title">Hraj a sbírej XP.</h2>
+      <p class="section-subtitle">Tři interaktivní hry, které jsou zábavné a zároveň tě učí novým věcem.</p>
+    </div>
+
+    <div class="games-grid">
+      <div class="game-card reveal reveal-delay-1">
+        <div class="game-preview">🕷️</div>
+        <div class="game-info">
+          <h3>Spider Focus</h3>
+          <p>Dechová reakční hra synchronizovaná s dýcháním. Combo systém, 45s kola a progresivní obtížnost.</p>
+        </div>
+      </div>
+      <div class="game-card reveal reveal-delay-2">
+        <div class="game-preview">🧬</div>
+        <div class="game-info">
+          <h3>Terpene Match</h3>
+          <p>Paměťová hra terpenových profilů. Zábavný způsob, jak se naučit rozlišovat terpeny.</p>
+        </div>
+      </div>
+      <div class="game-card reveal reveal-delay-3">
+        <div class="game-preview">⏱️</div>
+        <div class="game-info">
+          <h3>Pass Timer</h3>
+          <p>Multiplayer časovač pro skupinové aktivity. Nastavitelné 30-90s kola s rotací hráčů.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Tech Stack -->
+<section class="tech-section section-pad">
+  <div class="container" style="text-align:center">
+    <div class="reveal">
+      <div class="section-label" style="justify-content:center">
+        <span>Tech Stack</span>
+      </div>
+      <h2 class="section-title">Postaveno na<br>moderních technologiích.</h2>
+    </div>
+
+    <div class="tech-pills reveal">
+      <span class="tech-pill">Flutter</span>
+      <span class="tech-pill">Dart 3</span>
+      <span class="tech-pill">Supabase</span>
+      <span class="tech-pill">PostgreSQL</span>
+      <span class="tech-pill">Riverpod</span>
+      <span class="tech-pill">GoRouter</span>
+      <span class="tech-pill">Claude AI</span>
+      <span class="tech-pill">GPT-4o Vision</span>
+      <span class="tech-pill">E2EE / AES-256</span>
+      <span class="tech-pill">Firebase</span>
+      <span class="tech-pill">Sentry</span>
+      <span class="tech-pill">Freezed</span>
+    </div>
+  </div>
+</section>
+
+<!-- Download CTA -->
+<section class="cta-section" id="download">
+  <div class="container">
+    <div class="reveal">
+      <h2 class="cta-title">Připoj se ke komunitě.</h2>
+      <p class="cta-subtitle">Stáhni si Buds & Buddies zdarma a staň se součástí zodpovědné komunity nové generace.</p>
+    </div>
+
+    <div class="cta-buttons reveal reveal-delay-1">
+      <a href="#" class="store-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+        <div class="store-btn-text">
+          <span class="small">Stáhnout na</span>
+          <span class="big">App Store</span>
+        </div>
+      </a>
+      <a href="#" class="store-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.199l2.302 2.302a1 1 0 010 1.38l-2.302 2.302L15.396 13l2.302-2.492zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
+        <div class="store-btn-text">
+          <span class="small">Stáhnout na</span>
+          <span class="big">Google Play</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand"><span>Spider</span>Bagzz</div>
+    <ul class="footer-links">
+      <li><a href="#">Podmínky použití</a></li>
+      <li><a href="#">Ochrana soukromí</a></li>
+      <li><a href="#">Kontakt</a></li>
+    </ul>
+    <div class="footer-copy">&copy; 2024–2026 SpiderBagzz. Všechna práva vyhrazena. Buds & Buddies v1.0.1</div>
+  </div>
+</footer>
+
+<!-- Floating CTA -->
+<div class="floating-cta" id="floatingCta">
+  <a href="#download">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Stáhnout nyní
+  </a>
+</div>
+
+<script>
+/* ========================================
+   SPIDER WEB CANVAS BACKGROUND
+   ======================================== */
+(function() {
+  const canvas = document.getElementById('webCanvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, nodes = [], mouse = { x: -1000, y: -1000 };
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+
+  function createNodes() {
+    nodes = [];
+    const count = Math.min(60, Math.floor((w * h) / 25000));
+    for (let i = 0; i < count; i++) {
+      nodes.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        r: Math.random() * 1.5 + 0.5
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    const maxDist = 180;
+
+    // Draw connections
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < maxDist) {
+          const alpha = (1 - dist / maxDist) * 0.08;
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.strokeStyle = `rgba(245, 240, 230, ${alpha})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+
+      // Mouse interaction lines
+      const mdx = nodes[i].x - mouse.x;
+      const mdy = nodes[i].y - mouse.y;
+      const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+      if (mdist < 200) {
+        const alpha = (1 - mdist / 200) * 0.15;
+        ctx.beginPath();
+        ctx.moveTo(nodes[i].x, nodes[i].y);
+        ctx.lineTo(mouse.x, mouse.y);
+        ctx.strokeStyle = `rgba(0, 212, 255, ${alpha})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+
+    // Draw nodes
+    for (const node of nodes) {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(245, 240, 230, 0.15)';
+      ctx.fill();
+
+      node.x += node.vx;
+      node.y += node.vy;
+      if (node.x < 0 || node.x > w) node.vx *= -1;
+      if (node.y < 0 || node.y > h) node.vy *= -1;
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', () => { resize(); createNodes(); });
+  document.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  resize();
+  createNodes();
+  draw();
+})();
+
+/* ========================================
+   NAV SCROLL BEHAVIOR
+   ======================================== */
+const nav = document.getElementById('nav');
+const floatingCta = document.getElementById('floatingCta');
+
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  nav.classList.toggle('scrolled', y > 60);
+  floatingCta.classList.toggle('visible', y > 600);
+});
+
+/* ========================================
+   REVEAL ON SCROLL (Intersection Observer)
+   ======================================== */
+const revealElements = document.querySelectorAll('.reveal');
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+revealElements.forEach(el => revealObserver.observe(el));
+
+/* ========================================
+   ANIMATED COUNTERS
+   ======================================== */
+const statValues = document.querySelectorAll('.stat-value[data-count]');
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const el = entry.target;
+      const target = parseInt(el.dataset.count);
+      let current = 0;
+      const duration = 1500;
+      const step = target / (duration / 16);
+
+      function tick() {
+        current += step;
+        if (current >= target) {
+          el.textContent = target + (el.dataset.count === '45' ? '+' : '');
+          return;
+        }
+        el.textContent = Math.floor(current) + (el.dataset.count === '45' ? '+' : '');
+        requestAnimationFrame(tick);
+      }
+      tick();
+      counterObserver.unobserve(el);
+    }
+  });
+}, { threshold: 0.5 });
+
+statValues.forEach(el => counterObserver.observe(el));
+
+/* ========================================
+   SMOOTH SCROLL FOR ANCHOR LINKS
+   ======================================== */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Close mobile menu
+      document.getElementById('navLinks').classList.remove('open');
+    }
+  });
+});
+</script>
+</body>
+</html>
